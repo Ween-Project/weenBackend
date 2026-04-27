@@ -1,0 +1,13 @@
+package com.ween.enums;
+
+public enum CoinReason {
+    SIGNUP,
+    REGISTRATION,
+    ATTENDANCE,
+    CERTIFICATE,
+    PROFILE_COMPLETE,
+    REFERRAL,
+    INTERNATIONAL,
+    LEADERBOARD_BONUS,
+    ANNUAL_ACHIEVEMENT
+}
