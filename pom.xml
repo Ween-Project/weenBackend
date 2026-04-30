@@ -136,6 +136,19 @@
         </dependency>
 
 
+        <!-- 2. Thymeleaf (HTML şablonlarını oxumaq və dinamik datalarla doldurmaq üçün) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- 3. Flying Saucer / OpenPDF (Hazır HTML-i oxuyub PDF-ə çevirmək (render etmək) üçün) -->
+        <dependency>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-pdf-openpdf</artifactId>
+            <version>9.1.22</version>
+        </dependency>
+
         <!-- Rate Limiting -->
         <dependency>
             <groupId>com.github.vladimir-bukhtoyarov</groupId>

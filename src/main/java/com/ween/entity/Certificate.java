@@ -1,6 +1,6 @@
 package com.ween.entity;
 
-import com.ween.enums.CertificateTemplate;
+import com.ween.enums.EventCategory;
 import lombok.*;
 import jakarta.persistence.*;
 
@@ -33,7 +33,7 @@ public class Certificate extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "template_type")
-    private CertificateTemplate templateType = CertificateTemplate.GENERAL;
+    private EventCategory templateType = EventCategory.EDUCATION;
 
     @Column(name = "issued_at", columnDefinition = "DATETIME(6)")
     private LocalDateTime issuedAt;

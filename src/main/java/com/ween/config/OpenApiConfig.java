@@ -32,7 +32,7 @@ public class OpenApiConfig {
                 )
             )
             .servers(List.of(
-                new Server().url("http://localhost:5000").description("Development"),
+                new Server().url("http://localhost:5050").description("Development"),
                 new Server().url("https://api.ween.az").description("Production")
             ))
             .addSecurityItem(new SecurityRequirement().addList("Bearer"))

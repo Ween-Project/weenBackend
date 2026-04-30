@@ -1,6 +1,5 @@
 package com.ween.dto.response;
 
-import com.ween.enums.CertificateTemplate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +18,5 @@ public class CertificateResponse {
     private String eventId;
     private String eventTitle;
     private String pdfUrl;
-    private CertificateTemplate templateType;
     private LocalDateTime issuedAt;
 }
