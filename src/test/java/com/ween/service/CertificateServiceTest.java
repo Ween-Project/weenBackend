@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
@@ -44,13 +43,13 @@ class CertificateServiceTest {
     }
 
     @Test @DisplayName("Generate certificate – success")
-    void generateCertificate_success() {
+    void createCertificate_Pdf_success() {
         when(userRepository.findById("uid")).thenReturn(Optional.of(testUser));
         when(eventRepository.findById("eid")).thenReturn(Optional.of(testEvent));
         when(certificateRepository.existsByUserIdAndEventId("uid", "eid")).thenReturn(false);
         when(certificateRepository.save(any())).thenAnswer(i -> { Certificate c = i.getArgument(0); c.setId("cid"); return c; });
 
-        Certificate cert = certificateService.generateCertificate("uid", "eid", CertificateTemplate.GENERAL);
+        Certificate cert = certificateService.createCertificatePdf("uid", "eid", CertificateTemplate.GENERAL);
         assertThat(cert.getUserId()).isEqualTo("uid");
         assertThat(cert.getEventId()).isEqualTo("eid");
         assertThat(cert.getCertificateNumber()).startsWith("CERT-");
@@ -58,37 +57,37 @@ class CertificateServiceTest {
     }
 
     @Test @DisplayName("Generate certificate – user not found throws")
-    void generateCertificate_userNotFound() {
+    void createCertificate_Pdf_userNotFound() {
         when(userRepository.findById("x")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> certificateService.generateCertificate("x", "eid", CertificateTemplate.GENERAL))
+        assertThatThrownBy(() -> certificateService.createCertificatePdf("x", "eid", CertificateTemplate.GENERAL))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test @DisplayName("Generate certificate – event not found throws")
-    void generateCertificate_eventNotFound() {
+    void createCertificate_Pdf_eventNotFound() {
         when(userRepository.findById("uid")).thenReturn(Optional.of(testUser));
         when(eventRepository.findById("x")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> certificateService.generateCertificate("uid", "x", CertificateTemplate.GENERAL))
+        assertThatThrownBy(() -> certificateService.createCertificatePdf("uid", "x", CertificateTemplate.GENERAL))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test @DisplayName("Generate certificate – already exists throws")
-    void generateCertificate_alreadyExists() {
+    void createCertificate_Pdf_alreadyExists() {
         when(userRepository.findById("uid")).thenReturn(Optional.of(testUser));
         when(eventRepository.findById("eid")).thenReturn(Optional.of(testEvent));
         when(certificateRepository.existsByUserIdAndEventId("uid", "eid")).thenReturn(true);
-        assertThatThrownBy(() -> certificateService.generateCertificate("uid", "eid", CertificateTemplate.GENERAL))
+        assertThatThrownBy(() -> certificateService.createCertificatePdf("uid", "eid", CertificateTemplate.GENERAL))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test @DisplayName("Generate certificate with default template")
-    void generateCertificate_defaultTemplate() {
+    void createCertificate_Pdf_defaultTemplate() {
         when(userRepository.findById("uid")).thenReturn(Optional.of(testUser));
         when(eventRepository.findById("eid")).thenReturn(Optional.of(testEvent));
         when(certificateRepository.existsByUserIdAndEventId("uid", "eid")).thenReturn(false);
         when(certificateRepository.save(any())).thenAnswer(i -> { Certificate c = i.getArgument(0); c.setId("cid"); return c; });
 
-        Certificate cert = certificateService.generateCertificate("uid", "eid");
+        Certificate cert = certificateService.createCertificatePdf("uid", "eid");
         assertThat(cert.getTemplateType()).isEqualTo(CertificateTemplate.GENERAL);
     }
 

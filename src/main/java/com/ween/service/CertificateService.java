@@ -1,34 +1,21 @@
 package com.ween.service;
 
-// iText imports disabled - PDF generation temporarily disabled
-// import com.itextpdf.io.font.constants.StandardFonts;
-// import com.itextpdf.kernel.colors.ColorConstants;
-// import com.itextpdf.kernel.font.PdfFont;
-// import com.itextpdf.kernel.font.PdfFontFactory;
-// import com.itextpdf.kernel.geom.PageSize;
-// import com.itextpdf.kernel.pdf.PdfDocument;
-// import com.itextpdf.kernel.pdf.PdfWriter;
-// import com.itextpdf.layout.Document;
-// import com.itextpdf.layout.element.Paragraph;
-// import com.itextpdf.layout.properties.TextAlignment;
-
+import com.ween.config.ThymeleafConfig;
 import com.ween.entity.Certificate;
 import com.ween.entity.Event;
 import com.ween.entity.User;
-import com.ween.enums.CertificateTemplate;
 import com.ween.exception.ResourceNotFoundException;
-import com.ween.mapper.CertificateMapper;
 import com.ween.repository.CertificateRepository;
 import com.ween.repository.EventRepository;
 import com.ween.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.context.Context;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.ByteArrayOutputStream;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
@@ -40,79 +27,60 @@ import java.util.UUID;
 public class CertificateService {
 
     private final CertificateRepository certificateRepository;
-    private final CertificateMapper certificateMapper;
+    private final ThymeleafConfig thymeleafConfig;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
-    private final CoinService coinService;
-    private final NotificationService notificationService;
-    // private final FirebaseService firebaseService; // DISABLED
 
-    @Async("taskExecutor")
-    @Transactional
-    public void generateCertificateAsync(String userId, String eventId, CertificateTemplate template) {
+    public byte[] createCertificatePdf(String certificateId) throws Exception {
+
+        // Fetch the certificate
+        Certificate certificate = certificateRepository.findById(certificateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Certificate not found. ID: " + certificateId));
+
+        // Fetch user and event details
+        User user = userRepository.findById(certificate.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found. ID: " + certificate.getUserId()));
+
+        Event event = eventRepository.findById(certificate.getEventId())
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found. ID: " + certificate.getEventId()));
+
+        // Setup Thymeleaf context
+        Context context = new Context();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
+        String formattedDate = certificate.getIssuedAt() != null
+                ? certificate.getIssuedAt().format(formatter)
+                : "Date not specified";
+
+        context.setVariable("userName", user.getFullName());
+        context.setVariable("title", event.getTitle());
+        context.setVariable("certificateNumber", certificate.getCertificateNumber());
+        context.setVariable("issueDate", formattedDate);
+
+        // Use category name for the template dynamically
+        String categoryTemplate = event.getCategory().name().toLowerCase();
+        context.setVariable("templateType", categoryTemplate);
+
+        // Process HTML to String
+        String htmlContent;
         try {
-            generateCertificate(userId, eventId, template);
+            htmlContent = thymeleafConfig.customTemplateEngine().process(categoryTemplate, context);
         } catch (Exception e) {
-            log.error("Failed to generate certificate asynchronously", e);
-        }
-    }
-
-    @Transactional
-    public Certificate generateCertificate(String userId, String eventId) {
-        return generateCertificate(userId, eventId, CertificateTemplate.GENERAL);
-    }
-
-    @Transactional
-    public Certificate generateCertificate(String userId, String eventId, CertificateTemplate template) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
-
-        // Check if certificate already exists
-        if (certificateRepository.existsByUserIdAndEventId(userId, eventId)) {
-            throw new IllegalArgumentException("Certificate already exists for this user and event");
+            // Log warning if specific template is missing and fallback to default
+            log.warn("Specific template not found: {}. Falling back to default template.", categoryTemplate);
+            htmlContent = thymeleafConfig.customTemplateEngine().process("default_certificate", context);
         }
 
-        // Generate certificate number
-        String certificateNumber = generateCertificateNumber();
+        // Convert HTML to PDF
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            ITextRenderer renderer = new ITextRenderer();
 
-        // PDF generation disabled - iText dependency commented out
-        /* 
-        byte[] pdfBytes = generateCertificatePdf(user, event, certificateNumber, template);
-        String pdfUrl = storageService.uploadCertificatePdf(pdfBytes, certificateNumber);
-        */
-        String pdfUrl = "https://placeholder-certificate-url.local/" + certificateNumber + ".pdf";
+            renderer.setDocumentFromString(htmlContent);
+            renderer.layout();
+            renderer.createPDF(outputStream);
 
-        // Create certificate record
-        Certificate certificate = Certificate.builder()
-                .userId(userId)
-                .eventId(eventId)
-                .certificateNumber(certificateNumber)
-                .pdfUrl(pdfUrl)
-                .templateType(template)
-                .issuedAt(LocalDateTime.now())
-                .build();
-
-        Certificate saved = certificateRepository.save(certificate);
-        log.info("Certificate generated: {} for user: {} and event: {}", certificateNumber, userId, eventId);
-
-        // Award certificate coins
-        try {
-            coinService.awardCertificateBonus(userId, saved.getId());
-        } catch (Exception e) {
-            log.warn("Failed to award certificate coins", e);
+            return outputStream.toByteArray();
         }
-
-        // Send notification
-        try {
-            notificationService.createCertificateNotification(userId, event.getTitle(), certificateNumber);
-        } catch (Exception e) {
-            log.warn("Failed to create certificate notification", e);
-        }
-
-        return saved;
     }
 
     public Certificate getCertificateById(String certificateId) {
@@ -129,22 +97,11 @@ public class CertificateService {
         return certificateRepository.findByUserId(userId);
     }
 
-    public byte[] downloadCertificate(String certificateId) {
-        Certificate certificate = getCertificateById(certificateId);
-        try {
-            // StorageService removed - PDF download functionality disabled
-            log.info("Certificate download requested for: {}", certificateId);
-            return new byte[0];
-        } catch (Exception e) {
-            log.error("Failed to download certificate", e);
-            throw new RuntimeException("Failed to download certificate", e);
-        }
-    }
 
     @Transactional
     public void deleteCertificate(String certificateId) {
         Certificate certificate = getCertificateById(certificateId);
-        
+
         try {
             // StorageService removed - PDF deletion functionality disabled
             log.info("Certificate PDF deletion skipped: {}", certificateId);
@@ -162,43 +119,6 @@ public class CertificateService {
 
     public Integer getUserCertificateCount(String userId) {
         return (int) getUserCertificates(userId).size();
-    }
-
-    // iText-based PDF generation disabled - dependency commented out
-    /*
-    private byte[] generateCertificatePdf(User user, Event event, String certificateNumber, CertificateTemplate template) {
-        // ... iText PDF generation code disabled ...
-    }
-
-    private void addGeneralCertificateContent(Document document, User user, Event event, String certificateNumber) throws Exception {
-        // ... iText content generation disabled ...
-    }
-
-    private void addInternationalCertificateContent(Document document, User user, Event event, String certificateNumber) throws Exception {
-        // ... iText content generation disabled ...
-    }
-
-    private void addSeminarCertificateContent(Document document, User user, Event event, String certificateNumber) throws Exception {
-        // ... iText content generation disabled ...
-    }
-    */
-
-    /*
-    private void addGeneralCertificateContent(Document document, User user, Event event, String certificateNumber) throws Exception {
-        // ... iText code disabled ...
-    }
-
-    private void addInternationalCertificateContent(Document document, User user, Event event, String certificateNumber) throws Exception {
-        // ... iText code disabled ...
-    }
-
-    private void addSeminarCertificateContent(Document document, User user, Event event, String certificateNumber) throws Exception {
-        // ... iText code disabled ...
-    }
-    */
-
-    private String generateCertificateNumber() {
-        return "CERT-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
 

@@ -5,10 +5,7 @@ import com.ween.dto.response.ParticipantResponse;
 import com.ween.entity.Event;
 import com.ween.entity.EventRegistration;
 import com.ween.enums.CoinReason;
-import com.ween.exception.AlreadyExistsException;
-import com.ween.exception.EventCapacityExceededException;
-import com.ween.exception.EventNotRegisteredException;
-import com.ween.exception.ResourceNotFoundException;
+import com.ween.exception.*;
 import com.ween.repository.EventRegistrationRepository;
 import com.ween.repository.EventRepository;
 import com.ween.repository.UserRepository;
@@ -36,54 +33,52 @@ public class RegistrationService {
     private final NotificationService notificationService;
 //    private final FirebaseService firebaseService;
     // private final EventService eventService; // REMOVED - causes circular dependency
+@Transactional
+public EventRegistration registerForEvent(String eventId, String userId) {
+    Event event = eventRepository.findById(eventId)
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
 
-    @Transactional
-    public EventRegistration registerForEvent(String eventId, String userId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
-
-        // Check if already registered
-        if (eventRegistrationRepository.findByEventIdAndUserId(eventId, userId).isPresent()) {
-            throw new AlreadyExistsException("User already registered for this event");
-        }
-
-        // Check capacity
-        long registrationCount = eventRegistrationRepository.countByEventId(eventId);
-        if (event.getMaxParticipants() != null && registrationCount >= event.getMaxParticipants()) {
-            throw new EventCapacityExceededException("Event is at maximum capacity");
-        }
-
-        // Check registration deadline
-        if (event.getRegistrationDeadline() != null && LocalDateTime.now().isAfter(event.getRegistrationDeadline())) {
-            throw new RuntimeException("Registration deadline has passed");
-        }
-
-        EventRegistration registration = EventRegistration.builder()
-                .eventId(eventId)
-                .userId(userId)
-                .registeredAt(LocalDateTime.now())
-                .isJoined(false)
-                .build();
-
-        EventRegistration saved = eventRegistrationRepository.save(registration);
-        log.info("User {} registered for event: {}", userId, eventId);
-
-        // Award registration coins
-        try {
-            coinService.awardEventRegistrationBonus(userId, eventId);
-        } catch (Exception e) {
-            log.warn("Failed to award registration coins", e);
-        }
-
-        // Send notification
-        try {
-            notificationService.createRegistrationNotification(userId, event.getTitle());
-        } catch (Exception e) {
-            log.warn("Failed to create registration notification", e);
-        }
-
-        return saved;
+    // Check if already registered
+    if (eventRegistrationRepository.findByEventIdAndUserId(eventId, userId).isPresent()) {
+        throw new AlreadyExistsException("User already registered for this event");
     }
+
+    // Check capacity
+    long registrationCount = eventRegistrationRepository.countByEventId(eventId);
+    if (event.getMaxParticipants() != null && registrationCount >= event.getMaxParticipants()) {
+        throw new EventCapacityExceededException("Event is at maximum capacity");
+    }
+
+    if (event.getRegistrationDeadline() != null && LocalDateTime.now().isAfter(event.getRegistrationDeadline())) {
+        throw new RegistrationClosedException("Registration deadline has passed");
+    }
+
+    EventRegistration registration = EventRegistration.builder()
+            .eventId(eventId)
+            .userId(userId)
+            .registeredAt(LocalDateTime.now())
+            .isJoined(false)
+            .build();
+
+    EventRegistration saved = eventRegistrationRepository.save(registration);
+    log.info("User {} registered for event: {}", userId, eventId);
+
+    // Award registration coins
+    try {
+        coinService.awardEventRegistrationBonus(userId, eventId);
+    } catch (Exception e) {
+        log.warn("Failed to award registration coins", e);
+    }
+
+    // Send notification
+    try {
+        notificationService.createRegistrationNotification(userId, event.getTitle());
+    } catch (Exception e) {
+        log.warn("Failed to create registration notification", e);
+    }
+
+    return saved;
+}
 
     @Transactional
     public void cancelRegistration(String eventId, String userId) {

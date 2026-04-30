@@ -198,6 +198,8 @@ public class AuthService {
         Organization organization = Organization.builder()
                 .username(orgUsername)
                 .email(orgEmail)
+                .logoUrl(request.getLogoUrl())
+                .website(request.getWebsite())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .organizationName(request.getOrganizationName())
                 .description(request.getDescription())
@@ -227,9 +229,12 @@ public class AuthService {
                 .id(savedOrganization.getId())
                 .username(savedOrganization.getUsername())
                 .email(savedOrganization.getEmail())
+                .website(savedOrganization.getWebsite())
+                .logoUrl(savedOrganization.getLogoUrl())
                 .description(savedOrganization.getDescription())
                 .organizationName(savedOrganization.getOrganizationName())
                 .role(savedOrganization.getRole())
+                .createdAt(LocalDateTime.now())
                 .isVerified(savedOrganization.getIsVerified())
                 .build();
 

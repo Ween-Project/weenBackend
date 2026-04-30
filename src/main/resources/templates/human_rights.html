@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Human Rights Event</title>
+  <!-- Sənin orijinal font linkin olduğu kimi qaldı -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&amp;family=Cormorant+Garamond:wght@300;400;500&amp;display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --crimson: #8B0000;
+      --crimson-light: #C0392B;
+      --gold: #C9A84C;
+      --cream: #FAF6F0;
+      --dark: #1A0A0A;
+      --mid: #4A1010;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    .page {
+      width: 900px;
+      min-height: 620px;
+      background: var(--cream);
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 1.2s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .border-frame {
+      position: absolute;
+      inset: 18px;
+      border: 2px solid var(--crimson);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .border-frame::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 1px solid var(--gold);
+    }
+
+    .corner {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      z-index: 3;
+    }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 12px; left: 12px; }
+    .corner.tr { top: 12px; right: 12px; transform: scaleX(-1); }
+    .corner.bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
+    .corner.br { bottom: 12px; right: 12px; transform: scale(-1,-1); }
+
+    .bg-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.04;
+      background-image: repeating-linear-gradient(
+        45deg,
+        var(--crimson) 0, var(--crimson) 1px,
+        transparent 0, transparent 50%
+      );
+      background-size: 14px 14px;
+    }
+
+    .sidebar {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 8px;
+      background: linear-gradient(to bottom, var(--crimson-light), var(--crimson), var(--mid));
+    }
+
+    .header-band {
+      background: linear-gradient(135deg, var(--crimson) 0%, var(--mid) 100%);
+      padding: 36px 60px 28px 70px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header-band::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 4px;
+      background: var(--gold);
+    }
+
+    .category-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .category-label::before, .category-label::after {
+      content: '';
+      display: inline-block;
+      height: 1px;
+      width: 30px;
+      background: var(--gold);
+      opacity: 0.6;
+    }
+
+    .event-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 38px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+
+    .org-name {
+      margin-top: 10px;
+      font-size: 15px;
+      color: rgba(255,255,255,0.65);
+      font-style: italic;
+      letter-spacing: 1px;
+    }
+
+    .body-content {
+      padding: 44px 60px 44px 70px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+      align-items: start;
+    }
+
+    .cert-text {
+      font-size: 13.5px;
+      color: #555;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .volunteer-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 44px;
+      font-weight: 700;
+      font-style: italic;
+      color: var(--crimson);
+      line-height: 1;
+      margin-bottom: 18px;
+      border-bottom: 2px solid var(--gold);
+      padding-bottom: 14px;
+    }
+
+    .description {
+      font-size: 16px;
+      color: #444;
+      line-height: 1.85;
+      max-width: 460px;
+    }
+
+    .description strong {
+      color: var(--crimson);
+      font-weight: 500;
+    }
+
+    .stats-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 160px;
+    }
+
+    .stat-box {
+      border: 1px solid var(--gold);
+      padding: 18px 20px;
+      text-align: center;
+      position: relative;
+      background: rgba(201,168,76,0.04);
+    }
+    .stat-box::before {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px;
+      width: 12px; height: 1px;
+      background: var(--crimson);
+    }
+    .stat-box::after {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px;
+      width: 1px; height: 12px;
+      background: var(--crimson);
+    }
+
+    .stat-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--crimson);
+      display: block;
+    }
+    .stat-label {
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .footer {
+      border-top: 1px solid rgba(139,0,0,0.15);
+      padding: 20px 60px 20px 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .seal {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      border: 2px solid var(--crimson);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .seal::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      border: 1px solid var(--gold);
+    }
+    .seal-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 9px;
+      color: var(--crimson);
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      line-height: 1.3;
+    }
+
+    .footer-info {
+      text-align: right;
+    }
+    .footer-date {
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .footer-id {
+      font-size: 11px;
+      color: #bbb;
+      margin-top: 4px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="bg-pattern"></div>
+  <div class="sidebar"></div>
+  <div class="border-frame"></div>
+
+  <div class="corner tl">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 5 L25 5 L5 25 Z" fill="#8B0000" opacity="0.5" />
+      <path d="M5 5 L5 35" stroke="#C9A84C" stroke-width="1.5" />
+      <path d="M5 5 L35 5" stroke="#C9A84C" stroke-width="1.5" />
+      <circle cx="5" cy="5" r="3" fill="#C9A84C" />
+    </svg>
+  </div>
+  <div class="corner tr">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 5 L25 5 L5 25 Z" fill="#8B0000" opacity="0.5" />
+      <path d="M5 5 L5 35" stroke="#C9A84C" stroke-width="1.5" />
+      <path d="M5 5 L35 5" stroke="#C9A84C" stroke-width="1.5" />
+      <circle cx="5" cy="5" r="3" fill="#C9A84C" />
+    </svg>
+  </div>
+  <div class="corner bl">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 5 L25 5 L5 25 Z" fill="#8B0000" opacity="0.5" />
+      <path d="M5 5 L5 35" stroke="#C9A84C" stroke-width="1.5" />
+      <path d="M5 5 L35 5" stroke="#C9A84C" stroke-width="1.5" />
+      <circle cx="5" cy="5" r="3" fill="#C9A84C" />
+    </svg>
+  </div>
+  <div class="corner br">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 5 L25 5 L5 25 Z" fill="#8B0000" opacity="0.5" />
+      <path d="M5 5 L5 35" stroke="#C9A84C" stroke-width="1.5" />
+      <path d="M5 5 L35 5" stroke="#C9A84C" stroke-width="1.5" />
+      <circle cx="5" cy="5" r="3" fill="#C9A84C" />
+    </svg>
+  </div>
+
+  <div class="header-band">
+    <div class="category-label">Human Rights</div>
+    <!-- Burada Dəyişən Çağırılır -->
+    <div class="event-title" th:text="${eventName}">Event Title</div>
+    <!-- Burada Dəyişən Çağırılır -->
+    <div class="org-name"><span th:text="${organizationName}">Organization</span> tərəfindən təşkil edilir</div>
+  </div>
+
+  <div class="body-content">
+    <div>
+      <div class="cert-text">Volunteer</div>
+      <!-- Burada Dəyişən Çağırılır -->
+      <div class="volunteer-name" th:text="${volunteerName}">Volunteer Name</div>
+
+      <p class="description">
+        This document certifies the active participation and volunteer services of
+        <!-- Burada Mətn Daxilində Dəyişən Çağırılır -->
+        <strong>[[${volunteerName}]]</strong> in the <strong>[[${eventName}]]</strong> event organized by
+        <strong>[[${organizationName}]]</strong>.
+      </p>
+    </div>
+    <div class="stats-panel">
+      <div class="stat-box">
+        <span class="stat-value">2026</span>
+        <span class="stat-label">Year</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value">HR</span>
+        <span class="stat-label">Category</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="seal">
+      <div class="seal-text">OFFICIAL<br />DOCUMENT</div>
+    </div>
+    <div class="footer-info">
+      <!-- Burada Mətn Daxilində Dəyişən Çağırılır -->
+      <div class="footer-date">Date: [[${issueDate}]]</div>
+      <div class="footer-id">ID: [[${certificateNumber}]]</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
