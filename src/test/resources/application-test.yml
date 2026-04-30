@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  mail:
+    host: localhost
+    port: 25
+  flyway:
+    enabled: false
+
+ween:
+  jwt:
+    secret: test-secret-key-that-is-at-least-32-characters-long-for-hmac
+    access-token-expiry: 900
+    refresh-token-expiry: 604800
+  aes:
+    secret-key: "1234567890123456"
+  mail:
+    from: test@ween.az
+  frontend:
+    verify-url: http://localhost:5001/verify
+    reset-password-url: http://localhost:5001/reset-password
+  api-key: test-api-key
+  app:
+    name: Ween
