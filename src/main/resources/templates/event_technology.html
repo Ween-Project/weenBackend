@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technology Event</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #050810;
+    --dark: #0C1120;
+    --card: #111827;
+    --border: #1F2D4A;
+    --electric: #6366F1;
+    --neon: #22D3EE;
+    --lime: #A3E635;
+    --white: #F8FAFC;
+    --muted: #64748B;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .page {
+    width: 900px;
+    min-height: 620px;
+    background: var(--dark);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    animation: glitch-in 0.8s ease forwards;
+  }
+
+  @keyframes glitch-in {
+    0% { opacity: 0; clip-path: inset(30% 0 50% 0); }
+    40% { opacity: 1; clip-path: inset(0% 0 0% 0); transform: translateX(3px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(1px); }
+    100% { transform: translateX(0); clip-path: none; }
+  }
+
+  /* Grid pattern */
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Glow orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .orb1 { width: 300px; height: 300px; background: var(--electric); opacity: 0.12; top: -80px; right: -60px; }
+  .orb2 { width: 200px; height: 200px; background: var(--neon); opacity: 0.08; bottom: -60px; left: 200px; }
+
+  /* Top bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 2;
+  }
+
+  .terminal-dots {
+    display: flex;
+    gap: 7px;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .dot.red { background: #FF5F57; }
+  .dot.yellow { background: #FEBC2E; }
+  .dot.green { background: #28C840; }
+
+  .top-path {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .top-path span { color: var(--lime); }
+
+  .top-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--electric);
+  }
+
+  /* Main content */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    min-height: 480px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Left panel */
+  .left {
+    padding: 40px 36px 40px 40px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.4);
+    border-radius: 4px;
+    padding: 5px 14px;
+    color: var(--electric);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+  .cat-chip .blink {
+    width: 6px; height: 6px;
+    background: var(--lime);
+    border-radius: 50%;
+    animation: blink 1.2s step-start infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .event-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+  }
+  .event-title .highlight {
+    color: var(--neon);
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field-key {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .field-key::before { content: '// '; color: var(--lime); }
+
+  .field-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* Right panel */
+  .right {
+    padding: 40px 40px 40px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .code-block {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .code-line {
+    font-size: 12px;
+    line-height: 2;
+  }
+  .c-purple { color: var(--electric); }
+  .c-blue { color: var(--neon); }
+  .c-green { color: var(--lime); }
+  .c-white { color: var(--white); }
+  .c-gray { color: var(--muted); }
+  .c-string { color: #FBBF24; }
+
+  .desc-text {
+    font-size: 14px;
+    color: #94A3B8;
+    line-height: 1.85;
+    border-left: 3px solid var(--electric);
+    padding-left: 16px;
+  }
+
+  .desc-text strong { color: var(--neon); font-weight: 400; }
+
+  .badge-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+  .badge {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+  .badge.active { border-color: var(--lime); color: var(--lime); }
+
+  /* Bottom bar */
+  .bottom-bar {
+    border-top: 1px solid var(--border);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+  }
+
+  .progress-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 70%;
+    background: linear-gradient(to right, var(--electric), var(--neon));
+    border-radius: 2px;
+    animation: fill 1.5s ease forwards;
+  }
+  @keyframes fill { from { width: 0; } to { width: 70%; } }
+
+  .bar-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .bar-text span { color: var(--lime); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="grid-bg"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <div class="top-bar">
+    <div class="terminal-dots">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+    </div>
+    <div class="top-path">~/events/<span>technology</span>/certificate.html</div>
+    <div class="top-time">2025.AZ</div>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <div class="cat-chip"><span class="blink"></span>Technology · Texnologiya</div>
+      <div class="event-title">{{EVENT_NAME}}</div>
+      <div class="field-group">
+        <div class="field">
+          <div class="field-key">könüllü</div>
+          <div class="field-val">{{VOLUNTEER_NAME}}</div>
+        </div>
+        <div class="field">
+          <div class="field-key">təşkilat</div>
+          <div class="field-val">{{ORGANIZATION_NAME}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="code-block">
+        <div class="code-line"><span class="c-purple">const</span> <span class="c-blue">volunteer</span> <span class="c-white">= {</span></div>
+        <div class="code-line">&nbsp;&nbsp;<span class="c-green">name</span><span class="c-white">:</span> <span class="c-string">"{{VOLUNTEER_NAME}}"</span><span class="c-white">,</span></div>
+        <div class="code-line">&nbsp;&nbsp;<span class="c-green">event</span><span class="c-white">:</span> <span class="c-string">"{{EVENT_NAME}}"</span><span class="c-white">,</span></div>
+        <div class="code-line">&nbsp;&nbsp;<span class="c-green">org</span><span class="c-white">:</span> <span class="c-string">"{{ORGANIZATION_NAME}}"</span><span class="c-white">,</span></div>
+        <div class="code-line">&nbsp;&nbsp;<span class="c-green">status</span><span class="c-white">:</span> <span class="c-blue">certified</span></div>
+        <div class="code-line"><span class="c-white">}</span></div>
+      </div>
+
+      <div class="desc-text">
+        Bu sənəd, <strong>{{VOLUNTEER_NAME}}</strong> şəxsinin
+        <strong>{{ORGANIZATION_NAME}}</strong> tərəfindən həyata keçirilən
+        <strong>{{EVENT_NAME}}</strong> tədbirindəki könüllü iştirakını rəsmi olaraq
+        təsdiqləyir. Texnologiya sahəsindəki töhfəsinə görə minnətdarlıqla qeyd edilir.
+      </div>
+
+      <div class="badge-row">
+        <div class="badge active">VERIFIED</div>
+        <div class="badge">TECH-2025</div>
+        <div class="badge">BAKÜ, AZ</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="bar-text">ID: <span>TECH-{{ORGANIZATION_NAME}}-001</span></div>
+    <div class="progress-line"><div class="progress-fill"></div></div>
+    <div class="bar-text"><span>100%</span> tamamlandı</div>
+  </div>
+</div>
+</body>
+</html>

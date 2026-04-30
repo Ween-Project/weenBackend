@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Culture Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Josefin+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #1C0B2E;
+    --purple: #4C1D95;
+    --violet: #7C3AED;
+    --lavender: #A78BFA;
+    --mauve: #DDD6FE;
+    --gold: #D4AF37;
+    --amber: #F59E0B;
+    --white: #FFFBFF;
+    --parch: #FFF8F0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Josefin Sans', sans-serif;
+  }
+
+  .page {
+    width: 900px;
+    min-height: 640px;
+    background: var(--parch);
+    position: relative;
+    overflow: hidden;
+    animation: curtain 1.2s ease forwards;
+  }
+
+  @keyframes curtain {
+    from { opacity: 0; clip-path: inset(0 50% 0 50%); }
+    to   { opacity: 1; clip-path: inset(0 0% 0 0%); }
+  }
+
+  /* Ornamental top arch */
+  .arch-top {
+    width: 100%;
+    line-height: 0;
+  }
+  .arch-top svg { display: block; width: 100%; }
+
+  /* Decorative mosaic pattern */
+  .mosaic {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(124,58,237,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(212,175,55,0.08) 0%, transparent 50%);
+  }
+
+  /* Floral corner SVG */
+  .corner-deco {
+    position: absolute;
+    width: 90px;
+    opacity: 0.25;
+  }
+  .corner-deco.tl { top: 0; left: 0; }
+  .corner-deco.tr { top: 0; right: 0; transform: scaleX(-1); }
+  .corner-deco.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+  .corner-deco.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+  /* Content */
+  .content {
+    padding: 10px 70px 50px;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+  }
+
+  /* Category badge */
+  .cat-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .cat-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold));
+    max-width: 100px;
+  }
+  .cat-line.right { background: linear-gradient(to left, transparent, var(--gold)); }
+  .cat-text {
+    font-size: 10px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--violet);
+    font-weight: 600;
+  }
+
+  /* Ornament divider */
+  .ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 12px 0;
+    color: var(--gold);
+    font-size: 18px;
+  }
+  .orn-line { flex: 1; height: 1px; background: var(--gold); opacity: 0.3; max-width: 120px; }
+
+  /* Event title */
+  .event-title {
+    font-family: 'IM Fell English', serif;
+    font-size: 40px;
+    color: var(--deep);
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .event-title em {
+    color: var(--violet);
+    font-style: italic;
+  }
+
+  .org-name {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--violet);
+    margin-bottom: 28px;
+    opacity: 0.7;
+  }
+
+  /* Central certificate body */
+  .cert-body {
+    background: rgba(76,29,149,0.04);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 4px;
+    padding: 34px 40px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .cert-body::before, .cert-body::after {
+    content: '✦';
+    position: absolute;
+    color: var(--gold);
+    font-size: 12px;
+    top: 10px;
+  }
+  .cert-body::before { left: 14px; }
+  .cert-body::after  { right: 14px; }
+
+  .cert-presents {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--lavender);
+    margin-bottom: 10px;
+  }
+
+  .vol-name {
+    font-family: 'IM Fell English', serif;
+    font-size: 48px;
+    color: var(--purple);
+    font-style: italic;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+
+  .cert-desc {
+    font-size: 15px;
+    color: #5B4066;
+    line-height: 1.9;
+  }
+  .cert-desc strong { color: var(--purple); font-weight: 400; font-style: italic; }
+
+  /* Bottom details */
+  .details-row {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    margin-bottom: 20px;
+  }
+
+  .detail-item {
+    text-align: center;
+  }
+  .detail-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--lavender);
+    margin-bottom: 4px;
+  }
+  .detail-value {
+    font-family: 'IM Fell English', serif;
+    font-size: 16px;
+    color: var(--deep);
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+  }
+
+  .footer-seal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .seal-ring {
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .seal-ring::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,175,55,0.4);
+  }
+  .seal-inner {
+    font-family: 'IM Fell English', serif;
+    font-size: 8px;
+    color: var(--gold);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .footer-id {
+    font-size: 10px;
+    color: #C4B5D0;
+    font-family: 'Josefin Sans', sans-serif;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="mosaic"></div>
+
+  <!-- Floral corners -->
+  <div class="corner-deco tl">
+    <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10,10 Q30,5 25,25 Q20,45 10,50 Q5,30 10,10Z" fill="#7C3AED"/>
+      <path d="M10,10 Q5,30 25,25 Q45,20 50,10 Q30,5 10,10Z" fill="#D4AF37"/>
+      <circle cx="10" cy="10" r="4" fill="#7C3AED"/>
+    </svg>
+  </div>
+  <div class="corner-deco tr">
+    <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10,10 Q30,5 25,25 Q20,45 10,50 Q5,30 10,10Z" fill="#7C3AED"/>
+      <path d="M10,10 Q5,30 25,25 Q45,20 50,10 Q30,5 10,10Z" fill="#D4AF37"/>
+      <circle cx="10" cy="10" r="4" fill="#7C3AED"/>
+    </svg>
+  </div>
+  <div class="corner-deco bl">
+    <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10,10 Q30,5 25,25 Q20,45 10,50 Q5,30 10,10Z" fill="#7C3AED"/>
+      <path d="M10,10 Q5,30 25,25 Q45,20 50,10 Q30,5 10,10Z" fill="#D4AF37"/>
+      <circle cx="10" cy="10" r="4" fill="#7C3AED"/>
+    </svg>
+  </div>
+  <div class="corner-deco br">
+    <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10,10 Q30,5 25,25 Q20,45 10,50 Q5,30 10,10Z" fill="#7C3AED"/>
+      <path d="M10,10 Q5,30 25,25 Q45,20 50,10 Q30,5 10,10Z" fill="#D4AF37"/>
+      <circle cx="10" cy="10" r="4" fill="#7C3AED"/>
+    </svg>
+  </div>
+
+  <div class="arch-top">
+    <svg viewBox="0 0 900 90" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,0 L900,0 L900,40 Q700,90 450,70 Q200,50 0,90 Z" fill="#4C1D95" opacity="0.6"/>
+      <path d="M0,0 L900,0 L900,30 Q650,80 450,55 Q250,30 0,70 Z" fill="#7C3AED" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <div class="content">
+    <div class="cat-row">
+      <div class="cat-line"></div>
+      <div class="cat-text">Mədəniyyət · Culture</div>
+      <div class="cat-line right"></div>
+    </div>
+
+    <div class="event-title">{{EVENT_NAME}}</div>
+    <div class="org-name">{{ORGANIZATION_NAME}}</div>
+
+    <div class="ornament">
+      <div class="orn-line"></div>
+      ✦
+      <div class="orn-line"></div>
+    </div>
+
+    <div class="cert-body">
+      <div class="cert-presents">Könüllü olaraq təqdim edilir</div>
+      <div class="vol-name">{{VOLUNTEER_NAME}}</div>
+      <p class="cert-desc">
+        Bu sənəd, <strong>{{VOLUNTEER_NAME}}</strong> şəxsinin <strong>{{ORGANIZATION_NAME}}</strong>
+        tərəfindən keçirilən <strong>{{EVENT_NAME}}</strong> mədəni tədbirindəki könüllü iştirakını
+        rəsmi olaraq təsdiqləyir. Mədəniyyətin inkişafına verdiyi töhfə minnətdarlıqla qeyd olunur.
+      </p>
+    </div>
+
+    <div class="details-row">
+      <div class="detail-item">
+        <div class="detail-label">Kateqoriya</div>
+        <div class="detail-value">Mədəniyyət</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Tarix</div>
+        <div class="detail-value">2025</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Ölkə</div>
+        <div class="detail-value">Azərbaycan</div>
+      </div>
+    </div>
+
+    <div class="ornament">
+      <div class="orn-line"></div>
+      ✦ ✦ ✦
+      <div class="orn-line"></div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-seal">
+        <div class="seal-ring">
+          <div class="seal-inner">RƏSMİ<br>MÖHÜR</div>
+        </div>
+      </div>
+      <div class="footer-id">ID: CUL-{{ORGANIZATION_NAME}}-001 · Bakı, 2025</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
