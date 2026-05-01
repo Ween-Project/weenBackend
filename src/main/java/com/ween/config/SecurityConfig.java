@@ -96,6 +96,7 @@ public class SecurityConfig {
 
                         // Users
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/@*").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/me/profile-photo").authenticated()

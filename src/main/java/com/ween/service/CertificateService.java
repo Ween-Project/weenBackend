@@ -3,19 +3,23 @@ package com.ween.service;
 import com.ween.config.ThymeleafConfig;
 import com.ween.entity.Certificate;
 import com.ween.entity.Event;
+import com.ween.entity.Organization;
 import com.ween.entity.User;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.repository.CertificateRepository;
 import com.ween.repository.EventRepository;
+import com.ween.repository.OrganizationRepository;
 import com.ween.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
+import com.lowagie.text.pdf.BaseFont;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +34,7 @@ public class CertificateService {
     private final ThymeleafConfig thymeleafConfig;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final OrganizationRepository organizationRepository;
 
     public byte[] createCertificatePdf(String certificateId) throws Exception {
 
@@ -52,7 +57,23 @@ public class CertificateService {
                 ? certificate.getIssuedAt().format(formatter)
                 : "Date not specified";
 
-        context.setVariable("userName", user.getFullName());
+        String year = certificate.getIssuedAt() != null
+            ? String.valueOf(certificate.getIssuedAt().getYear())
+            : String.valueOf(LocalDate.now().getYear());
+
+        String organizationName = organizationRepository.findById(event.getOrganizationId())
+            .map(Organization::getOrganizationName)
+            .orElse(event.getOrganizationId());
+
+        String volunteerName = normalizePdfText(user.getFullName());
+        String eventName = normalizePdfText(event.getTitle());
+        String normalizedOrganizationName = normalizePdfText(organizationName);
+
+        context.setVariable("userName", volunteerName);
+        context.setVariable("volunteerName", volunteerName);
+        context.setVariable("eventName", eventName);
+        context.setVariable("organizationName", normalizedOrganizationName);
+        context.setVariable("year", year);
         context.setVariable("title", event.getTitle());
         context.setVariable("certificateNumber", certificate.getCertificateNumber());
         context.setVariable("issueDate", formattedDate);
@@ -74,12 +95,51 @@ public class CertificateService {
         // Convert HTML to PDF
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             ITextRenderer renderer = new ITextRenderer();
+            registerUnicodeFonts(renderer);
 
             renderer.setDocumentFromString(htmlContent);
             renderer.layout();
             renderer.createPDF(outputStream);
 
             return outputStream.toByteArray();
+        }
+    }
+
+    private String normalizePdfText(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return value
+                .replace("ə", "e")
+                .replace("Ə", "E")
+                .replace("ğ", "g")
+                .replace("Ğ", "G")
+                .replace("ç", "c")
+                .replace("Ç", "C")
+                .replace("ş", "s")
+            .replace("Ş", "S")
+                .replace("ö", "o")
+                .replace("Ö", "O")
+                .replace("ü", "u")
+                .replace("Ü", "U")
+                .replace("ı", "i")
+                .replace("I", "I");
+    }
+
+    private void registerUnicodeFonts(ITextRenderer renderer) {
+        String[] fontPaths = {
+                "C:/Windows/Fonts/arial.ttf",
+                "C:/Windows/Fonts/tahoma.ttf",
+                "C:/Windows/Fonts/segoeui.ttf"
+        };
+
+        for (String fontPath : fontPaths) {
+            try {
+                renderer.getFontResolver().addFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            } catch (Exception e) {
+                log.debug("Skipping unavailable font: {}", fontPath);
+            }
         }
     }
 

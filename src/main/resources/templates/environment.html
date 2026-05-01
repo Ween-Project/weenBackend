@@ -1,243 +1,243 @@
 <!DOCTYPE html>
-<html lang="az">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Environment Event</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Environment Certificate</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&amp;family=DM+Sans:wght@300;400;500&amp;display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --forest: #1B4332;
-    --moss: #2D6A4F;
-    --sage: #52B788;
-    --leaf: #95D5B2;
-    --cream: #F8FDF6;
-    --bark: #5C4033;
-    --sun: #E9C46A;
-  }
+  <style>
+    :root {
+      --forest: #1B4332;
+      --moss: #2D6A4F;
+      --sage: #52B788;
+      --leaf: #95D5B2;
+      --cream: #F8FDF6;
+      --bark: #5C4033;
+      --sun: #E9C46A;
+    }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
-    background: #0D2017;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-  }
+    body {
+      background: #0D2017;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'DM Sans', sans-serif;
+    }
 
-  .page {
-    width: 900px;
-    min-height: 620px;
-    background: var(--cream);
-    position: relative;
-    overflow: hidden;
-    animation: rise 1s cubic-bezier(0.22,1,0.36,1) forwards;
-  }
+    .page {
+      width: 900px;
+      min-height: 620px;
+      background: var(--cream);
+      position: relative;
+      overflow: hidden;
+      animation: rise 1s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
 
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(30px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(30px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
-  /* Organic background blob */
-  .bg-blob {
-    position: absolute;
-    top: -80px; right: -80px;
-    width: 360px; height: 360px;
-    border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
-    background: radial-gradient(circle, var(--leaf) 0%, var(--sage) 50%, var(--moss) 100%);
-    opacity: 0.12;
-    animation: morph 8s ease-in-out infinite alternate;
-  }
-  @keyframes morph {
-    from { border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%; }
-    to   { border-radius: 40% 60% 30% 70% / 60% 40% 60% 40%; }
-  }
+    /* Organic background blob */
+    .bg-blob {
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 360px; height: 360px;
+      border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
+      background: radial-gradient(circle, var(--leaf) 0%, var(--sage) 50%, var(--moss) 100%);
+      opacity: 0.12;
+      animation: morph 8s ease-in-out infinite alternate;
+    }
+    @keyframes morph {
+      from { border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%; }
+      to   { border-radius: 40% 60% 30% 70% / 60% 40% 60% 40%; }
+    }
 
-  /* Left organic stripe */
-  .left-stripe {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 280px;
-    background: linear-gradient(160deg, var(--forest) 0%, var(--moss) 60%, var(--sage) 100%);
-    clip-path: polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%);
-  }
+    /* Left organic stripe */
+    .left-stripe {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 280px;
+      background: linear-gradient(160deg, var(--forest) 0%, var(--moss) 60%, var(--sage) 100%);
+      clip-path: polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%);
+    }
 
-  /* Leaf texture overlay on stripe */
-  .leaf-lines {
-    position: absolute;
-    left: 0; top: 0; bottom: 0; width: 280px;
-    opacity: 0.08;
-    background-image:
-      repeating-linear-gradient(120deg, #fff 0, #fff 1px, transparent 0, transparent 30px),
-      repeating-linear-gradient(60deg, #fff 0, #fff 1px, transparent 0, transparent 30px);
-  }
+    /* Leaf texture overlay on stripe */
+    .leaf-lines {
+      position: absolute;
+      left: 0; top: 0; bottom: 0; width: 280px;
+      opacity: 0.08;
+      background-image:
+        repeating-linear-gradient(120deg, #fff 0, #fff 1px, transparent 0, transparent 30px),
+        repeating-linear-gradient(60deg, #fff 0, #fff 1px, transparent 0, transparent 30px);
+    }
 
-  /* SVG leaf decorations */
-  .leaf-deco {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0.15;
-  }
+    /* SVG leaf decorations */
+    .leaf-deco {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.15;
+    }
 
-  /* Left content */
-  .left-content {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 260px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 50px 50px 50px 40px;
-    z-index: 2;
-  }
+    /* Left content */
+    .left-content {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 50px 50px 50px 40px;
+      z-index: 2;
+    }
 
-  .cat-badge {
-    background: var(--sun);
-    color: var(--forest);
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    padding: 5px 12px;
-    display: inline-block;
-    margin-bottom: 20px;
-    border-radius: 2px;
-  }
+    .cat-badge {
+      background: var(--sun);
+      color: var(--forest);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      display: inline-block;
+      margin-bottom: 20px;
+      border-radius: 2px;
+    }
 
-  .left-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 13px;
-    color: var(--leaf);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    font-style: italic;
-  }
+    .left-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 13px;
+      color: var(--leaf);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      font-style: italic;
+    }
 
-  .event-name {
-    font-family: 'DM Serif Display', serif;
-    font-size: 26px;
-    color: #fff;
-    line-height: 1.25;
-    margin-bottom: 20px;
-  }
+    .event-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: #fff;
+      line-height: 1.25;
+      margin-bottom: 20px;
+    }
 
-  .org-label {
-    font-size: 11px;
-    color: var(--leaf);
-    letter-spacing: 1px;
-    opacity: 0.8;
-    margin-bottom: 4px;
-  }
-  .org-value {
-    font-size: 13px;
-    color: #fff;
-    font-weight: 500;
-    opacity: 0.9;
-  }
+    .org-label {
+      font-size: 11px;
+      color: var(--leaf);
+      letter-spacing: 1px;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+    .org-value {
+      font-size: 13px;
+      color: #fff;
+      font-weight: 500;
+      opacity: 0.9;
+    }
 
-  /* Right content */
-  .right-content {
-    margin-left: 290px;
-    padding: 56px 50px 50px 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-    min-height: 620px;
-    justify-content: center;
-  }
+    /* Right content */
+    .right-content {
+      margin-left: 290px;
+      padding: 56px 50px 50px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      min-height: 620px;
+      justify-content: center;
+    }
 
-  .vol-label {
-    font-size: 10px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--moss);
-    margin-bottom: 6px;
-  }
+    .vol-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--moss);
+      margin-bottom: 6px;
+    }
 
-  .vol-name {
-    font-family: 'DM Serif Display', serif;
-    font-size: 46px;
-    color: var(--forest);
-    line-height: 1;
-    position: relative;
-    display: inline-block;
-  }
-  .vol-name::after {
-    content: '';
-    display: block;
-    height: 3px;
-    width: 80px;
-    background: linear-gradient(to right, var(--sage), var(--leaf));
-    margin-top: 10px;
-    border-radius: 2px;
-  }
+    .vol-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 46px;
+      color: var(--forest);
+      line-height: 1;
+      position: relative;
+      display: inline-block;
+    }
+    .vol-name::after {
+      content: '';
+      display: block;
+      height: 3px;
+      width: 80px;
+      background: linear-gradient(to right, var(--sage), var(--leaf));
+      margin-top: 10px;
+      border-radius: 2px;
+    }
 
-  .cert-body {
-    font-size: 15px;
-    color: #555;
-    line-height: 1.9;
-    border-left: 3px solid var(--leaf);
-    padding-left: 18px;
-  }
+    .cert-body {
+      font-size: 15px;
+      color: #555;
+      line-height: 1.9;
+      border-left: 3px solid var(--leaf);
+      padding-left: 18px;
+    }
 
-  .cert-body strong { color: var(--moss); font-weight: 500; }
+    .cert-body strong { color: var(--moss); font-weight: 500; }
 
-  /* Tags */
-  .tags {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .tag {
-    border: 1px solid var(--sage);
-    color: var(--moss);
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 5px 14px;
-    border-radius: 30px;
-  }
+    /* Tags */
+    .tags {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      border: 1px solid var(--sage);
+      color: var(--moss);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 30px;
+    }
 
-  /* Footer */
-  .footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 20px;
-    border-top: 1px solid rgba(45,106,79,0.2);
-  }
+    /* Footer */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 20px;
+      border-top: 1px solid rgba(45,106,79,0.2);
+    }
 
-  .footer-id {
-    font-size: 11px;
-    color: #aaa;
-    font-family: 'Courier New', monospace;
-  }
+    .footer-id {
+      font-size: 11px;
+      color: #aaa;
+      font-family: 'Courier New', monospace;
+    }
 
-  .circle-stamp {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    border: 2px solid var(--moss);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-  }
-  .stamp-text {
-    font-size: 7px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--forest);
-    font-weight: 500;
-    text-align: center;
-    line-height: 1.4;
-  }
-</style>
+    .circle-stamp {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      border: 2px solid var(--moss);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .stamp-text {
+      font-size: 7px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--forest);
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.4;
+    }
+  </style>
 </head>
 <body>
 <div class="page">
@@ -247,34 +247,38 @@
 
   <div class="left-content">
     <span class="cat-badge">Environment</span>
-    <div class="left-title">Könüllü Tədbiri</div>
-    <div class="event-name">{{EVENT_NAME}}</div>
-    <div class="org-label">Təşkilat</div>
-    <div class="org-value">{{ORGANIZATION_NAME}}</div>
+    <div class="left-title">Volunteer Event</div>
+    <div class="event-name" th:text="${eventName}"></div>
+    <div class="org-label">Organized by</div>
+    <div class="org-value" th:text="${organizationName}"></div>
   </div>
 
   <div class="right-content">
     <div>
-      <div class="vol-label">Könüllü</div>
-      <div class="vol-name">{{VOLUNTEER_NAME}}</div>
+      <div class="vol-label">Volunteer</div>
+      <div class="vol-name" th:text="${volunteerName}"></div>
     </div>
 
     <div class="cert-body">
-      Bu sənəd, <strong>{{VOLUNTEER_NAME}}</strong> şəxsinin <strong>{{ORGANIZATION_NAME}}</strong>
-      tərəfindən təşkil edilən <strong>{{EVENT_NAME}}</strong> tədbirindəki fəal könüllü iştirakını
-      rəsmi olaraq təsdiqləyir. Ətraf mühitin mühafizəsinə verdiyi töhfə yüksək qiymətləndirilir.
+      This certificate officially confirms that
+      <strong th:text="${volunteerName}"></strong> has actively participated
+      as a volunteer in the environmental event
+      <strong th:text="${eventName}"></strong> organized by
+      <strong th:text="${organizationName}"></strong>.<br><br>
+      Their valuable contribution to environmental protection and sustainability
+      is highly appreciated and recognized.
     </div>
 
     <div class="tags">
-      <span class="tag">Ətraf Mühit</span>
-      <span class="tag">Könüllülük</span>
+      <span class="tag">Environment</span>
+      <span class="tag">Volunteering</span>
       <span class="tag">2025</span>
     </div>
 
     <div class="footer">
-      <div class="footer-id">ID: ENV-{{ORGANIZATION_NAME}}-001</div>
+      <div class="footer-id">ID: ENV-<span th:text="${organizationName}"></span>-001</div>
       <div class="circle-stamp">
-        <div class="stamp-text">RƏSMİ<br>SƏNƏD<br>2025</div>
+        <div class="stamp-text">OFFICIAL<br>CERTIFICATE<br>2025</div>
       </div>
     </div>
   </div>
