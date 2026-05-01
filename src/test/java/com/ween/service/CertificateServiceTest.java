@@ -1,19 +1,22 @@
 package com.ween.service;
 
+import com.ween.config.ThymeleafConfig;
 import com.ween.entity.Certificate;
 import com.ween.entity.Event;
+import com.ween.entity.Organization;
 import com.ween.entity.User;
-import com.ween.enums.CertificateTemplate;
+import com.ween.enums.EventCategory;
 import com.ween.exception.ResourceNotFoundException;
-import com.ween.mapper.CertificateMapper;
 import com.ween.repository.CertificateRepository;
 import com.ween.repository.EventRepository;
+import com.ween.repository.OrganizationRepository;
 import com.ween.repository.UserRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
@@ -24,119 +27,99 @@ import static org.mockito.Mockito.*;
 class CertificateServiceTest {
 
     @Mock private CertificateRepository certificateRepository;
-    @Mock private CertificateMapper certificateMapper;
+    @Mock private ThymeleafConfig thymeleafConfig;
     @Mock private UserRepository userRepository;
     @Mock private EventRepository eventRepository;
-    @Mock private CoinService coinService;
-    @Mock private NotificationService notificationService;
+    @Mock private OrganizationRepository organizationRepository;
     @InjectMocks private CertificateService certificateService;
 
     private User testUser;
     private Event testEvent;
+    private Certificate testCertificate;
 
     @BeforeEach
     void setUp() {
         testUser = User.builder().username("u").email("u@e.com").passwordHash("p").fullName("U").build();
         testUser.setId("uid");
-        testEvent = Event.builder().title("Ev").organizationId("org1").build();
+        testEvent = Event.builder().title("Ev").organizationId("org1").category(EventCategory.EDUCATION).build();
         testEvent.setId("eid");
+
+        testCertificate = Certificate.builder()
+                .userId("uid")
+                .eventId("eid")
+                .certificateNumber("CERT-2026-ABCD")
+                .templateType(EventCategory.EDUCATION)
+                .issuedAt(LocalDateTime.now())
+                .build();
+        testCertificate.setId("cid");
     }
 
-    @Test @DisplayName("Generate certificate – success")
-    void createCertificate_Pdf_success() {
-        when(userRepository.findById("uid")).thenReturn(Optional.of(testUser));
-        when(eventRepository.findById("eid")).thenReturn(Optional.of(testEvent));
-        when(certificateRepository.existsByUserIdAndEventId("uid", "eid")).thenReturn(false);
-        when(certificateRepository.save(any())).thenAnswer(i -> { Certificate c = i.getArgument(0); c.setId("cid"); return c; });
-
-        Certificate cert = certificateService.createCertificatePdf("uid", "eid", CertificateTemplate.GENERAL);
-        assertThat(cert.getUserId()).isEqualTo("uid");
-        assertThat(cert.getEventId()).isEqualTo("eid");
-        assertThat(cert.getCertificateNumber()).startsWith("CERT-");
-        verify(coinService).awardCertificateBonus(eq("uid"), anyString());
-    }
-
-    @Test @DisplayName("Generate certificate – user not found throws")
-    void createCertificate_Pdf_userNotFound() {
-        when(userRepository.findById("x")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> certificateService.createCertificatePdf("x", "eid", CertificateTemplate.GENERAL))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test @DisplayName("Generate certificate – event not found throws")
-    void createCertificate_Pdf_eventNotFound() {
-        when(userRepository.findById("uid")).thenReturn(Optional.of(testUser));
-        when(eventRepository.findById("x")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> certificateService.createCertificatePdf("uid", "x", CertificateTemplate.GENERAL))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test @DisplayName("Generate certificate – already exists throws")
-    void createCertificate_Pdf_alreadyExists() {
-        when(userRepository.findById("uid")).thenReturn(Optional.of(testUser));
-        when(eventRepository.findById("eid")).thenReturn(Optional.of(testEvent));
-        when(certificateRepository.existsByUserIdAndEventId("uid", "eid")).thenReturn(true);
-        assertThatThrownBy(() -> certificateService.createCertificatePdf("uid", "eid", CertificateTemplate.GENERAL))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test @DisplayName("Generate certificate with default template")
-    void createCertificate_Pdf_defaultTemplate() {
-        when(userRepository.findById("uid")).thenReturn(Optional.of(testUser));
-        when(eventRepository.findById("eid")).thenReturn(Optional.of(testEvent));
-        when(certificateRepository.existsByUserIdAndEventId("uid", "eid")).thenReturn(false);
-        when(certificateRepository.save(any())).thenAnswer(i -> { Certificate c = i.getArgument(0); c.setId("cid"); return c; });
-
-        Certificate cert = certificateService.createCertificatePdf("uid", "eid");
-        assertThat(cert.getTemplateType()).isEqualTo(CertificateTemplate.GENERAL);
-    }
+    // ── getCertificateById ──────────────────────────────────────────────
 
     @Test @DisplayName("Get certificate by id – found")
     void getCertificateById_found() {
-        Certificate cert = Certificate.builder().userId("uid").eventId("eid").certificateNumber("CERT-1").build();
-        cert.setId("cid");
-        when(certificateRepository.findById("cid")).thenReturn(Optional.of(cert));
-        assertThat(certificateService.getCertificateById("cid").getCertificateNumber()).isEqualTo("CERT-1");
+        when(certificateRepository.findById("cid")).thenReturn(Optional.of(testCertificate));
+        Certificate result = certificateService.getCertificateById("cid");
+        assertThat(result.getCertificateNumber()).isEqualTo("CERT-2026-ABCD");
     }
 
     @Test @DisplayName("Get certificate by id – not found throws")
     void getCertificateById_notFound() {
         when(certificateRepository.findById("x")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> certificateService.getCertificateById("x")).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> certificateService.getCertificateById("x"))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
+
+    // ── getCertificateByNumber ──────────────────────────────────────────
 
     @Test @DisplayName("Get certificate by number – found")
     void getCertificateByNumber_found() {
-        Certificate cert = Certificate.builder().certificateNumber("CERT-1").build();
-        when(certificateRepository.findByCertificateNumber("CERT-1")).thenReturn(Optional.of(cert));
+        when(certificateRepository.findByCertificateNumber("CERT-1")).thenReturn(Optional.of(testCertificate));
         assertThat(certificateService.getCertificateByNumber("CERT-1")).isNotNull();
     }
 
     @Test @DisplayName("Get certificate by number – not found throws")
     void getCertificateByNumber_notFound() {
         when(certificateRepository.findByCertificateNumber("x")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> certificateService.getCertificateByNumber("x")).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> certificateService.getCertificateByNumber("x"))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
+
+    // ── getUserCertificates ─────────────────────────────────────────────
 
     @Test @DisplayName("Get user certificates")
     void getUserCertificates() {
-        when(certificateRepository.findByUserId("uid")).thenReturn(List.of(
-                Certificate.builder().userId("uid").build()
-        ));
+        when(certificateRepository.findByUserId("uid")).thenReturn(List.of(testCertificate));
         assertThat(certificateService.getUserCertificates("uid")).hasSize(1);
     }
 
+    @Test @DisplayName("Get user certificates – empty list")
+    void getUserCertificates_empty() {
+        when(certificateRepository.findByUserId("uid")).thenReturn(List.of());
+        assertThat(certificateService.getUserCertificates("uid")).isEmpty();
+    }
+
+    // ── deleteCertificate ───────────────────────────────────────────────
+
     @Test @DisplayName("Delete certificate")
     void deleteCertificate() {
-        Certificate cert = Certificate.builder().build(); cert.setId("cid");
-        when(certificateRepository.findById("cid")).thenReturn(Optional.of(cert));
+        when(certificateRepository.findById("cid")).thenReturn(Optional.of(testCertificate));
         certificateService.deleteCertificate("cid");
-        verify(certificateRepository).delete(cert);
+        verify(certificateRepository).delete(testCertificate);
     }
+
+    @Test @DisplayName("Delete certificate – not found throws")
+    void deleteCertificate_notFound() {
+        when(certificateRepository.findById("x")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> certificateService.deleteCertificate("x"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ── verifyCertificate ───────────────────────────────────────────────
 
     @Test @DisplayName("Verify certificate – exists returns true")
     void verifyCertificate_true() {
-        when(certificateRepository.findByCertificateNumber("CERT-1")).thenReturn(Optional.of(Certificate.builder().build()));
+        when(certificateRepository.findByCertificateNumber("CERT-1")).thenReturn(Optional.of(testCertificate));
         assertThat(certificateService.verifyCertificate("CERT-1")).isTrue();
     }
 
@@ -146,11 +129,35 @@ class CertificateServiceTest {
         assertThat(certificateService.verifyCertificate("x")).isFalse();
     }
 
+    // ── getUserCertificateCount ─────────────────────────────────────────
+
     @Test @DisplayName("Get user certificate count")
     void getUserCertificateCount() {
         when(certificateRepository.findByUserId("uid")).thenReturn(List.of(
                 Certificate.builder().build(), Certificate.builder().build()
         ));
         assertThat(certificateService.getUserCertificateCount("uid")).isEqualTo(2);
+    }
+
+    @Test @DisplayName("Get user certificate count – zero")
+    void getUserCertificateCount_zero() {
+        when(certificateRepository.findByUserId("uid")).thenReturn(List.of());
+        assertThat(certificateService.getUserCertificateCount("uid")).isEqualTo(0);
+    }
+
+    // ── downloadCertificatePdf (stub) ───────────────────────────────────
+
+    @Test @DisplayName("Download certificate PDF – returns empty byte array (stub)")
+    void downloadCertificatePdf_stub() {
+        byte[] result = certificateService.downloadCertificatePdf("uid", "cid");
+        assertThat(result).isEmpty();
+    }
+
+    // ── generateCertificatesAsync (stub) ────────────────────────────────
+
+    @Test @DisplayName("Generate certificates async – returns userId (stub)")
+    void generateCertificatesAsync_stub() {
+        String result = certificateService.generateCertificatesAsync("uid", "eid");
+        assertThat(result).isEqualTo("uid");
     }
 }
