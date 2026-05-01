@@ -2,6 +2,7 @@ package com.ween.service;
 
 import com.ween.dto.response.AdminStatsResponse;
 import com.ween.dto.response.OrganizationResponse;
+import com.ween.dto.response.UserResponse;
 import com.ween.entity.Organization;
 import com.ween.entity.User;
 import com.ween.mapper.OrganizationMapper;
@@ -169,10 +170,25 @@ public class AdminService {
         log.info("Organization deleted successfully: {}", organizationId);
     }
 
-    public com.ween.dto.response.UserResponse banUnbanUser(String id, Boolean ban, String reason) {
-        return null;
-    }
+    public UserResponse banUnbanUser(String id, Boolean ban, String reason) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found: " + id));
 
+        if (Boolean.TRUE.equals(ban)) {
+            if (reason == null || reason.isBlank()) {
+                throw new IllegalArgumentException("Ban reason is required");
+            }
+            user.setBanned(true);
+            user.setBanReason(reason);
+            log.info("User banned: {} | Reason: {}", id, reason);
+        } else {
+            user.setBanned(false);
+            user.setBanReason(null);
+            log.info("User unbanned: {}", id);
+        }
+
+        return userMapper.toUserResponse(user);
+    }
     public AdminStatsResponse getPlatformStatistics() {
         return null;
     }
