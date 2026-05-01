@@ -1,251 +1,273 @@
 <!DOCTYPE html>
-<html lang="az">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Culture Event</title>
-  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&amp;family=Josefin+Sans:wght@300;400;600&amp;display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --deep: #1C0B2E;
-    --purple: #4C1D95;
-    --violet: #7C3AED;
-    --lavender: #A78BFA;
-    --mauve: #DDD6FE;
-    --gold: #D4AF37;
-    --amber: #F59E0B;
-    --white: #FFFBFF;
-    --parch: #FFF8F0;
-  }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Culture Certificate</title>
+  <style>
+    :root {
+      --deep: #1C0B2E;
+      --purple: #4C1D95;
+      --violet: #7C3AED;
+      --lavender: #A78BFA;
+      --mauve: #DDD6FE;
+      --gold: #D4AF37;
+      --amber: #F59E0B;
+      --white: #FFFBFF;
+      --parch: #FFF8F0;
+    }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
 
-  body {
-    background: var(--deep);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Josefin Sans', sans-serif;
-  }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  .page {
-    width: 900px;
-    min-height: 640px;
-    background: var(--parch);
-    position: relative;
-    overflow: hidden;
-    animation: curtain 1.2s ease forwards;
-  }
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
 
-  @keyframes curtain {
-    from { opacity: 0; clip-path: inset(0 50% 0 50%); }
-    to   { opacity: 1; clip-path: inset(0 0% 0 0%); }
-  }
+    body {
+      background: #1C0B2E;
+      display: block;
+      min-height: 100%;
+      padding: 0;
+      font-family: Arial, Tahoma, 'Segoe UI', sans-serif;
+    }
 
-  /* Ornamental top arch */
-  .arch-top {
-    width: 100%;
-    line-height: 0;
-  }
-  .arch-top svg { display: block; width: 100%; }
+    .page {
+      width: 1123px;
+      min-height: 794px;
+      background: #FFF8F0;
+      position: relative;
+      overflow: hidden;
+      margin: 0 auto;
+      border: 1px solid rgba(212,175,55,0.35);
+      box-shadow: 0 22px 60px rgba(0,0,0,0.28);
+      animation: curtain 1.2s ease forwards;
+    }
 
-  /* Decorative mosaic pattern */
-  .mosaic {
-    position: absolute;
-    inset: 0;
-    background-image:
-      radial-gradient(circle at 20% 20%, rgba(124,58,237,0.06) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(212,175,55,0.08) 0%, transparent 50%);
-  }
+    @keyframes curtain {
+      from { opacity: 0; clip-path: inset(0 50% 0 50%); }
+      to   { opacity: 1; clip-path: inset(0 0% 0 0%); }
+    }
 
-  /* Floral corner SVG */
-  .corner-deco {
-    position: absolute;
-    width: 90px;
-    opacity: 0.25;
-  }
-  .corner-deco.tl { top: 0; left: 0; }
-  .corner-deco.tr { top: 0; right: 0; transform: scaleX(-1); }
-  .corner-deco.bl { bottom: 0; left: 0; transform: scaleY(-1); }
-  .corner-deco.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+    /* Ornamental top arch */
+    .arch-top {
+      width: 100%;
+      line-height: 0;
+    }
+    .arch-top svg { display: block; width: 100%; }
 
-  /* Content */
-  .content {
-    padding: 10px 70px 50px;
-    position: relative;
-    z-index: 2;
-    text-align: center;
-  }
+    /* Decorative mosaic pattern */
+    .mosaic {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(124,58,237,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(212,175,55,0.08) 0%, transparent 50%);
+    }
 
-  /* Category badge */
-  .cat-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    margin-bottom: 14px;
-  }
-  .cat-line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(to right, transparent, var(--gold));
-    max-width: 100px;
-  }
-  .cat-line.right { background: linear-gradient(to left, transparent, var(--gold)); }
-  .cat-text {
-    font-size: 10px;
-    letter-spacing: 5px;
-    text-transform: uppercase;
-    color: var(--violet);
-    font-weight: 600;
-  }
+    /* Floral corner SVG */
+    .corner-deco {
+      position: absolute;
+      width: 90px;
+      opacity: 0.25;
+    }
+    .corner-deco.tl { top: 0; left: 0; }
+    .corner-deco.tr { top: 0; right: 0; transform: scaleX(-1); }
+    .corner-deco.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+    .corner-deco.br { bottom: 0; right: 0; transform: scale(-1,-1); }
 
-  /* Ornament divider */
-  .ornament {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 12px 0;
-    color: var(--gold);
-    font-size: 18px;
-  }
-  .orn-line { flex: 1; height: 1px; background: var(--gold); opacity: 0.3; max-width: 120px; }
+    /* Content */
+    .content {
+      padding: 10px 70px 50px;
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
 
-  /* Event title */
-  .event-title {
-    font-family: 'IM Fell English', serif;
-    font-size: 40px;
-    color: var(--deep);
-    line-height: 1.2;
-    margin-bottom: 8px;
-  }
-  .event-title em {
-    color: var(--violet);
-    font-style: italic;
-  }
+    /* Category badge */
+    .cat-row {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+      margin-bottom: 14px;
+    }
+    .cat-line {
+      display: table-cell;
+      vertical-align: middle;
+      height: 1px;
+      background: #D4AF37;
+      opacity: 0.85;
+    }
+    .cat-line.right { }
+    .cat-text {
+      display: table-cell;
+      vertical-align: middle;
+      width: 18%;
+      font-size: 10px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #7C3AED;
+      font-weight: 600;
+      white-space: nowrap;
+    }
 
-  .org-name {
-    font-size: 13px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--violet);
-    margin-bottom: 28px;
-    opacity: 0.7;
-  }
+    /* Ornament divider */
+    .ornament {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+      margin: 12px 0;
+      color: #D4AF37;
+      font-size: 18px;
+    }
+    .orn-line {
+      display: table-cell;
+      vertical-align: middle;
+      height: 1px;
+      background: #D4AF37;
+      opacity: 0.3;
+    }
 
-  /* Central certificate body */
-  .cert-body {
-    background: rgba(76,29,149,0.04);
-    border: 1px solid rgba(212,175,55,0.3);
-    border-radius: 4px;
-    padding: 34px 40px;
-    margin-bottom: 24px;
-    position: relative;
-  }
-  .cert-body::before, .cert-body::after {
-    content: '✦';
-    position: absolute;
-    color: var(--gold);
-    font-size: 12px;
-    top: 10px;
-  }
-  .cert-body::before { left: 14px; }
-  .cert-body::after  { right: 14px; }
+    /* Event title */
+    .event-title {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 40px;
+      color: #1C0B2E;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
 
-  .cert-presents {
-    font-size: 11px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--lavender);
-    margin-bottom: 10px;
-  }
+    .org-name {
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #7C3AED;
+      margin-bottom: 28px;
+      opacity: 0.7;
+    }
 
-  .vol-name {
-    font-family: 'IM Fell English', serif;
-    font-size: 48px;
-    color: var(--purple);
-    font-style: italic;
-    line-height: 1;
-    margin-bottom: 16px;
-  }
+    /* Central certificate body */
+    .cert-body {
+      background: #FDF7EF;
+      border: 1px solid rgba(212,175,55,0.55);
+      border-radius: 4px;
+      padding: 34px 40px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .cert-body::before, .cert-body::after {
+      content: '✦';
+      position: absolute;
+      color: #D4AF37;
+      font-size: 12px;
+      top: 10px;
+    }
+    .cert-body::before { left: 14px; }
+    .cert-body::after  { right: 14px; }
 
-  .cert-desc {
-    font-size: 15px;
-    color: #5B4066;
-    line-height: 1.9;
-  }
-  .cert-desc strong { color: var(--purple); font-weight: 400; font-style: italic; }
+    .cert-presents {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #A78BFA;
+      margin-bottom: 10px;
+    }
 
-  /* Bottom details */
-  .details-row {
-    display: flex;
-    justify-content: center;
-    gap: 60px;
-    margin-bottom: 20px;
-  }
+    .vol-name {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 48px;
+      color: #4C1D95;
+      font-style: italic;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
 
-  .detail-item {
-    text-align: center;
-  }
-  .detail-label {
-    font-size: 9px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--lavender);
-    margin-bottom: 4px;
-  }
-  .detail-value {
-    font-family: 'IM Fell English', serif;
-    font-size: 16px;
-    color: var(--deep);
-  }
+    .cert-desc {
+      font-size: 15px;
+      color: #5B4066;
+      line-height: 1.9;
+    }
+    .cert-desc strong { color: #4C1D95; font-weight: 400; font-style: italic; }
 
-  /* Footer */
-  .footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 10px;
-  }
+    /* Bottom details */
+    .details-row {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+      margin-bottom: 20px;
+    }
 
-  .footer-seal {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-  .seal-ring {
-    width: 62px; height: 62px;
-    border-radius: 50%;
-    border: 2px solid var(--gold);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-  .seal-ring::before {
-    content: '';
-    position: absolute;
-    inset: 5px;
-    border-radius: 50%;
-    border: 1px solid rgba(212,175,55,0.4);
-  }
-  .seal-inner {
-    font-family: 'IM Fell English', serif;
-    font-size: 8px;
-    color: var(--gold);
-    text-align: center;
-    line-height: 1.4;
-  }
-  .footer-id {
-    font-size: 10px;
-    color: #C4B5D0;
-    font-family: 'Josefin Sans', sans-serif;
-    letter-spacing: 1px;
-  }
-</style>
+    .detail-item {
+      display: table-cell;
+      width: 33.33%;
+      text-align: center;
+    }
+    .detail-label {
+      font-size: 9px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #A78BFA;
+      margin-bottom: 4px;
+    }
+    .detail-value {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 16px;
+      color: #1C0B2E;
+    }
+
+    /* Footer */
+    .footer {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+      padding: 0 10px;
+    }
+
+    .footer-seal {
+      display: table-cell;
+      vertical-align: middle;
+      width: 30%;
+      text-align: left;
+    }
+    .seal-ring {
+      width: 62px; height: 62px;
+      border-radius: 50%;
+      border: 2px solid #D4AF37;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .seal-ring::before {
+      content: '';
+      position: absolute;
+      inset: 5px;
+      border-radius: 50%;
+      border: 1px solid rgba(212,175,55,0.4);
+    }
+    .seal-inner {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 8px;
+      color: #D4AF37;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .footer-id {
+      display: table-cell;
+      vertical-align: middle;
+      width: 70%;
+      text-align: right;
+      font-size: 10px;
+      color: #C4B5D0;
+      font-family: 'Josefin Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+  </style>
 </head>
 <body>
 <div class="page">
@@ -291,12 +313,12 @@
   <div class="content">
     <div class="cat-row">
       <div class="cat-line"></div>
-      <div class="cat-text">Mədəniyyət · Culture</div>
+      <div class="cat-text">Culture</div>
       <div class="cat-line right"></div>
     </div>
 
-    <div class="event-title">{{EVENT_NAME}}</div>
-    <div class="org-name">{{ORGANIZATION_NAME}}</div>
+    <div class="event-title" th:text="${eventName}"></div>
+    <div class="org-name" th:text="${organizationName}"></div>
 
     <div class="ornament">
       <div class="orn-line"></div>
@@ -305,27 +327,28 @@
     </div>
 
     <div class="cert-body">
-      <div class="cert-presents">Könüllü olaraq təqdim edilir</div>
-      <div class="vol-name">{{VOLUNTEER_NAME}}</div>
+      <div class="cert-presents">Presented to the Volunteer</div>
+      <div class="vol-name" th:text="${volunteerName}"></div>
       <p class="cert-desc">
-        Bu sənəd, <strong>{{VOLUNTEER_NAME}}</strong> şəxsinin <strong>{{ORGANIZATION_NAME}}</strong>
-        tərəfindən keçirilən <strong>{{EVENT_NAME}}</strong> mədəni tədbirindəki könüllü iştirakını
-        rəsmi olaraq təsdiqləyir. Mədəniyyətin inkişafına verdiyi töhfə minnətdarlıqla qeyd olunur.
+        This document officially certifies that <strong th:text="${volunteerName}"></strong>
+        has volunteered in the cultural event <strong th:text="${eventName}"></strong>
+        organized by <strong th:text="${organizationName}"></strong>.<br/>
+        Their valuable contribution to the development and promotion of culture is gratefully acknowledged.
       </p>
     </div>
 
     <div class="details-row">
       <div class="detail-item">
-        <div class="detail-label">Kateqoriya</div>
-        <div class="detail-value">Mədəniyyət</div>
+        <div class="detail-label">Category</div>
+        <div class="detail-value">Culture</div>
       </div>
       <div class="detail-item">
-        <div class="detail-label">Tarix</div>
-        <div class="detail-value">2025</div>
+        <div class="detail-label">Year</div>
+        <div class="detail-value" th:text="${year}"></div>
       </div>
       <div class="detail-item">
-        <div class="detail-label">Ölkə</div>
-        <div class="detail-value">Azərbaycan</div>
+        <div class="detail-label">Country</div>
+        <div class="detail-value">Azerbaijan</div>
       </div>
     </div>
 
@@ -338,10 +361,13 @@
     <div class="footer">
       <div class="footer-seal">
         <div class="seal-ring">
-          <div class="seal-inner">RƏSMİ<br>MÖHÜR</div>
+          <div class="seal-inner">OFFICIAL<br/>SEAL</div>
         </div>
       </div>
-      <div class="footer-id">ID: CUL-{{ORGANIZATION_NAME}}-001 · Bakı, 2025</div>
+      <div class="footer-id">
+        ID: CUL-<span th:text="${organizationName}"></span>-001
+        · Baku, <span th:text="${year}"></span>
+      </div>
     </div>
   </div>
 </div>

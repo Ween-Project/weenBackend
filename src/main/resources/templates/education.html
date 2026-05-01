@@ -1,264 +1,264 @@
 <!DOCTYPE html>
-<html lang="az">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Education Event</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Education Certificate</title>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&amp;family=Source+Sans+3:wght@300;400;600&amp;display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --navy: #0A1628;
-    --cobalt: #1A3A6B;
-    --sky: #2563EB;
-    --ice: #DBEAFE;
-    --gold: #F59E0B;
-    --white: #FFFFFF;
-    --off: #F1F5F9;
-    --text: #1E293B;
-    --muted: #64748B;
-  }
+  <style>
+    :root {
+      --navy: #0A1628;
+      --cobalt: #1A3A6B;
+      --sky: #2563EB;
+      --ice: #DBEAFE;
+      --gold: #F59E0B;
+      --white: #FFFFFF;
+      --off: #F1F5F9;
+      --text: #1E293B;
+      --muted: #64748B;
+    }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
-    background: var(--navy);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Source Sans 3', sans-serif;
-  }
+    body {
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Source Sans 3', sans-serif;
+    }
 
-  .page {
-    width: 900px;
-    min-height: 630px;
-    background: var(--white);
-    position: relative;
-    overflow: hidden;
-    animation: appear 0.9s ease forwards;
-  }
+    .page {
+      width: 900px;
+      min-height: 630px;
+      background: var(--white);
+      position: relative;
+      overflow: hidden;
+      animation: appear 0.9s ease forwards;
+    }
 
-  @keyframes appear {
-    from { opacity: 0; transform: scale(0.96); }
-    to   { opacity: 1; transform: scale(1); }
-  }
+    @keyframes appear {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: scale(1); }
+    }
 
-  /* Top accent bar */
-  .top-bar {
-    height: 8px;
-    background: linear-gradient(to right, var(--navy), var(--sky), var(--gold));
-  }
+    /* Top accent bar */
+    .top-bar {
+      height: 8px;
+      background: linear-gradient(to right, var(--navy), var(--sky), var(--gold));
+    }
 
-  /* Geometric background */
-  .geo-bg {
-    position: absolute;
-    top: 8px; right: 0;
-    width: 500px; height: 500px;
-    overflow: hidden;
-    opacity: 0.035;
-  }
-  .geo-bg::before {
-    content: '';
-    position: absolute;
-    top: 40px; right: -60px;
-    width: 400px; height: 400px;
-    border: 60px solid var(--cobalt);
-    border-radius: 50%;
-  }
-  .geo-bg::after {
-    content: '';
-    position: absolute;
-    top: 120px; right: 40px;
-    width: 240px; height: 240px;
-    border: 40px solid var(--sky);
-    border-radius: 50%;
-  }
+    /* Geometric background */
+    .geo-bg {
+      position: absolute;
+      top: 8px; right: 0;
+      width: 500px; height: 500px;
+      overflow: hidden;
+      opacity: 0.035;
+    }
+    .geo-bg::before {
+      content: '';
+      position: absolute;
+      top: 40px; right: -60px;
+      width: 400px; height: 400px;
+      border: 60px solid var(--cobalt);
+      border-radius: 50%;
+    }
+    .geo-bg::after {
+      content: '';
+      position: absolute;
+      top: 120px; right: 40px;
+      width: 240px; height: 240px;
+      border: 40px solid var(--sky);
+      border-radius: 50%;
+    }
 
-  /* Header */
-  .header {
-    padding: 40px 60px 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    position: relative;
-  }
+    /* Header */
+    .header {
+      padding: 40px 60px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+    }
 
-  .header-left {}
+    .header-left {}
 
-  .category-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--sky);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    padding: 6px 16px 6px 10px;
-    border-radius: 30px;
-    margin-bottom: 16px;
-  }
-  .category-pill .dot {
-    width: 8px; height: 8px;
-    background: var(--gold);
-    border-radius: 50%;
-  }
+    .category-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--sky);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 6px 16px 6px 10px;
+      border-radius: 30px;
+      margin-bottom: 16px;
+    }
+    .category-pill .dot {
+      width: 8px; height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+    }
 
-  .event-title {
-    font-family: 'Libre Baskerville', serif;
-    font-size: 34px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.15;
-    max-width: 480px;
-  }
+    .event-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.15;
+      max-width: 480px;
+    }
 
-  .header-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-  }
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
 
-  .header-number {
-    font-size: 80px;
-    font-weight: 700;
-    color: var(--ice);
-    line-height: 1;
-    font-family: 'Libre Baskerville', serif;
-  }
+    .header-number {
+      font-size: 80px;
+      font-weight: 700;
+      color: var(--ice);
+      line-height: 1;
+      font-family: 'Libre Baskerville', serif;
+    }
 
-  /* Divider */
-  .divider {
-    height: 1px;
-    margin: 0 60px;
-    background: linear-gradient(to right, var(--sky) 0%, var(--gold) 60%, transparent 100%);
-  }
+    /* Divider */
+    .divider {
+      height: 1px;
+      margin: 0 60px;
+      background: linear-gradient(to right, var(--sky) 0%, var(--gold) 60%, transparent 100%);
+    }
 
-  /* Main content */
-  .main {
-    padding: 36px 60px 36px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-  }
+    /* Main content */
+    .main {
+      padding: 36px 60px 36px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
 
-  .left-col {}
+    .left-col {}
 
-  .field-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--sky);
-    margin-bottom: 6px;
-  }
+    .field-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--sky);
+      margin-bottom: 6px;
+    }
 
-  .vol-name {
-    font-family: 'Libre Baskerville', serif;
-    font-size: 36px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.1;
-    margin-bottom: 6px;
-  }
+    .vol-name {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
 
-  .org-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 14px;
-  }
-  .org-line {
-    width: 24px; height: 2px;
-    background: var(--gold);
-  }
-  .org-text {
-    font-size: 14px;
-    color: var(--muted);
-    font-style: italic;
-  }
+    .org-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .org-line {
+      width: 24px; height: 2px;
+      background: var(--gold);
+    }
+    .org-text {
+      font-size: 14px;
+      color: var(--muted);
+      font-style: italic;
+    }
 
-  .right-col {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
 
-  .cert-text {
-    font-size: 15px;
-    color: var(--text);
-    line-height: 1.85;
-  }
-  .cert-text strong { color: var(--sky); }
+    .cert-text {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.85;
+    }
+    .cert-text strong { color: var(--sky); }
 
-  /* Achievements */
-  .achievements {
-    margin-top: 28px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    padding: 0 60px;
-  }
+    /* Achievements */
+    .achievements {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 0 60px;
+    }
 
-  .ach-item {
-    background: var(--off);
-    padding: 16px;
-    text-align: center;
-    border-bottom: 3px solid var(--sky);
-  }
-  .ach-item:nth-child(2) { border-color: var(--gold); }
-  .ach-item:nth-child(3) { border-color: var(--cobalt); }
+    .ach-item {
+      background: var(--off);
+      padding: 16px;
+      text-align: center;
+      border-bottom: 3px solid var(--sky);
+    }
+    .ach-item:nth-child(2) { border-color: var(--gold); }
+    .ach-item:nth-child(3) { border-color: var(--cobalt); }
 
-  .ach-val {
-    font-family: 'Libre Baskerville', serif;
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text);
-    display: block;
-  }
-  .ach-key {
-    font-size: 9px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 4px;
-  }
+    .ach-val {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      display: block;
+    }
+    .ach-key {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 4px;
+    }
 
-  /* Footer */
-  .footer {
-    margin: 24px 60px 0;
-    padding-top: 20px;
-    border-top: 1px solid #E2E8F0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+    /* Footer */
+    .footer {
+      margin: 24px 60px 0;
+      padding-top: 20px;
+      border-top: 1px solid #E2E8F0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-  .footer-brand {
-    font-family: 'Libre Baskerville', serif;
-    font-size: 16px;
-    color: var(--cobalt);
-    font-style: italic;
-  }
+    .footer-brand {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 16px;
+      color: var(--cobalt);
+      font-style: italic;
+    }
 
-  .footer-meta {
-    text-align: right;
-  }
-  .footer-date {
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-  .footer-id {
-    font-size: 11px;
-    color: #CBD5E1;
-    font-family: 'Courier New', monospace;
-    margin-top: 3px;
-  }
-</style>
+    .footer-meta {
+      text-align: right;
+    }
+    .footer-date {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .footer-id {
+      font-size: 11px;
+      color: #CBD5E1;
+      font-family: 'Courier New', monospace;
+      margin-top: 3px;
+    }
+  </style>
 </head>
 <body>
 <div class="page">
@@ -267,8 +267,8 @@
 
   <div class="header">
     <div class="header-left">
-      <div class="category-pill"><span class="dot"></span>Təhsil · Education</div>
-      <div class="event-title">{{EVENT_NAME}}</div>
+      <div class="category-pill"><span class="dot"></span>Education</div>
+      <div class="event-title" th:text="${eventName}"></div>
     </div>
     <div class="header-right">
       <div class="header-number">EDU</div>
@@ -279,42 +279,45 @@
 
   <div class="main">
     <div class="left-col">
-      <div class="field-label">Könüllü</div>
-      <div class="vol-name">{{VOLUNTEER_NAME}}</div>
+      <div class="field-label">Volunteer</div>
+      <div class="vol-name" th:text="${volunteerName}"></div>
       <div class="org-row">
         <div class="org-line"></div>
-        <div class="org-text">{{ORGANIZATION_NAME}}</div>
+        <div class="org-text" th:text="${organizationName}"></div>
       </div>
     </div>
     <div class="right-col">
       <p class="cert-text">
-        Bu sənəd, <strong>{{VOLUNTEER_NAME}}</strong> şəxsinin <strong>{{ORGANIZATION_NAME}}</strong>
-        tərəfindən keçirilən <strong>{{EVENT_NAME}}</strong> tədbirindəki könüllü iştirakını
-        rəsmi olaraq təsdiqləyir. Təhsilin inkişafına göstərdiyi dəstək yüksək qiymətləndirilir.
+        This certificate officially confirms that
+        <strong th:text="${volunteerName}"></strong> has actively volunteered
+        in the educational event <strong th:text="${eventName}"></strong>
+        organized by <strong th:text="${organizationName}"></strong>.<br><br>
+        Their dedicated support and contribution to the development of education
+        are highly appreciated and valued.
       </p>
     </div>
   </div>
 
   <div class="achievements">
     <div class="ach-item">
-      <span class="ach-val">2025</span>
-      <div class="ach-key">Tarix</div>
+      <span class="ach-val" th:text="${year}">2025</span>
+      <div class="ach-key">Year</div>
     </div>
     <div class="ach-item">
       <span class="ach-val">EDU</span>
-      <div class="ach-key">Kateqoriya</div>
+      <div class="ach-key">Category</div>
     </div>
     <div class="ach-item">
       <span class="ach-val">AZ</span>
-      <div class="ach-key">Ölkə</div>
+      <div class="ach-key">Country</div>
     </div>
   </div>
 
   <div class="footer">
-    <div class="footer-brand">Könüllü Sertifikatı</div>
+    <div class="footer-brand">Certificate of Volunteer Service</div>
     <div class="footer-meta">
-      <div class="footer-date">Bakı · 2025</div>
-      <div class="footer-id">ID: EDU-{{ORGANIZATION_NAME}}-001</div>
+      <div class="footer-date">Baku · <span th:text="${year}">2025</span></div>
+      <div class="footer-id">ID: EDU-<span th:text="${organizationName}"></span>-001</div>
     </div>
   </div>
 </div>
