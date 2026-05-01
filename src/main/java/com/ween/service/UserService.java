@@ -1,7 +1,9 @@
 package com.ween.service;
 
+import com.ween.dto.request.UpdateProfilePhotoRequest;
 import com.ween.dto.request.UpdateProfileRequest;
 import com.ween.dto.response.PublicProfileResponse;
+import com.ween.entity.Organization;
 import com.ween.entity.User;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.mapper.UserMapper;
@@ -69,6 +71,21 @@ public class UserService {
 
         return updated;
     }
+
+    @Transactional
+    public User updateUserPhoto(String userId, UpdateProfilePhotoRequest request){
+
+        User user = getUserById(userId);
+
+        if(request.getImageUrl() !=null){
+            user.setProfilePhotoUrl(request.getImageUrl());
+        }
+        User updated = userRepository.save(user);
+
+        log.info("User profile photo updated: {}", userId);
+        return updated;
+    }
+
 
     public boolean isProfileComplete(User user) {
         return user.getFullName() != null && !user.getFullName().isEmpty()
