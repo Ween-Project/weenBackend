@@ -1,5 +1,6 @@
 package com.ween.controller;
 
+import com.ween.dto.request.UpdateProfilePhotoRequest;
 import com.ween.dto.request.UpdateProfileRequest;
 import com.ween.dto.response.*;
 import com.ween.entity.Certificate;
@@ -7,6 +8,7 @@ import com.ween.entity.User;
 import com.ween.exception.UnauthorizedException;
 import com.ween.mapper.CertificateMapper;
 import com.ween.mapper.UserMapper;
+import com.ween.security.SecurityUtil;
 import com.ween.service.CertificateService;
 import com.ween.service.RegistrationService;
 import com.ween.service.UserService;
@@ -25,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,6 +43,7 @@ public class UserController {
     private final UserService userService;
     private final RegistrationService registrationService;
     private final CertificateService certificateService;
+    private final SecurityUtil securityUtil;
     private final UserMapper userMapper;
     private final CertificateMapper certificateMapper;
 
@@ -80,6 +84,34 @@ public class UserController {
             throw e;
         }
     }
+
+
+    @PutMapping("/profile-photo")
+    @Transactional
+    @Operation(summary = "Update current user profile photo", description = "Update profile photo (current user only)")
+    @SecurityRequirement(name = "Bearer")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Profile photo updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<ApiResponse<User>> updateUserPhoto(
+            @Valid @RequestBody UpdateProfilePhotoRequest request) {
+        String userId = null;
+        try {
+            userId = securityUtil.getCurrentUserId();
+
+            User response = userService.updateUserPhoto(userId, request);
+
+            return ResponseEntity.ok(ApiResponse.ok(response, "Profile photo updated successfully"));
+        } catch (Exception e) {
+
+            log.error("Failed to update user profile photo for user: {}", userId, e);
+            throw e;
+        }
+    }
+
 
     @GetMapping("/@{username}")
     @Operation(summary = "Get public user profile", description = "Retrieve public profile information for a user by username")
