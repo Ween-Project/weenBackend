@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.nio.charset.StandardCharsets;
+
 @Configuration
 public class ThymeleafConfig {
 
@@ -16,7 +18,7 @@ public class ThymeleafConfig {
         templateResolver.setPrefix("templates/");
         templateResolver.setSuffix(".html");
         templateResolver.setTemplateMode("HTML");
-        templateResolver.setCharacterEncoding("UTF-8");
+        templateResolver.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
         templateEngine.setTemplateResolver(templateResolver);
         return templateEngine;

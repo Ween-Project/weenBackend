@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Human Rights Event</title>
-  <!-- Sənin orijinal font linkin olduğu kimi qaldı -->
+  <title>Human Rights Certificate</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&amp;family=Cormorant+Garamond:wght@300;400;500&amp;display=swap" rel="stylesheet" />
+
   <style>
     :root {
       --crimson: #8B0000;
@@ -280,6 +280,7 @@
   <div class="sidebar"></div>
   <div class="border-frame"></div>
 
+  <!-- Corners -->
   <div class="corner tl">
     <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M5 5 L25 5 L5 25 Z" fill="#8B0000" opacity="0.5" />
@@ -315,28 +316,27 @@
 
   <div class="header-band">
     <div class="category-label">Human Rights</div>
-    <!-- Burada Dəyişən Çağırılır -->
-    <div class="event-title" th:text="${eventName}">Event Title</div>
-    <!-- Burada Dəyişən Çağırılır -->
-    <div class="org-name"><span th:text="${organizationName}">Organization</span> tərəfindən təşkil edilir</div>
+    <div class="event-title" th:text="${eventName}"></div>
+    <div class="org-name" th:text="${organizationName + ' Organization'}"></div>
   </div>
 
   <div class="body-content">
     <div>
       <div class="cert-text">Volunteer</div>
-      <!-- Burada Dəyişən Çağırılır -->
-      <div class="volunteer-name" th:text="${volunteerName}">Volunteer Name</div>
+      <div class="volunteer-name" th:text="${volunteerName}"></div>
 
       <p class="description">
-        This document certifies the active participation and volunteer services of
-        <!-- Burada Mətn Daxilində Dəyişən Çağırılır -->
-        <strong>[[${volunteerName}]]</strong> in the <strong>[[${eventName}]]</strong> event organized by
-        <strong>[[${organizationName}]]</strong>.
+        This document officially certifies the active participation and dedicated volunteer service of
+        <strong th:text="${volunteerName}"></strong> in the
+        <strong th:text="${eventName}"></strong> event organized by
+        <strong th:text="${organizationName}"></strong>.<br></br>
+        Their valuable contribution to the promotion and protection of human rights is sincerely acknowledged and highly appreciated.
       </p>
     </div>
+
     <div class="stats-panel">
       <div class="stat-box">
-        <span class="stat-value">2026</span>
+        <span class="stat-value" th:text="${year}">2026</span>
         <span class="stat-label">Year</span>
       </div>
       <div class="stat-box">
@@ -351,9 +351,8 @@
       <div class="seal-text">OFFICIAL<br />DOCUMENT</div>
     </div>
     <div class="footer-info">
-      <!-- Burada Mətn Daxilində Dəyişən Çağırılır -->
-      <div class="footer-date">Date: [[${issueDate}]]</div>
-      <div class="footer-id">ID: [[${certificateNumber}]]</div>
+      <div class="footer-date" th:text="'Baku, ' + ${year}">Baku, 2026</div>
+      <div class="footer-id" th:text="'ID: HR-' + ${organizationName} + '-001'">ID: HR-ORG-001</div>
     </div>
   </div>
 </div>
