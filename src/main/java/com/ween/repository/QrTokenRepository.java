@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface QrTokenRepository extends JpaRepository<QrToken, String> {
     Optional<QrToken> findByUserIdAndIsRevokedFalse(String userId);
+
+    void deleteAllByExpiresAtBefore(java.time.LocalDateTime time);
 }
