@@ -1,12 +1,9 @@
 package com.ween.controller;
 
 import com.ween.dto.response.ApiResponse;
-import com.ween.dto.response.LeaderboardEntryResponse;
-import com.ween.entity.CoinTransaction;
-import com.ween.enums.LeaderboardPeriod;
-import com.ween.enums.LeaderboardScope;
+import com.ween.dto.response.CoinTransactionResponse;
+import com.ween.security.SecurityUtil;
 import com.ween.service.CoinService;
-import com.ween.service.LeaderboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -32,7 +29,7 @@ import java.util.List;
 public class CoinController {
 
     private final CoinService coinService;
-    private final LeaderboardService leaderboardService;
+    private final SecurityUtil securityUtil;
 
     @GetMapping("/balance")
     @Operation(summary = "Get coin balance", description = "Get current user's coin balance")
@@ -43,11 +40,11 @@ public class CoinController {
     })
     public ResponseEntity<ApiResponse<Integer>> getCoinBalance() {
         try {
-            String userId = getCurrentUserId();
+            String userId = securityUtil.getCurrentUserId();
             Integer response = coinService.getUserCoinBalance(userId);
             return ResponseEntity.ok(ApiResponse.ok(response, "Balance retrieved successfully"));
         } catch (Exception e) {
-            log.error("Failed to retrieve coin balance for user: {}", getCurrentUserId(), e);
+            log.error("Failed to retrieve coin balance for user",  e);
             throw e;
         }
     }
@@ -59,41 +56,17 @@ public class CoinController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Transactions retrieved successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<ApiResponse<List<CoinTransaction>>> getCoinTransactions(
+    public ResponseEntity<ApiResponse<Page<CoinTransactionResponse>>> getCoinTransactions(
             @PageableDefault(size = 20) Pageable pageable) {
         try {
-            String userId = getCurrentUserId();
-            List<CoinTransaction> response = coinService.getUserCoinTransactions(userId, pageable);
+            String userId = securityUtil.getCurrentUserId();
+            Page<CoinTransactionResponse> response = coinService.getUserCoinTransactions(userId, pageable);
             return ResponseEntity.ok(ApiResponse.ok(response, "Transactions retrieved successfully"));
         } catch (Exception e) {
-            log.error("Failed to retrieve coin transactions for user: {}", getCurrentUserId(), e);
+            log.error("Failed to retrieve coin transactions for user", e);
             throw e;
         }
     }
 
-    @GetMapping("/leaderboard")
-    @Operation(summary = "Get leaderboard", description = "Get pageable leaderboard with optional period and scope filters")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Leaderboard retrieved successfully")
-    })
-    public ResponseEntity<ApiResponse<Page<LeaderboardEntryResponse>>> getLeaderboard(
-            @Parameter(description = "Leaderboard period (default: MONTHLY)") @RequestParam(required = false, defaultValue = "MONTHLY") LeaderboardPeriod period,
-            @Parameter(description = "Leaderboard scope (default: GLOBAL)") @RequestParam(required = false, defaultValue = "GLOBAL") LeaderboardScope scope,
-            @PageableDefault(size = 50) Pageable pageable) {
-        try {
-            Page<LeaderboardEntryResponse> response = leaderboardService.getLeaderboardMapped(period, scope, pageable);
-            return ResponseEntity.ok(ApiResponse.ok(response, "Leaderboard retrieved successfully"));
-        } catch (Exception e) {
-            log.error("Failed to retrieve leaderboard for period: {}, scope: {}", period, scope, e);
-            throw e;
-        }
-    }
 
-    private String getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("User not authenticated");
-        }
-        return (String) authentication.getPrincipal();
-    }
 }
