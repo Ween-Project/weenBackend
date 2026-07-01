@@ -16,6 +16,5 @@ public class CoinTransactionResponse {
     private String id;
     private Integer amount;
     private CoinReason reason;
-    private String relatedEntityId;
     private LocalDateTime createdAt;
 }
