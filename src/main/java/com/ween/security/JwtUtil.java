@@ -1,5 +1,6 @@
 package com.ween.security;
 
+import com.ween.entity.User;
 import com.ween.enums.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -43,6 +44,20 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "refresh");
         return createToken(claims, userId, refreshTokenExpiry);
+    }
+
+    public String generateQrToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "qr");
+        claims.put("email", user.getEmail());
+        claims.put("fullName", user.getFullName());
+        claims.put("username", user.getUsername());
+        claims.put("role", user.getRole());
+        if (user.getUniversity() != null) claims.put("university", user.getUniversity());
+        if (user.getMajor() != null) claims.put("major", user.getMajor());
+
+        // 30 seconds expiry for QR code
+        return createToken(claims, user.getId(), 30);
     }
 
     private String createToken(Map<String, Object> claims, String subject, long expiry) {
