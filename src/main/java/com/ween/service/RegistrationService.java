@@ -31,6 +31,7 @@ public class RegistrationService {
     private final UserRepository userRepository;
     private final CoinService coinService;
     private final NotificationService notificationService;
+    private final ChatService chatService;
 //    private final FirebaseService firebaseService;
     // private final EventService eventService; // REMOVED - causes circular dependency
 @Transactional
@@ -63,12 +64,13 @@ public EventRegistration registerForEvent(String eventId, String userId) {
     EventRegistration saved = eventRegistrationRepository.save(registration);
     log.info("User {} registered for event: {}", userId, eventId);
 
-    // Award registration coins
+    // Add user to Event Group Chat
     try {
-        coinService.awardEventRegistrationBonus(userId, eventId);
+        chatService.addUserToEventGroup(eventId, userId);
     } catch (Exception e) {
-        log.warn("Failed to award registration coins", e);
+        log.warn("Failed to add user to event group chat", e);
     }
+
 
     // Send notification
     try {
@@ -88,17 +90,6 @@ public EventRegistration registerForEvent(String eventId, String userId) {
         eventRegistrationRepository.delete(registration);
         log.info("User {} cancelled registration for event: {}", userId, eventId);
 
-        // Debit coins if event already happened
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-
-        if (event.getStartDate().isBefore(LocalDateTime.now())) {
-            try {
-                coinService.debit(userId, 25, CoinReason.REGISTRATION, eventId);
-            } catch (Exception e) {
-                log.warn("Failed to debit coins for cancellation", e);
-            }
-        }
     }
 
     @Transactional
