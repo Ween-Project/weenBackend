@@ -5,5 +5,7 @@ public enum NotificationType {
     ATTENDANCE_CONFIRMED,
     CERTIFICATE_READY,
     COIN_EARNED,
-    SYSTEM
+    SYSTEM,
+    NEW_MESSAGE,
+    NEW_FOLLOWER
 }
