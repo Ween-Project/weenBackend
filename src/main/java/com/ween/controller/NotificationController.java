@@ -3,6 +3,8 @@ package com.ween.controller;
 import com.ween.dto.response.ApiResponse;
 import com.ween.dto.response.NotificationResponse;
 import com.ween.entity.Notification;
+import com.ween.mapper.NotificationMapper;
+import com.ween.security.SecurityUtil;
 import com.ween.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +31,8 @@ import org.springframework.web.bind.annotation.*;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final NotificationMapper notificationMapper;
+    private final SecurityUtil securityUtil;
 
     @GetMapping
     @Operation(summary = "Get notifications", description = "Retrieve pageable list of user's notifications")
@@ -40,11 +44,12 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getNotifications(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
-            String userId = getCurrentUserId();
-            Page<NotificationResponse> response = notificationService.getUserNotificationsMapped(userId, pageable);
+            String userId = securityUtil.getCurrentUserId();
+            Page<Notification> notifications = notificationService.getUserNotifications(userId, pageable);
+            Page<NotificationResponse> response = notifications.map(notificationMapper::toNotificationResponse);
             return ResponseEntity.ok(ApiResponse.ok(response, "Notifications retrieved successfully"));
         } catch (Exception e) {
-            log.error("Failed to retrieve notifications for user: {}", getCurrentUserId(), e);
+            log.error("Failed to retrieve notifications for user: {}", securityUtil.getCurrentUserId(), e);
             throw e;
         }
     }
@@ -62,7 +67,7 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<Notification>> markAsRead(
             @Parameter(description = "Notification ID", required = true) @PathVariable String id) {
         try {
-            String userId = getCurrentUserId();
+            String userId = securityUtil.getCurrentUserId();
             Notification response = notificationService.markAsRead(userId, id);
             return ResponseEntity.ok(ApiResponse.ok(response, "Notification marked as read"));
         } catch (Exception e) {
@@ -81,20 +86,12 @@ public class NotificationController {
     })
     public ResponseEntity<ApiResponse<Void>> markAllAsRead() {
         try {
-            String userId = getCurrentUserId();
+            String userId = securityUtil.getCurrentUserId();
             notificationService.markAllAsRead(userId);
             return ResponseEntity.ok(ApiResponse.ok(null, "All notifications marked as read"));
         } catch (Exception e) {
-            log.error("Failed to mark all notifications as read for user: {}", getCurrentUserId(), e);
+            log.error("Failed to mark all notifications as read for user: {}", securityUtil.getCurrentUserId(), e);
             throw e;
         }
-    }
-
-    private String getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("User not authenticated");
-        }
-        return (String) authentication.getPrincipal();
     }
 }

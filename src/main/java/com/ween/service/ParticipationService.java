@@ -7,9 +7,12 @@ import com.ween.exception.ResourceNotFoundException;
 import com.ween.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -21,6 +24,8 @@ public class ParticipationService {
     private final EventRepository eventRepository;
     private final CertificateTriggerService certificateTriggerService;
     private final EventRegistrationRepository eventRegistrationRepository;
+    private final NotificationService notificationService;
+
 
     private void validateUserRegistration(String eventId, String userId) {
         boolean isRegistered = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId).isPresent();
@@ -47,6 +52,7 @@ public class ParticipationService {
                 .build();
 
         participationRepository.save(participation);
+        notificationService.createAttendanceConfirmedNotification(userId, eventId);
     }
 
     @Transactional
@@ -61,10 +67,40 @@ public class ParticipationService {
 
         log.info("Participation completed. Triggering certificate generation for User: {}, Event: {}", userId, eventId);
 
-        certificateTriggerService.autoGenerateCertificateRecord(
+        Certificate generatedCert=certificateTriggerService.autoGenerateCertificateRecord(
                 userId,
                 eventId,
                 participation.getEvent().getCategory()
         );
+
+        notificationService.createCertificateNotification(userId, eventId, generatedCert.getCertificateNumber());
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void scheduleEventReminders() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tomorrow = now.plusHours(24);
+
+        List<Event> upcomingEvents = eventRepository.findEventsStartingBetween(
+                tomorrow.minusMinutes(30),
+                tomorrow.plusMinutes(30),
+                com.ween.enums.EventStatus.PUBLISHED
+        );
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        for (Event event : upcomingEvents) {
+            String timeStr = event.getStartDate().format(formatter);
+            List<EventRegistration> registrations = eventRegistrationRepository.findByEventId(event.getId());
+
+            for (EventRegistration reg : registrations) {
+                try {
+                    notificationService.createEventReminderNotification(reg.getUserId(), event.getId(), timeStr);
+                } catch (Exception e) {
+                    log.error("Failed to send reminder for user {} event {}", reg.getUserId(), event.getId(), e);
+                }
+            }
+        }
     }
 }
