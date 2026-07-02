@@ -103,17 +103,6 @@ public class NotificationService {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
-    public Page<NotificationResponse> getUserNotificationsMapped(String userId, Pageable pageable) {
-        log.info("Fetching notifications (mapped) for user: {}", userId);
-        Page<Notification> notifications = getUserNotifications(userId, pageable);
-
-        var mappedNotifications = notifications.getContent().stream()
-                .map(notificationMapper::toNotificationResponse)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(mappedNotifications, pageable, notifications.getTotalElements());
-    }
-
     public Notification markAsRead(String userId, String notificationId) {
         Notification notification = getNotificationById(notificationId);
 
