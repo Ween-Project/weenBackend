@@ -62,7 +62,7 @@ public class AuthService {
     private final CoinService coinService;
     private final QrService qrService;
     private final NotificationService notificationService;
-    private final com.ween.repository.ReferralRepository referralRepository;
+    private final ReferralService referralService;
 
     @Value("${ween.frontend.verify-url:http://localhost:5001/verify}")
     private String verifyEmailBaseUrl;
@@ -103,13 +103,6 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         log.info("User registered successfully: {}", savedUser.getEmail());
 
-        String qrToken = null;
-        try {
-            qrToken = qrService.generateQrToken(savedUser.getId());
-        } catch (Exception e) {
-            log.warn("Failed to generate QR token during registration for user: {}", savedUser.getId(), e);
-        }
-
         try {
             notificationService.createNotification(
                     savedUser.getId(),
@@ -135,21 +128,7 @@ public class AuthService {
         String referralCode = request.getReferralCode();
         if (referralCode != null && !referralCode.isEmpty()) {
             try {
-                User referrer = userRepository.findByReferralCode(referralCode)
-                        .orElseThrow(() -> new ResourceNotFoundException("Invalid referral code"));
-
-                // Create and award referral coins
-                com.ween.entity.Referral referral = com.ween.entity.Referral.builder()
-                        .referrerId(referrer.getId())
-                        .referredId(savedUser.getId())
-                        .coinAwarded(false)
-                        .build();
-                referralRepository.save(referral);
-
-                // Award coins asynchronously
-                coinService.awardReferralBonus(referrer.getId(), savedUser.getId());
-                coinService.credit(savedUser.getId(), 100, com.ween.enums.CoinReason.REFERRAL, referrer.getId());
-                log.info("Referral processed for new user: {}", savedUser.getId());
+                referralService.processReferralAtSignup(referralCode.trim(), savedUser.getId());
             } catch (Exception e) {
                 log.warn("Failed to process referral code during registration", e);
             }
