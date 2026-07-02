@@ -26,6 +26,7 @@ public class CoinService {
     private final CoinTransactionRepository coinTransactionRepository;
     private final UserRepository userRepository;
     private final CoinTransactionMapper coinTransactionMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     public CoinTransaction credit(String userId, Integer amount, CoinReason reason) {
@@ -66,6 +67,7 @@ public class CoinService {
         // Ensure one-time bonus prevention: only award if user hasn't already received signup bonus
         if (signupCount == 0) {
             credit(userId, 50, CoinReason.SIGNUP);
+            notificationService.createCoinEarnedNotification(userId, 50, "Signup bonus");
             log.info("Signup bonus awarded to user: {}", userId);
         } else {
             log.info("Signup bonus already awarded to user: {}", userId);
@@ -76,6 +78,7 @@ public class CoinService {
     @Transactional
     public void awardAttendanceBonus(String userId, String eventId) {
         credit(userId, 50, CoinReason.ATTENDANCE);
+        notificationService.createCoinEarnedNotification(userId, 50, "Event attendance bonus");
         log.info("Attendance bonus awarded to user: {} for event: {}", userId, eventId);
     }
 
@@ -83,12 +86,16 @@ public class CoinService {
     @Transactional
     public void awardReferralBonus(String referrerId, String referredId) {
         credit(referrerId, 25, CoinReason.REFERRAL);
+        User referredUser = userRepository.findById(referredId).orElse(null);
+        String name = referredUser != null ? referredUser.getFullName() : "A friend";
+        notificationService.createCoinEarnedNotification(referrerId, 25, name + " used your referral code");
         log.info("Referral bonus awarded to referrer: {} for referring: {}", referrerId, referredId);
     }
 
     @Transactional
     public void awardReferredBonus(String referredId, String referrerId) {
         credit(referredId, 25, CoinReason.REFERRAL);
+        notificationService.createCoinEarnedNotification(referredId, 25, "Used a referral code");
         log.info("Referred bonus awarded to user: {} referred by: {}", referredId, referrerId);
     }
 
@@ -99,6 +106,7 @@ public class CoinService {
         // One-time bonus prevention
         if (profileCount == 0) {
             credit(userId, 50, CoinReason.PROFILE_COMPLETE);
+            notificationService.createCoinEarnedNotification(userId, 50, "Profile completion bonus");
             log.info("Profile complete bonus awarded to user: {}", userId);
         } else {
             log.info("Profile complete bonus already awarded to user: {}", userId);
