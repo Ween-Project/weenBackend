@@ -16,7 +16,7 @@ public class CertificateTriggerService {
 
     private final CertificateRepository certificateRepository;
 
-    public void autoGenerateCertificateRecord(String userId, String eventId, EventCategory category) {
+    public Certificate autoGenerateCertificateRecord(String userId, String eventId, EventCategory category) {
         Certificate cert = new Certificate();
         cert.setUserId(userId);
         cert.setEventId(eventId);
@@ -28,6 +28,6 @@ public class CertificateTriggerService {
         cert.setIssuedAt(LocalDateTime.now());
 
 
-        certificateRepository.save(cert);
+        return certificateRepository.save(cert);
     }
 }
