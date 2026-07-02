@@ -146,7 +146,6 @@ public class AuthService {
                 .role(savedUser.getRole())
                 .isEmailVerified(savedUser.getIsEmailVerified())
                 .weenCoinBalance(savedUser.getWeenCoinBalance())
-                .qrToken(qrToken)
                 .build();
 
         return AuthResponse.builder()
@@ -236,15 +235,6 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
-        String qrToken = null;
-        try {
-            qrToken = qrService.isQrTokenValid(user.getId())
-                    ? qrService.getQrToken(user.getId())
-                    : qrService.generateQrToken(user.getId());
-        } catch (Exception e) {
-            log.warn("Failed to resolve QR token during login for user: {}", user.getId(), e);
-        }
-
         log.info("User logged in successfully: {}", user.getEmail());
 
         UserResponse userResponse = UserResponse.builder()
@@ -255,7 +245,6 @@ public class AuthService {
                 .role(user.getRole())
                 .isEmailVerified(user.getIsEmailVerified())
                 .weenCoinBalance(user.getWeenCoinBalance())
-                .qrToken(qrToken)
                 .build();
 
         return AuthResponse.builder()
