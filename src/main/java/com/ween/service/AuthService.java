@@ -63,7 +63,6 @@ public class AuthService {
     private final QrService qrService;
     private final NotificationService notificationService;
     private final ReferralService referralService;
-
     @Value("${ween.frontend.verify-url:http://localhost:5001/verify}")
     private String verifyEmailBaseUrl;
 
@@ -126,7 +125,7 @@ public class AuthService {
 
         // Handle referral if provided
         String referralCode = request.getReferralCode();
-        if (referralCode != null && !referralCode.isEmpty()) {
+        if (referralCode != null && !referralCode.trim().isEmpty()) {
             try {
                 referralService.processReferralAtSignup(referralCode.trim(), savedUser.getId());
             } catch (Exception e) {
@@ -228,6 +227,12 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
+        if (Boolean.TRUE.equals(user.getBanned())) {
+            throw new UnauthorizedException("This account has been suspended");
+        }
+        if (user.getRole() == UserRole.ORGANIZATION_ADMIN) {
+            throw new UnauthorizedException("Please sign in using the organization account type");
+        }
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new UnauthorizedException("Invalid email or password");
         }
@@ -275,7 +280,7 @@ public class AuthService {
                 .organizationName(organization.getOrganizationName())
                 .description(organization.getDescription())
                 .role(organization.getRole())
-                .isVerified(false)
+                .isVerified(organization.getIsVerified())
                 .build();
 
         return AuthResponse.builder()
@@ -293,6 +298,9 @@ public class AuthService {
             User user = userRepository.findById(accountId).orElse(null);
 
             if (user != null) {
+                if (Boolean.TRUE.equals(user.getBanned())) {
+                    throw new UnauthorizedException("This account has been suspended");
+                }
                 log.info("Refresh token used by User: {}", user.getEmail());
                 return jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole());
             }

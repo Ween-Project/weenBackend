@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface ReferralRepository extends JpaRepository<Referral, String> {
     Optional<Referral> findByReferrerIdAndReferredId(String referrerId, String referredId);
+    long countByReferrerId(String referrerId);
 }
