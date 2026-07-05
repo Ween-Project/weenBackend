@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import jakarta.validation.constraints.Size;
+import com.ween.enums.MessagePermission;
 
 @Data
 @NoArgsConstructor
@@ -15,9 +17,16 @@ public class UpdateProfileRequest {
     private String phone;
     private String university;
     private String major;
+    @Size(max = 10, message = "Course must not exceed 10 characters")
+    private String course;
     private String bio;
     private String linkedinUrl;
     private String githubUrl;
     private String interests;
     private String skills;
+    @Size(max = 500)
+    private String profilePhotoUrl;
+    @Size(max = 500)
+    private String bannerUrl;
+    private MessagePermission messagePermission;
 }
