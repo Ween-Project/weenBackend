@@ -1,6 +1,7 @@
 package com.ween.entity;
 
 import com.ween.enums.UserRole;
+import com.ween.enums.MessagePermission;
 import lombok.*;
 import jakarta.persistence.*;
 
@@ -53,6 +54,14 @@ public class User extends BaseEntity {
 
     @Column(name = "profile_photo_url", length = 500)
     private String profilePhotoUrl;
+
+    @Column(name = "banner_url", length = 500)
+    private String bannerUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_permission", nullable = false, length = 20)
+    @Builder.Default
+    private MessagePermission messagePermission = MessagePermission.EVERYONE;
 
     @Column(name = "ween_coin_balance")
     private Integer weenCoinBalance = 0;

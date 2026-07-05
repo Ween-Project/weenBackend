@@ -41,7 +41,7 @@ public class RegisterRequest {
     @Size(max = 100, message = "Major must not exceed 100 characters")
     private String major;
     
-    @Size(min = 1, message = "Course must be selected")
+    @Size(min = 1, max = 10,  message = "Course must be between 1 and 10 characters")
     private String course;
     
     private String interests;
