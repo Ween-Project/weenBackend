@@ -2,8 +2,6 @@ package com.ween.service;
 
 import com.ween.entity.Referral;
 import com.ween.entity.User;
-import com.ween.exception.AlreadyExistsException;
-import com.ween.exception.ResourceNotFoundException;
 import com.ween.repository.ReferralRepository;
 import com.ween.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +21,19 @@ public class ReferralService {
 
     @Transactional
     public void processReferralAtSignup(String referrerCode, String referredUserId) {
-        // 1. Find referrer
-        User referrer = userRepository.findByReferralCode(referrerCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid referral code: " + referrerCode));
-
-
-        // 2. Check if referral already exists
-        if (referralRepository.findByReferrerIdAndReferredId(referrer.getId(), referredUserId).isPresent()) {
-            throw new AlreadyExistsException("Referral already exists between these users");
+        User referrer = userRepository.findByReferralCode(referrerCode).orElse(null);
+        if (referrer == null) {
+            log.warn("Ignoring invalid referral code during signup");
+            return;
         }
 
-        // 3. Create the referral record, immediately awarded
+
+        if (referralRepository.findByReferrerIdAndReferredId(referrer.getId(), referredUserId).isPresent()) {
+            log.info("Referral already exists between referrer={} and referred={}",
+                    referrer.getId(), referredUserId);
+            return;
+        }
+
         Referral referral = Referral.builder()
                 .referrerId(referrer.getId())
                 .referredId(referredUserId)
@@ -41,11 +41,11 @@ public class ReferralService {
                 .build();
         referralRepository.save(referral);
 
-        // 4. Award the coins via CoinService
         coinService.awardReferralBonus(referrer.getId(), referredUserId);
         coinService.awardReferredBonus(referredUserId, referrer.getId());
 
         log.info("Referral successfully processed at signup: referrer={}, referred={}", referrer.getId(), referredUserId);
     }
+
 
 }
