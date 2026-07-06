@@ -1,22 +1,22 @@
 package com.ween.service;
 
-import com.ween.entity.Event;
 import com.ween.entity.Notification;
 import com.ween.enums.NotificationType;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.mapper.NotificationMapper;
-import com.ween.repository.EventRepository;
 import com.ween.repository.NotificationRepository;
 import com.ween.dto.response.NotificationResponse;
+import com.ween.repository.EventRepository;
+import com.ween.entity.Event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.stream.Collectors;
 
@@ -46,9 +46,10 @@ public class NotificationService {
 
         Notification saved = notificationRepository.save(notification);
         log.info("Notification created for user: {} with type: {}", userId, type);
-
+        
+        // Push notification in real-time
         messagingTemplate.convertAndSendToUser(userId, "/queue/notifications", notificationMapper.toNotificationResponse(saved));
-
+        
         return saved;
     }
 
@@ -91,7 +92,7 @@ public class NotificationService {
         String body = "You have earned " + amount + " coins for: " + reason;
         return createNotification(userId, NotificationType.COIN_EARNED, title, body);
     }
-    
+
     public Notification createFollowNotification(String targetUserId, String followerUsername) {
         String title = "New Follower";
         String body = followerUsername + " started following you.";

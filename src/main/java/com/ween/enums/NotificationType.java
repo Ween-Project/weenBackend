@@ -7,5 +7,8 @@ public enum NotificationType {
     COIN_EARNED,
     SYSTEM,
     NEW_MESSAGE,
-    NEW_FOLLOWER
+    NEW_FOLLOWER,
+    POST_LIKED,
+    POST_COMMENTED,
+    POST_REPOSTED
 }
