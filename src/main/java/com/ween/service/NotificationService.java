@@ -91,7 +91,40 @@ public class NotificationService {
         String body = "You have earned " + amount + " coins for: " + reason;
         return createNotification(userId, NotificationType.COIN_EARNED, title, body);
     }
+    
+    public Notification createFollowNotification(String targetUserId, String followerUsername) {
+        String title = "New Follower";
+        String body = followerUsername + " started following you.";
+        return createNotification(targetUserId, NotificationType.NEW_FOLLOWER, title, body);
+    }
 
+    public Notification createBadgeEarnedNotification(String userId, String badgeName) {
+        return createNotification(
+                userId,
+                NotificationType.SYSTEM,
+                "New badge unlocked!",
+                "You earned the \"" + badgeName + "\" badge. Open your profile to view it."
+        );
+    }
+
+    public Notification createPostLikeNotification(String targetUserId, String actorUsername) {
+        String title = "New Like";
+        String body = actorUsername + " liked your post.";
+        return createNotification(targetUserId, NotificationType.POST_LIKED, title, body);
+    }
+
+    public Notification createPostCommentNotification(String targetUserId, String actorUsername, String comment) {
+        String title = "New Comment";
+        String preview = comment.length() > 80 ? comment.substring(0, 80) + "..." : comment;
+        String body = actorUsername + " commented on your post: " + preview;
+        return createNotification(targetUserId, NotificationType.POST_COMMENTED, title, body);
+    }
+
+    public Notification createPostRepostNotification(String targetUserId, String actorUsername) {
+        String title = "New Repost";
+        String body = actorUsername + " reposted your post.";
+        return createNotification(targetUserId, NotificationType.POST_REPOSTED, title, body);
+    }
 
     public Notification getNotificationById(String notificationId) {
         return notificationRepository.findById(notificationId)
