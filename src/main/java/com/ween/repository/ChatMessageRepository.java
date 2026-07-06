@@ -28,6 +28,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
     @Query("""
             select m from ChatMessage m
             where (m.senderId = :userId or m.recipientId = :userId)
+              and m.request = false
               and not exists (
                 select 1 from ChatMessage newer
                 where ((newer.senderId = m.senderId and newer.recipientId = m.recipientId)
@@ -37,6 +38,31 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
             order by m.createdAt desc
             """)
     List<ChatMessage> findLatestMessagesByUser(@Param("userId") String userId);
+
+    Page<ChatMessage> findByRecipientIdAndRequestTrueOrderByCreatedAtDesc(String recipientId, Pageable pageable);
+
+    @Query("""
+            select count(m) > 0 from ChatMessage m
+            where (m.senderId = :userId and m.recipientId = :partnerId)
+               or (m.senderId = :partnerId and m.recipientId = :userId)
+            """)
+    boolean conversationExists(@Param("userId") String userId, @Param("partnerId") String partnerId);
+
+    @Query("""
+            select count(m) > 0 from ChatMessage m
+            where m.request = false and (
+                (m.senderId = :userId and m.recipientId = :partnerId)
+                or (m.senderId = :partnerId and m.recipientId = :userId)
+            )
+            """)
+    boolean acceptedConversationExists(@Param("userId") String userId, @Param("partnerId") String partnerId);
+
+    @Modifying
+    @Query("""
+            update ChatMessage m set m.request = false
+            where m.recipientId = :userId and m.senderId = :partnerId and m.request = true
+            """)
+    int acceptMessageRequest(@Param("userId") String userId, @Param("partnerId") String partnerId);
 
     Page<ChatMessage> findByChatRoomId(String chatRoomId, Pageable pageable);
 
