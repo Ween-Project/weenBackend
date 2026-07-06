@@ -8,5 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateProfilePhotoRequest {
+    // The URL of the new profile photo to update for the user.
     private String imageUrl;
 }
