@@ -5,12 +5,24 @@ import com.ween.dto.request.GroupMessageRequest;
 import com.ween.dto.response.ChatConversationResponse;
 import com.ween.dto.response.ChatMessageResponse;
 import com.ween.dto.response.GroupMessageResponse;
-import com.ween.entity.*;
+import com.ween.entity.ChatMessage;
+import com.ween.entity.GroupChatMessage;
+import com.ween.entity.ChatRoom;
+import com.ween.entity.ChatRoomMember;
+import com.ween.entity.Event;
+import com.ween.entity.User;
 import com.ween.enums.ChatRoomRole;
 import com.ween.enums.ChatRoomType;
+import com.ween.enums.MessagePermission;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.exception.UnauthorizedException;
-import com.ween.repository.*;
+import com.ween.repository.ChatMessageRepository;
+import com.ween.repository.GroupChatMessageRepository;
+import com.ween.repository.ChatRoomMemberRepository;
+import com.ween.repository.ChatRoomRepository;
+import com.ween.repository.EventRepository;
+import com.ween.repository.UserRepository;
+import com.ween.repository.FollowRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,6 +45,7 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final UserRepository userRepository;
+    private final FollowRepository followRepository;
     private final EventRepository eventRepository;
     private final NotificationService notificationService;
 
@@ -46,9 +59,21 @@ public class ChatService {
         if (senderId.equals(recipientId)) {
             throw new IllegalArgumentException("Cannot send a message to yourself");
         }
-        if (!userRepository.existsById(recipientId)) {
-            throw new ResourceNotFoundException("Recipient not found");
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sender not found"));
+        User recipient = userRepository.findById(recipientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipient not found"));
+        boolean existingConversation = chatMessageRepository.conversationExists(senderId, recipientId);
+        boolean acceptedConversation = chatMessageRepository.acceptedConversationExists(senderId, recipientId);
+        boolean senderFollowsRecipient = followRepository.existsByFollowerAndFollowing(sender, recipient);
+        MessagePermission permission = recipient.getMessagePermission() == null
+                ? MessagePermission.EVERYONE : recipient.getMessagePermission();
+        if (!existingConversation && (permission == MessagePermission.NOBODY
+                || (permission == MessagePermission.FOLLOWERS && !senderFollowsRecipient))) {
+            throw new UnauthorizedException("This user only accepts messages from allowed connections");
         }
+        boolean isRequest = !acceptedConversation
+                && !followRepository.existsByFollowerAndFollowing(recipient, sender);
 
         ChatRoom room = chatRoomRepository.findDirectRoom(senderId, recipientId)
                 .orElseGet(() -> chatRoomRepository.save(ChatRoom.builder()
@@ -62,14 +87,15 @@ public class ChatService {
                 .senderId(senderId)
                 .recipientId(recipientId)
                 .content(content)
+                .request(isRequest)
                 .build();
 
         ChatMessage saved = chatMessageRepository.save(message);
         log.info("Direct chat message sent by {} to {}", senderId, recipientId);
 
         // Notify recipient
-        userRepository.findById(senderId).ifPresent(sender -> {
-            notificationService.createMessageNotification(recipientId, sender.getUsername(), content);
+        userRepository.findById(senderId).ifPresent(senderUser -> {
+            notificationService.createMessageNotification(recipientId, senderUser.getUsername(), content);
         });
 
         return toResponse(saved);
@@ -143,6 +169,26 @@ public class ChatService {
     public List<ChatConversationResponse> getConversations(String userId) {
         return chatMessageRepository.findLatestMessagesByUser(userId).stream()
                 .map(message -> toConversationResponse(userId, message))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ChatConversationResponse> getMessageRequests(String userId, Pageable pageable) {
+        return chatMessageRepository.findByRecipientIdAndRequestTrueOrderByCreatedAtDesc(userId, pageable)
+                .map(message -> toConversationResponse(userId, message));
+    }
+
+    public int acceptMessageRequest(String userId, String partnerId) {
+        return chatMessageRepository.acceptMessageRequest(userId, partnerId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatRoom> getUserGroupRooms(String userId) {
+        List<String> roomIds = chatRoomMemberRepository.findByUserId(userId).stream()
+                .map(ChatRoomMember::getChatRoomId)
+                .toList();
+        return chatRoomRepository.findAllById(roomIds).stream()
+                .filter(room -> room.getType() != ChatRoomType.DIRECT)
                 .toList();
     }
 
@@ -266,8 +312,12 @@ public class ChatService {
         }
         long unreadCount = partnerId != null ? chatMessageRepository.countBySenderIdAndRecipientIdAndReadAtIsNull(partnerId, userId) : 0;
 
+        User partner = partnerId == null ? null : userRepository.findById(partnerId).orElse(null);
         return ChatConversationResponse.builder()
                 .partnerId(partnerId)
+                .partnerUsername(partner != null ? partner.getUsername() : null)
+                .partnerFullName(partner != null ? partner.getFullName() : null)
+                .partnerPhotoUrl(partner != null ? partner.getProfilePhotoUrl() : null)
                 .lastMessageId(message.getId())
                 .lastMessage(message.getContent())
                 .lastSenderId(message.getSenderId())
@@ -286,6 +336,7 @@ public class ChatService {
                 .read(message.getReadAt() != null)
                 .readAt(message.getReadAt())
                 .createdAt(message.getCreatedAt())
+                .request(message.getRequest())
                 .build();
     }
 

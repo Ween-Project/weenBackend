@@ -31,46 +31,6 @@ public interface UserRepository extends JpaRepository<User, String> {
             """)
     Page<User> searchPublicProfiles(@Param("query") String query, Pageable pageable);
 
-        @Query("""
-                        SELECT DISTINCT candidate FROM User candidate
-                        JOIN Follow f2 ON f2.following = candidate
-                        JOIN Follow f1 ON f1.following = f2.follower
-                        WHERE f1.follower.id = :currentUserId
-                          AND candidate.id <> :currentUserId
-                          AND candidate.banned = false
-                          AND candidate.id NOT IN (
-                                  SELECT followed.id FROM Follow direct
-                                  JOIN direct.following followed
-                                  WHERE direct.follower.id = :currentUserId
-                          )
-                        """)
-        Page<User> findNetworkDiscoveryCandidates(@Param("currentUserId") String currentUserId, Pageable pageable);
-
-        @Query("""
-                        SELECT DISTINCT candidate FROM User candidate
-                        JOIN Follow f2 ON f2.following = candidate
-                        JOIN Follow f1 ON f1.following = f2.follower
-                        WHERE f1.follower.id = :currentUserId
-                          AND candidate.id <> :currentUserId
-                          AND candidate.banned = false
-                          AND candidate.id NOT IN (
-                                  SELECT followed.id FROM Follow direct
-                                  JOIN direct.following followed
-                                  WHERE direct.follower.id = :currentUserId
-                          )
-                          AND (
-                                  LOWER(candidate.username) LIKE LOWER(CONCAT('%', :query, '%'))
-                                  OR LOWER(candidate.fullName) LIKE LOWER(CONCAT('%', :query, '%'))
-                                  OR LOWER(COALESCE(candidate.university, '')) LIKE LOWER(CONCAT('%', :query, '%'))
-                                  OR LOWER(COALESCE(candidate.major, '')) LIKE LOWER(CONCAT('%', :query, '%'))
-                                  OR LOWER(COALESCE(candidate.skills, '')) LIKE LOWER(CONCAT('%', :query, '%'))
-                                  OR LOWER(COALESCE(candidate.interests, '')) LIKE LOWER(CONCAT('%', :query, '%'))
-                          )
-                        """)
-        Page<User> findNetworkDiscoveryCandidatesByQuery(@Param("currentUserId") String currentUserId,
-                                                                                                         @Param("query") String query,
-                                                                                                         Pageable pageable);
-    
     // For ALL_TIME leaderboard
     Page<User> findAllByOrderByWeenCoinBalanceDesc(Pageable pageable);
 }
