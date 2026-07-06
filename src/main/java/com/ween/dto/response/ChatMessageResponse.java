@@ -16,5 +16,6 @@ public class ChatMessageResponse {
     private boolean read;
     private LocalDateTime readAt;
     private LocalDateTime createdAt;
+    private Boolean request;
 }
 
