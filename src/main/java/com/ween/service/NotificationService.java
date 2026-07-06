@@ -46,10 +46,10 @@ public class NotificationService {
 
         Notification saved = notificationRepository.save(notification);
         log.info("Notification created for user: {} with type: {}", userId, type);
-        
+
         // Push notification in real-time
         messagingTemplate.convertAndSendToUser(userId, "/queue/notifications", notificationMapper.toNotificationResponse(saved));
-        
+
         return saved;
     }
 
