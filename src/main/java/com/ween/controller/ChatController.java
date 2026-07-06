@@ -43,6 +43,28 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(chatService.getConversations(userId), "Conversations retrieved successfully"));
     }
 
+    @GetMapping("/requests")
+    @Operation(summary = "Get message requests", description = "Retrieve first-contact messages awaiting acceptance")
+    public ResponseEntity<ApiResponse<Page<ChatConversationResponse>>> getMessageRequests(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        String userId = securityUtil.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.ok(chatService.getMessageRequests(userId, pageable), "Message requests retrieved successfully"));
+    }
+
+    @PutMapping("/requests/{partnerId}/accept")
+    @Operation(summary = "Accept a message request")
+    public ResponseEntity<ApiResponse<Integer>> acceptMessageRequest(@PathVariable String partnerId) {
+        String userId = securityUtil.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.ok(chatService.acceptMessageRequest(userId, partnerId), "Message request accepted"));
+    }
+
+    @GetMapping("/rooms")
+    @Operation(summary = "Get my group rooms", description = "Retrieve group and event chat rooms for the current user")
+    public ResponseEntity<ApiResponse<List<ChatRoom>>> getRooms() {
+        String userId = securityUtil.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.ok(chatService.getUserGroupRooms(userId), "Rooms retrieved successfully"));
+    }
+
     @GetMapping("/messages/{partnerId}")
     @Operation(summary = "Get conversation messages", description = "Retrieve paged messages with another user")
     public ResponseEntity<ApiResponse<Page<ChatMessageResponse>>> getMessages(
