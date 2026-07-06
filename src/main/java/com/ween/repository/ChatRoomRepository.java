@@ -1,6 +1,7 @@
 package com.ween.repository;
 
 import com.ween.entity.ChatRoom;
+import com.ween.enums.ChatRoomType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
