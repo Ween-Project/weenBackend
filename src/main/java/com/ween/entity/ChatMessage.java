@@ -36,4 +36,8 @@ public class ChatMessage extends BaseEntity {
 
     @Column(name = "read_at", columnDefinition = "DATETIME(6)")
     private LocalDateTime readAt;
+
+    @Column(name = "is_request", nullable = false)
+    @Builder.Default
+    private Boolean request = false;
 }
