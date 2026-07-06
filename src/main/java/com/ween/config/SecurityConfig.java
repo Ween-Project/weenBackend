@@ -110,11 +110,17 @@ public class SecurityConfig {
                         // Notifications
                         .requestMatchers("/api/v1/notifications/**").authenticated()
 
+                        // Chat
+                        .requestMatchers("/api/v1/chat/**").authenticated()
+
                         // Admin
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                         // Swagger
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
+
+                        // WebSockets
+                        .requestMatchers("/ws/**").permitAll()
 
                         // Health check
                         .requestMatchers("/actuator/**").permitAll()
