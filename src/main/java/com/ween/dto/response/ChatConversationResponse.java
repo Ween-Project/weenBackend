@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 @Builder
 public class ChatConversationResponse {
     private String partnerId;
+    private String partnerUsername;
+    private String partnerFullName;
+    private String partnerPhotoUrl;
     private String lastMessageId;
     private String lastMessage;
     private String lastSenderId;
