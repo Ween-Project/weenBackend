@@ -20,4 +20,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
     boolean existsByEmail(String email);
     
     boolean existsByUsername(String username);
+
+    long countByIsVerified(Boolean verified);
 }
