@@ -26,27 +26,6 @@ public class QrController {
     private final QrService qrService;
     private final SecurityUtil securityUtil;
 
-    @PostMapping("/checkin")
-    @Transactional
-    @Operation(summary = "Check-in to event", description = "Check-in participant to an event using QR token")
-    @SecurityRequirement(name = "Bearer")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Check-in successful"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid QR token or invalid input"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Event or participant not found")
-    })
-    public ResponseEntity<ApiResponse<CheckinResponse>> checkin(
-            @Valid @RequestBody CheckinRequest request) {
-        try {
-            CheckinResponse response = qrService.checkinParticipant(request.getEventId(), request.getQrToken());
-            return ResponseEntity.ok(ApiResponse.ok(response, "Check-in successful"));
-        } catch (Exception e) {
-            log.error("Failed to check-in participant for event: {}", request.getEventId(), e);
-            throw e;
-        }
-    }
 
     @GetMapping("/generate")
     @Operation(summary = "Generate QR token", description = "Generates a 30-second expiring QR token for the current user")
