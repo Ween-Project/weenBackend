@@ -54,29 +54,6 @@ public class AdminController {
         }
     }
 
-    @PutMapping("/users/{id}/ban")
-    @Transactional
-    @Operation(summary = "Ban/unban user", description = "Ban or unban a user account (ADMIN only)")
-    @SecurityRequirement(name = "Bearer")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User ban status updated"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Admin access required"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
-    })
-    public ResponseEntity<ApiResponse<com.ween.dto.response.UserResponse>> banUnbanUser(
-            @Parameter(description = "User ID", required = true) @PathVariable String id,
-            @Parameter(description = "Ban status (true to ban, false to unban)", required = true) @RequestParam Boolean ban,
-            @Parameter(description = "Ban reason") @RequestParam(required = false) String reason) {
-        try {
-            com.ween.dto.response.UserResponse response = adminService.banUnbanUser(id, ban, reason);
-            return ResponseEntity.ok(ApiResponse.ok(response,
-                    ban ? "User banned successfully" : "User unbanned successfully"));
-        } catch (Exception e) {
-            log.error("Failed to update ban status for user: {}", id, e);
-            throw e;
-        }
-    }
 
     @GetMapping("/organizations")
     @Operation(summary = "Get all organizations", description = "Retrieve list of all organizations on platform (ADMIN only)")
@@ -118,6 +95,28 @@ public class AdminController {
                     verify ? "Organization verified successfully" : "Organization verification revoke"));
         } catch (Exception e) {
             log.error("Failed to verify organization: {}", id, e);
+            throw e;
+        }
+    }
+
+    @PutMapping("/organizations/{id}/reject")
+    @Transactional
+    @Operation(summary = "Reject organization", description = "Reject an organization (ADMIN only)")
+    @SecurityRequirement(name = "Bearer")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization rejected successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Admin access required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Organization not found")
+    })
+    public ResponseEntity<ApiResponse<Void>> rejectOrganization(
+            @Parameter(description = "Organization ID", required = true) @PathVariable String id,
+            @Parameter(description = "Rejection reason") @RequestParam(required = false) String reason) {
+        try {
+            adminService.rejectOrganization(id, reason);
+            return ResponseEntity.ok(ApiResponse.ok(null, "Organization rejected successfully"));
+        } catch (Exception e) {
+            log.error("Failed to reject organization: {}", id, e);
             throw e;
         }
     }
