@@ -10,5 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface GroupChatMessageRepository extends JpaRepository<GroupChatMessage, String> {
 
     Page<GroupChatMessage> findByChatRoomId(String chatRoomId, Pageable pageable);
+    void deleteByChatRoomId(String chatRoomId);
 
 }
