@@ -55,6 +55,21 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     private String resolveToken(ServerHttpRequest request) {
+        // 1. Check Cookies first
+        List<String> cookieHeaders = request.getHeaders().get(HttpHeaders.COOKIE);
+        if (cookieHeaders != null) {
+            for (String header : cookieHeaders) {
+                String[] cookies = header.split(";");
+                for (String cookie : cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith("accessToken=")) {
+                        return cookie.substring(12);
+                    }
+                }
+            }
+        }
+
+        // 2. Fallback to Authorization header
         List<String> authHeaders = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
         if (authHeaders != null) {
             for (String header : authHeaders) {
@@ -64,6 +79,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             }
         }
 
+        // 3. Fallback to query param
         var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
         String token = params.getFirst("token");
         return token != null ? token : params.getFirst("access_token");
