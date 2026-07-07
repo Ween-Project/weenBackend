@@ -127,15 +127,6 @@ public class UserService {
                 .map(user -> enrichProfile(user, currentUserId));
     }
 
-    @Transactional(readOnly = true)
-    public Page<PublicProfileResponse> discoverNetworkProfiles(String currentUserId, String query, Pageable pageable) {
-        String normalizedQuery = query == null ? "" : query.trim();
-        Page<User> users = normalizedQuery.isEmpty()
-                ? userRepository.findNetworkDiscoveryCandidates(currentUserId, pageable)
-                : userRepository.findNetworkDiscoveryCandidatesByQuery(currentUserId, normalizedQuery, pageable);
-        return users.map(user -> enrichProfile(user, currentUserId));
-    }
-
     private PublicProfileResponse enrichProfile(User user, String currentUserId) {
         PublicProfileResponse response = userMapper.toPublicProfileResponse(user);
         response.setFollowerCount(followRepository.countByFollowing(user));
