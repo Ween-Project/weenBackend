@@ -26,5 +26,6 @@ public class CoinTransaction extends BaseEntity {
     @Column(nullable = false)
     private CoinReason reason;
 
-
+    @Column(name = "related_entity_id", columnDefinition = "CHAR(36)")
+    private String relatedEntityId;
 }
