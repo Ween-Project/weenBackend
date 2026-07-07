@@ -13,6 +13,8 @@ import com.ween.dto.projection.PostWithStatsProjection;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Optional;
+
 @Repository
 public interface PostRepository extends JpaRepository<Post, String> {
 
@@ -63,11 +65,13 @@ public interface PostRepository extends JpaRepository<Post, String> {
         FROM Post p
         WHERE p.organizationAuthor = :organization
         """)
+
     @EntityGraph(attributePaths = {"userAuthor", "organizationAuthor"})
     Page<PostWithStatsProjection> findPostsWithStatsByOrganization(
             @Param("organization") Organization organization,
             @Param("currentUserId") String currentUserId,
             Pageable pageable);
+
     @Query("""
         SELECT p AS post,
                (SELECT COUNT(l) FROM PostLike l WHERE l.post = p) AS likeCount,
@@ -81,5 +85,5 @@ public interface PostRepository extends JpaRepository<Post, String> {
         WHERE p.id = :postId
         """)
     @EntityGraph(attributePaths = {"userAuthor", "organizationAuthor"})
-    java.util.Optional<PostWithStatsProjection> findPostWithStatsById(@Param("postId") String postId, @Param("currentUserId") String currentUserId);
+    Optional<PostWithStatsProjection> findPostWithStatsById(@Param("postId") String postId, @Param("currentUserId") String currentUserId);
 }
