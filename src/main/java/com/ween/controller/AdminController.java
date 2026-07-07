@@ -75,6 +75,49 @@ public class AdminController {
         }
     }
 
+    @PutMapping("/users/{id}/ban-user")
+    @Transactional
+    @Operation(summary = "Ban user", description = "Ban a user account (ADMIN only)")
+    @SecurityRequirement(name = "Bearer")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User banned successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Admin access required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<ApiResponse<Void>> banUser(
+            @Parameter(description = "User ID", required = true) @PathVariable String id,
+            @Parameter(description = "Ban reason") @RequestParam(required = false) String reason) {
+        try {
+            adminService.banUser(id, reason);
+            return ResponseEntity.ok(ApiResponse.ok(null, "User banned successfully"));
+        } catch (Exception e) {
+            log.error("Failed to ban user: {}", id, e);
+            throw e;
+        }
+    }
+
+    @PutMapping("/users/{id}/unban-user")
+    @Transactional
+    @Operation(summary = "Unban user", description = "Unban a user account (ADMIN only)")
+    @SecurityRequirement(name = "Bearer")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User unbanned successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Admin access required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<ApiResponse<Void>> unbanUser(
+            @Parameter(description = "User ID", required = true) @PathVariable String id) {
+        try {
+            adminService.unbanUser(id);
+            return ResponseEntity.ok(ApiResponse.ok(null, "User unbanned successfully"));
+        } catch (Exception e) {
+            log.error("Failed to unban user: {}", id, e);
+            throw e;
+        }
+    }
+
     @PutMapping("/organizations/{id}/verify")
     @Transactional
     @Operation(summary = "Verify organization", description = "Verify or revoke verification for an organization (ADMIN only)")
