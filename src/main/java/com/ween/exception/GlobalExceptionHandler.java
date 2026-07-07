@@ -2,6 +2,7 @@ package com.ween.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -18,6 +19,26 @@ import java.util.UUID;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
+        log.warn("Invalid request: {}", ex.getMessage());
+        return new ResponseEntity<>(ErrorResponse.builder()
+                .timestamp(LocalDateTime.now()).status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request").message(ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .traceId(UUID.randomUUID().toString()).build(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex, WebRequest request) {
+        log.warn("Data conflict: {}", ex.getMostSpecificCause().getMessage());
+        return new ResponseEntity<>(ErrorResponse.builder()
+                .timestamp(LocalDateTime.now()).status(HttpStatus.CONFLICT.value())
+                .error("Conflict").message("This action conflicts with an existing record.")
+                .path(request.getDescription(false).replace("uri=", ""))
+                .traceId(UUID.randomUUID().toString()).build(), HttpStatus.CONFLICT);
+    }
 
     @ExceptionHandler(RegistrationClosedException.class)
     public ResponseEntity<ErrorResponse> handleRegistrationClosed(RegistrationClosedException ex, WebRequest request) {
