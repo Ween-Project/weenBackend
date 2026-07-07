@@ -54,4 +54,3 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .toArray(String[]::new);
     }
 }
-
