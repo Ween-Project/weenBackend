@@ -17,4 +17,9 @@ public class AdminStatsResponse {
     private Long totalAttendees;
     private Long totalCoinsDistributed;
     private Long totalCertificatesIssued;
+    private Long totalPosts;
+    private Long verifiedOrganizations;
+    private Long pendingOrganizations;
+    private Long bannedUsers;
+    private Long publishedEvents;
 }
