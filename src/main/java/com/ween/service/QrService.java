@@ -109,32 +109,6 @@ public class QrService {
     }
 
 
-    public CheckinResponse checkinParticipant(@NotBlank(message = "Event ID is required") String eventId, @NotBlank(message = "QR token is required") String qrToken) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
-
-        String currentUserId = securityUtil.getCurrentUserId();
-        if (!event.getOrganizationId().equals(currentUserId)) {
-            throw new AccessDeniedException("Only the event owner can perform check-in");
-        }
-
-        String participantUserId = validateAndDecryptQrToken(qrToken);
-        User participant = userRepository.findById(participantUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("Participant not found: " + participantUserId));
-
-        registrationService.markUserAsJoined(eventId, participantUserId);
-
-        String participantName = participant.getFullName() != null && !participant.getFullName().isBlank()
-                ? participant.getFullName()
-                : participant.getUsername();
-
-        return CheckinResponse.builder()
-                .status("CHECKED_IN")
-                .participantName(participantName)
-                .participantPhoto(participant.getProfilePhotoUrl())
-                .message("Check-in successful")
-                .build();
-    }
 
     @Scheduled(fixedRate = 3600000) // Run every hour
     @Transactional
