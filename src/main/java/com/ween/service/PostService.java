@@ -3,7 +3,6 @@ package com.ween.service;
 import com.ween.dto.request.AddPostCommentRequest;
 import com.ween.dto.request.CreatePostRequest;
 import com.ween.dto.request.UpdatePostRequest;
-import com.ween.dto.response.PostAuthorResponse;
 import com.ween.dto.response.PostCommentResponse;
 import com.ween.dto.response.PostResponse;
 import com.ween.entity.*;
