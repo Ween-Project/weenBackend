@@ -21,6 +21,8 @@ public class ReferralService {
 
     @Transactional
     public void processReferralAtSignup(String referrerCode, String referredUserId) {
+        // Referral codes are optional. An invalid code must not mark the surrounding
+        // registration transaction rollback-only after AuthService catches it.
         User referrer = userRepository.findByReferralCode(referrerCode).orElse(null);
         if (referrer == null) {
             log.warn("Ignoring invalid referral code during signup");
@@ -28,12 +30,14 @@ public class ReferralService {
         }
 
 
+        // 2. Check if referral already exists
         if (referralRepository.findByReferrerIdAndReferredId(referrer.getId(), referredUserId).isPresent()) {
             log.info("Referral already exists between referrer={} and referred={}",
                     referrer.getId(), referredUserId);
             return;
         }
 
+        // 3. Create the referral record, immediately awarded
         Referral referral = Referral.builder()
                 .referrerId(referrer.getId())
                 .referredId(referredUserId)
@@ -41,6 +45,7 @@ public class ReferralService {
                 .build();
         referralRepository.save(referral);
 
+        // 4. Award the coins via CoinService
         coinService.awardReferralBonus(referrer.getId(), referredUserId);
         coinService.awardReferredBonus(referredUserId, referrer.getId());
 
