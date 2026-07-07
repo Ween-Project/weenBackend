@@ -32,8 +32,7 @@ public class RegistrationService {
     private final CoinService coinService;
     private final NotificationService notificationService;
     private final ChatService chatService;
-//    private final FirebaseService firebaseService;
-    // private final EventService eventService; // REMOVED - causes circular dependency
+
 @Transactional
 public EventRegistration registerForEvent(String eventId, String userId) {
     Event event = eventRepository.findById(eventId)
