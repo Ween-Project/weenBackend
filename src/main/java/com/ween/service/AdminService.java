@@ -5,14 +5,10 @@ import com.ween.dto.response.OrganizationResponse;
 import com.ween.dto.response.UserResponse;
 import com.ween.entity.Organization;
 import com.ween.entity.User;
+import com.ween.enums.EventStatus;
 import com.ween.mapper.OrganizationMapper;
 import com.ween.mapper.UserMapper;
-import com.ween.repository.CertificateRepository;
-import com.ween.repository.CoinTransactionRepository;
-import com.ween.repository.EventRepository;
-import com.ween.repository.EventRegistrationRepository;
-import com.ween.repository.OrganizationRepository;
-import com.ween.repository.UserRepository;
+import com.ween.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,6 +30,7 @@ public class AdminService {
     private final CoinTransactionRepository coinTransactionRepository;
     private final UserMapper userMapper;
     private final OrganizationMapper organizationMapper;
+    private final PostRepository postRepository;
 
     public Page<com.ween.dto.response.UserResponse> getAllUsers(String search, Pageable pageable) {
         log.debug("Fetching all users with search: {}", search);
@@ -49,7 +46,6 @@ public class AdminService {
         return users.map(userMapper::toUserResponse);
     }
 
-//    UserBanlamaq əlavə etmək
 
     public void banUser(String userId, String reason) {
         log.debug("Banning user: {} with reason: {}", userId, reason);
@@ -63,7 +59,6 @@ public class AdminService {
         
         log.info("User banned successfully: {}", userId);
     }
-//    User bandan çıxarmaq əlavə etmək
 
     public void unbanUser(String userId) {
         log.debug("Unbanning user: {}", userId);
@@ -103,7 +98,7 @@ public class AdminService {
         organizationRepository.save(organization);
         
         log.info("Organization verified successfully: {}", organizationId);
-        return null;
+        return organizationMapper.toOrganizationResponse(organization);
     }
 
     public void rejectOrganization(String organizationId, String rejectionReason) {
@@ -143,6 +138,11 @@ public class AdminService {
         stats.setTotalAttendees(totalAttendees);
         stats.setTotalCoinsDistributed(totalCoinsDistributed);
         stats.setTotalCertificatesIssued(totalCertificatesIssued);
+        stats.setTotalPosts(postRepository.count());
+        stats.setVerifiedOrganizations(organizationRepository.countByIsVerified(true));
+        stats.setPendingOrganizations(organizationRepository.countByIsVerified(false));
+        stats.setBannedUsers(userRepository.countByBanned(true));
+        stats.setPublishedEvents(eventRepository.countByStatus(EventStatus.PUBLISHED));
         
         log.info("Admin stats calculated: Users={}, Orgs={}, Events={}", totalUsers, totalOrganizations, totalEvents);
         return stats;
