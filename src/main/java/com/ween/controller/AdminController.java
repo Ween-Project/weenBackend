@@ -4,6 +4,10 @@ import com.ween.dto.response.AdminStatsResponse;
 import com.ween.dto.response.ApiResponse;
 import com.ween.dto.response.OrganizationResponse;
 import com.ween.service.AdminService;
+import com.ween.service.BadgeService;
+import com.ween.dto.request.BadgeRequest;
+import com.ween.dto.response.BadgeResponse;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final AdminService adminService;
+    private final BadgeService badgeService;
 
     @GetMapping("/users")
     @Operation(summary = "Get all users", description = "Retrieve pageable list of all platform users (ADMIN only)")
@@ -133,6 +138,39 @@ public class AdminController {
             log.error("Failed to retrieve platform statistics", e);
             throw e;
         }
+    }
+
+    @GetMapping("/badges")
+    @Operation(summary = "List badge achievement rules")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<ApiResponse<Page<BadgeResponse>>> getBadges(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok(badgeService.list(pageable), "Badges retrieved successfully"));
+    }
+
+    @PostMapping("/badges")
+    @Operation(summary = "Create an achievement badge")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<ApiResponse<BadgeResponse>> createBadge(@Valid @RequestBody BadgeRequest request) {
+        return ResponseEntity.status(201)
+                .body(ApiResponse.ok(badgeService.create(request), "Badge created successfully"));
+    }
+
+    @PutMapping("/badges/{badgeId}")
+    @Operation(summary = "Update an achievement badge")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<ApiResponse<BadgeResponse>> updateBadge(
+            @PathVariable String badgeId,
+            @Valid @RequestBody BadgeRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(badgeService.update(badgeId, request), "Badge updated successfully"));
+    }
+
+    @DeleteMapping("/badges/{badgeId}")
+    @Operation(summary = "Deactivate an achievement badge")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<ApiResponse<Void>> deactivateBadge(@PathVariable String badgeId) {
+        badgeService.deactivate(badgeId);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Badge deactivated successfully"));
     }
 
     private String getCurrentUserId() {
