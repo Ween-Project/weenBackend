@@ -113,16 +113,6 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok(response, "Profiles retrieved successfully"));
     }
 
-    @GetMapping("/discover/network")
-    @Operation(summary = "Discover people through your network", description = "Find second-degree connections and optionally filter by query")
-    @SecurityRequirement(name = "Bearer")
-    public ResponseEntity<ApiResponse<Page<PublicProfileResponse>>> discoverNetworkProfiles(
-            @RequestParam(defaultValue = "") String query,
-            @PageableDefault(size = 20) Pageable pageable) {
-        Page<PublicProfileResponse> response = userService.discoverNetworkProfiles(getCurrentUserId(), query, pageable);
-        return ResponseEntity.ok(ApiResponse.ok(response, "Network discovery results retrieved successfully"));
-    }
-
     @GetMapping("/me/events")
     @Operation(summary = "Get user's attended events", description = "Retrieve paginated list of events user participated in")
     @SecurityRequirement(name = "Bearer")
