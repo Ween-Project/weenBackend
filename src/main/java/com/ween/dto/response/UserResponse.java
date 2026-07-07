@@ -23,6 +23,8 @@ public class UserResponse {
     private String major;
     private String bio;
     private String profilePhotoUrl;
+    private String bannerUrl;
+    private com.ween.enums.MessagePermission messagePermission;
     private Integer weenCoinBalance;
     private UserRole role;
     private Boolean isEmailVerified;
