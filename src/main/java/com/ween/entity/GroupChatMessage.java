@@ -1,10 +1,14 @@
 package com.ween.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import lombok.*;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -28,4 +32,3 @@ public class GroupChatMessage extends BaseEntity {
     private String content;
 
 }
-
