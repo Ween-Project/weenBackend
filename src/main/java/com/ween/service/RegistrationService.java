@@ -4,7 +4,6 @@ import com.ween.dto.response.EventResponse;
 import com.ween.dto.response.ParticipantResponse;
 import com.ween.entity.Event;
 import com.ween.entity.EventRegistration;
-import com.ween.enums.CoinReason;
 import com.ween.exception.*;
 import com.ween.repository.EventRegistrationRepository;
 import com.ween.repository.EventRepository;
@@ -29,10 +28,11 @@ public class RegistrationService {
     private final EventRegistrationRepository eventRegistrationRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
-    private final CoinService coinService;
     private final NotificationService notificationService;
     private final ChatService chatService;
-
+    private final CoinService coinService;
+//  private final FirebaseService firebaseService;
+//  private final EventService eventService; // REMOVED - causes circular dependency
 @Transactional
 public EventRegistration registerForEvent(String eventId, String userId) {
     Event event = eventRepository.findById(eventId)
@@ -70,6 +70,7 @@ public EventRegistration registerForEvent(String eventId, String userId) {
         log.warn("Failed to add user to event group chat", e);
     }
 
+    // Award registration coins removed
 
     // Send notification
     try {
@@ -89,6 +90,7 @@ public EventRegistration registerForEvent(String eventId, String userId) {
         eventRegistrationRepository.delete(registration);
         log.info("User {} cancelled registration for event: {}", userId, eventId);
 
+        // Debit coins removed
     }
 
     @Transactional
@@ -100,13 +102,7 @@ public EventRegistration registerForEvent(String eventId, String userId) {
         registration.setJoinedAt(LocalDateTime.now());
         eventRegistrationRepository.save(registration);
         log.info("User marked as joined for event: {}", eventId);
-
-        // Award attendance bonus
-        try {
-            coinService.awardAttendanceBonus(userId, eventId);
-        } catch (Exception e) {
-            log.warn("Failed to award attendance bonus", e);
-        }
+        coinService.awardAttendanceBonus(userId, eventId);
     }
 
     public List<EventRegistration> getEventRegistrations(String eventId) {
