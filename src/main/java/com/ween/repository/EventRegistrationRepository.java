@@ -19,6 +19,15 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
     long countByEventId(String eventId);
     long countByEventIdAndIsJoinedTrue(String eventId);
     long countByIsJoinedTrue();
+    long countByUserIdAndIsJoinedTrue(String userId);
+    @Query("""
+            SELECT COUNT(r) FROM EventRegistration r
+            WHERE r.userId = :userId AND r.isJoined = true
+              AND r.eventId IN (SELECT e.id FROM Event e WHERE e.category = :category)
+            """)
+    long countJoinedByUserIdAndEventCategory(
+            @Param("userId") String userId,
+            @Param("category") com.ween.enums.EventCategory category);
     List<EventRegistration> findByUserId(String userId);
 
     @Query("SELECT r.eventId, COUNT(r) FROM EventRegistration r WHERE r.eventId IN :eventIds GROUP BY r.eventId")

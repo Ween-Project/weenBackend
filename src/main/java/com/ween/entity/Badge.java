@@ -1,6 +1,7 @@
 package com.ween.entity;
 
 import com.ween.enums.BadgeType;
+import com.ween.enums.AchievementType;
 import com.ween.enums.EventCategory;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -28,7 +29,14 @@ public class Badge extends BaseEntity {
     @Column(nullable = false, length = 50)
     private BadgeType type;
 
-    // Optional: Only used if type == EVENT_CATEGORY
+    @Enumerated(EnumType.STRING)
+    @Column(name = "achievement_type", length = 50)
+    private AchievementType achievementType;
+
+    @Column(name = "achievement_threshold", nullable = false)
+    private Integer achievementThreshold;
+
+    // Required only for EVENT_CATEGORY_ATTENDANCE_COUNT.
     @Enumerated(EnumType.STRING)
     @Column(name = "event_category", length = 50)
     private EventCategory eventCategory;
