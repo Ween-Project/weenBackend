@@ -1,13 +1,17 @@
 package com.ween.service;
 
+import com.ween.dto.response.CheckinResponse;
 import com.ween.entity.*;
 import com.ween.enums.ParticipationStatus;
+import com.ween.exception.AlreadyExistsException;
 import com.ween.exception.EventNotRegisteredException;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.repository.*;
+import com.ween.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -25,6 +29,9 @@ public class ParticipationService {
     private final CertificateTriggerService certificateTriggerService;
     private final EventRegistrationRepository eventRegistrationRepository;
     private final NotificationService notificationService;
+    private final QrService qrService;
+    private final RegistrationService registrationService;
+    private final SecurityUtil securityUtil;
 
 
     private void validateUserRegistration(String eventId, String userId) {
@@ -36,8 +43,40 @@ public class ParticipationService {
     }
 
     @Transactional
-    public void joinEvent(String userId, String eventId) {
+    public CheckinResponse checkinViaQr(String eventId, String qrToken) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
+
+        String currentUserId = securityUtil.getCurrentUserId();
+        if (!event.getOrganizationId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the event owner can perform check-in");
+        }
+
+        String participantUserId = qrService.validateAndDecryptQrToken(qrToken);
+        User participant = userRepository.findById(participantUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Participant not found: " + participantUserId));
+
+        joinEventInternal(participantUserId, eventId);
+        registrationService.markUserAsJoined(eventId, participantUserId);
+
+        String participantName = participant.getFullName() != null && !participant.getFullName().isBlank()
+                ? participant.getFullName()
+                : participant.getUsername();
+
+        return CheckinResponse.builder()
+                .status("CHECKED_IN")
+                .participantName(participantName)
+                .participantPhoto(participant.getProfilePhotoUrl())
+                .message("Check-in successful")
+                .build();
+    }
+
+    private void joinEventInternal(String userId, String eventId) {
         validateUserRegistration(eventId, userId);
+
+        if (participationRepository.findByUserIdAndEventId(userId, eventId).isPresent()) {
+            throw new AlreadyExistsException("User has already checked in to this event");
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -54,6 +93,7 @@ public class ParticipationService {
         participationRepository.save(participation);
         notificationService.createAttendanceConfirmedNotification(userId, eventId);
     }
+
 
     @Transactional
     public void completeParticipation(String userId, String eventId) {
