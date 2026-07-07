@@ -94,25 +94,6 @@ public class ParticipationService {
         notificationService.createAttendanceConfirmedNotification(userId, eventId);
     }
 
-    @Transactional
-    public void joinEvent(String userId, String eventId) {
-        validateUserRegistration(eventId, userId);
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-
-        Participation participation = Participation.builder()
-                .user(user)
-                .event(event)
-                .status(ParticipationStatus.JOINED)
-                .joinedAt(LocalDateTime.now())
-                .build();
-
-        participationRepository.save(participation);
-        notificationService.createAttendanceConfirmedNotification(userId, eventId);
-    }
 
     @Transactional
     public void completeParticipation(String userId, String eventId) {
