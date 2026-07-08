@@ -12,6 +12,8 @@ import com.ween.repository.OrganizationRepository;
 import com.ween.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
@@ -157,19 +159,21 @@ public class CertificateService {
         return certificateRepository.findByUserId(userId);
     }
 
+    public Page<Certificate> getUserCertificatesPage(String userId, Pageable pageable) {
+        return certificateRepository.findByUserId(userId, pageable);
+    }
+
 
     @Transactional
     public void deleteCertificate(String certificateId) {
-        Certificate certificate = getCertificateById(certificateId);
 
         try {
-            // StorageService removed - PDF deletion functionality disabled
             log.info("Certificate PDF deletion skipped: {}", certificateId);
         } catch (Exception e) {
             log.warn("Failed to delete PDF file", e);
         }
 
-        certificateRepository.delete(certificate);
+        certificateRepository.deleteById(certificateId);
         log.info("Certificate deleted: {}", certificateId);
     }
 
