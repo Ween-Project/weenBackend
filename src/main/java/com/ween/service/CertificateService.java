@@ -166,16 +166,14 @@ public class CertificateService {
 
     @Transactional
     public void deleteCertificate(String certificateId) {
-        Certificate certificate = getCertificateById(certificateId);
 
         try {
-            // StorageService removed - PDF deletion functionality disabled
             log.info("Certificate PDF deletion skipped: {}", certificateId);
         } catch (Exception e) {
             log.warn("Failed to delete PDF file", e);
         }
 
-        certificateRepository.delete(certificate);
+        certificateRepository.deleteById(certificateId);
         log.info("Certificate deleted: {}", certificateId);
     }
 
