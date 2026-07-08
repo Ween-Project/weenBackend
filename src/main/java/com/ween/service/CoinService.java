@@ -31,7 +31,22 @@ public class CoinService {
 
     @Transactional
     private CoinTransaction credit(String userId, Integer amount, CoinReason reason) {
-        return credit(userId, amount, reason, null);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        user.setWeenCoinBalance(user.getWeenCoinBalance() + amount);
+        userRepository.save(user);
+
+        CoinTransaction transaction = CoinTransaction.builder()
+                .userId(userId)
+                .amount(amount)
+                .reason(reason)
+                .build();
+
+        CoinTransaction saved = coinTransactionRepository.save(transaction);
+        badgeService.evaluateUserAchievements(userId);
+        log.info("Coins credited to user {}: {} coins for reason: {}", userId, amount, reason);
+        return saved;
     }
 
     @Transactional
