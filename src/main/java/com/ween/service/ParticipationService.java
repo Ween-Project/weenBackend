@@ -74,22 +74,14 @@ public class ParticipationService {
     private void joinEventInternal(String userId, String eventId) {
         validateUserRegistration(eventId, userId);
 
-        if (participationRepository.findByUserIdAndEventId(userId, eventId).isPresent()) {
+        Participation participation = participationRepository.findByUserIdAndEventId(userId, eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Participation record not found"));
+
+        if (participation.getStatus() == ParticipationStatus.APPROVED) {
             throw new AlreadyExistsException("User has already checked in to this event");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-
-        Participation participation = Participation.builder()
-                .user(user)
-                .event(event)
-                .status(ParticipationStatus.JOINED)
-                .joinedAt(LocalDateTime.now())
-                .build();
-
+        participation.setStatus(ParticipationStatus.APPROVED);
         participationRepository.save(participation);
         notificationService.createAttendanceConfirmedNotification(userId, eventId);
     }

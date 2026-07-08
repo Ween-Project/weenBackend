@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.*;
 public class ParticipationController {
 
     private final ParticipationService participationService;
-    private final SecurityUtil securityUtil;
-
 
     @PostMapping("/checkin-join")
     @io.swagger.v3.oas.annotations.Operation(summary = "Check-in and join to event", description = "Check-in participant to an event using QR token")
@@ -34,15 +32,5 @@ public class ParticipationController {
             log.error("Failed to check-in participant for event: {}", request.getEventId(), e);
             throw e;
         }
-    }
-
-
-    @PostMapping("/complete/{eventId}")
-    public ResponseEntity<String> completeParticipation(@PathVariable String eventId,String organizerId ){
-        String currentUserId = securityUtil.getCurrentUserId();
-
-        participationService.completeParticipation(currentUserId, eventId,organizerId);
-
-        return ResponseEntity.ok("Participation completed and certificate generated.");
     }
 }
