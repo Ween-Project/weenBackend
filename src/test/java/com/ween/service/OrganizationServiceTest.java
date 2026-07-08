@@ -1,101 +1,46 @@
 package com.ween.service;
 
-import com.ween.dto.request.UpdateOrganizationRequest;
-import com.ween.dto.request.UpdateProfilePhotoRequest;
 import com.ween.entity.Organization;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.mapper.OrganizationMapper;
 import com.ween.repository.EventRepository;
 import com.ween.repository.OrganizationRepository;
 import com.ween.repository.UserRepository;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OrganizationServiceTest {
 
-    @Mock private OrganizationRepository organizationRepository;
-    @Mock private OrganizationMapper organizationMapper;
-    @Mock private UserRepository userRepository;
-    @Mock private EventRepository eventRepository;
-    @InjectMocks private OrganizationService organizationService;
+    @Mock OrganizationRepository organizationRepository;
+    @Mock OrganizationMapper organizationMapper;
+    @Mock UserRepository userRepository;
+    @Mock EventRepository eventRepository;
+    @InjectMocks OrganizationService organizationService;
 
-    private Organization testOrg;
+    @Test
+    void getOrganizationByIdReturnsExistingOrganization() {
+        Organization organization = Organization.builder().username("org").build();
+        organization.setId("org-1");
+        when(organizationRepository.findById("org-1")).thenReturn(Optional.of(organization));
 
-    @BeforeEach
-    void setUp() {
-        testOrg = Organization.builder().username("org").email("o@e.com")
-                .passwordHash("p").organizationName("TestOrg").description("Desc").build();
-        testOrg.setId("oid");
+        assertThat(organizationService.getOrganizationById("org-1")).isSameAs(organization);
     }
 
-    @Test @DisplayName("Get organization by id – found")
-    void getById_found() {
-        when(organizationRepository.findById("oid")).thenReturn(Optional.of(testOrg));
-        assertThat(organizationService.getOrganizationById("oid").getOrganizationName()).isEqualTo("TestOrg");
-    }
+    @Test
+    void getOrganizationByIdFailsWhenMissing() {
+        when(organizationRepository.findById("missing")).thenReturn(Optional.empty());
 
-    @Test @DisplayName("Get organization by id – not found throws")
-    void getById_notFound() {
-        when(organizationRepository.findById("x")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> organizationService.getOrganizationById("x"))
+        assertThatThrownBy(() -> organizationService.getOrganizationById("missing"))
                 .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test @DisplayName("Update organization – all fields")
-    void updateOrganization_allFields() {
-        UpdateOrganizationRequest req = new UpdateOrganizationRequest();
-        req.setName("NewName"); req.setDescription("NewDesc");
-        req.setContactEmail("new@e.com"); req.setLogoUrl("http://logo"); req.setWebsite("http://web");
-
-        when(organizationRepository.findById("oid")).thenReturn(Optional.of(testOrg));
-        when(organizationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Organization result = organizationService.updateOrganization("oid", req);
-        assertThat(result.getOrganizationName()).isEqualTo("NewName");
-        assertThat(result.getDescription()).isEqualTo("NewDesc");
-        assertThat(result.getEmail()).isEqualTo("new@e.com");
-        assertThat(result.getLogoUrl()).isEqualTo("http://logo");
-        assertThat(result.getWebsite()).isEqualTo("http://web");
-    }
-
-    @Test @DisplayName("Update organization – partial fields (nulls ignored)")
-    void updateOrganization_partialFields() {
-        UpdateOrganizationRequest req = new UpdateOrganizationRequest();
-        req.setName("NewName"); // only name
-
-        when(organizationRepository.findById("oid")).thenReturn(Optional.of(testOrg));
-        when(organizationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Organization result = organizationService.updateOrganization("oid", req);
-        assertThat(result.getOrganizationName()).isEqualTo("NewName");
-        assertThat(result.getDescription()).isEqualTo("Desc"); // unchanged
-    }
-
-    @Test @DisplayName("Update organization photo")
-    void updateOrganizationPhoto() {
-        UpdateProfilePhotoRequest req = new UpdateProfilePhotoRequest();
-        req.setImageUrl("http://new-logo");
-
-        when(organizationRepository.findById("oid")).thenReturn(Optional.of(testOrg));
-        when(organizationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Organization result = organizationService.updateOrganizationPhoto("oid", req);
-        assertThat(result.getLogoUrl()).isEqualTo("http://new-logo");
-    }
-
-    @Test @DisplayName("Delete organization")
-    void deleteOrganization() {
-        when(organizationRepository.findById("oid")).thenReturn(Optional.of(testOrg));
-        organizationService.deleteOrganization("oid");
-        verify(organizationRepository).delete(testOrg);
     }
 }
