@@ -18,6 +18,8 @@ public interface CoinTransactionRepository extends JpaRepository<CoinTransaction
 
     @Query("SELECT COUNT(ct) FROM CoinTransaction ct WHERE ct.userId = :userId AND ct.reason = :reason")
     long countByUserIdAndReason(@Param("userId") String userId, @Param("reason") CoinReason reason);
+    boolean existsByUserIdAndReasonAndRelatedEntityId(String userId, CoinReason reason, String relatedEntityId);
+
 
     @Query("SELECT COALESCE(SUM(ct.amount), 0) FROM CoinTransaction ct WHERE ct.userId = :userId AND ct.reason = :reason")
     int sumByUserIdAndReason(@Param("userId") String userId, @Param("reason") CoinReason reason);
