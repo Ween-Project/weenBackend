@@ -7,8 +7,11 @@ import com.ween.dto.response.EventResponse;
 import com.ween.dto.response.EventStatsResponse;
 import com.ween.entity.Event;
 import com.ween.entity.Organization;
+import com.ween.entity.User;
 import com.ween.enums.EventCategory;
 import com.ween.enums.EventStatus;
+import com.ween.enums.ParticipationStatus;
+import com.ween.enums.UserRole;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.exception.ServiceUnavailableException;
 import com.ween.mapper.EventMapper;
@@ -37,6 +40,7 @@ import java.util.stream.Collectors;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
     private final EventRegistrationRepository registrationRepository;
     private final EventMapper eventMapper;
@@ -47,6 +51,7 @@ public class EventService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final GroupChatMessageRepository groupChatMessageRepository;
+
 
     @Transactional
     public Event createEvent(CreateEventRequest request, String organizationId) {
@@ -135,24 +140,37 @@ public class EventService {
         return updated;
     }
 
+    private void validateEventAccess(Event event, String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (user.getRole() == UserRole.ADMIN) {
+            return;
+        }
+        if (!event.getOrganizationId().equals(userId)) {
+            throw new AccessDeniedException("Only the event owner or admin can perform this action");
+        }
+    }
+
     @Transactional
-    public void publishEvent(String eventId) {
+    public void publishEvent(String eventId,String userId) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
         event.setStatus(EventStatus.PUBLISHED);
         eventRepository.save(event);
         log.info("Event published: {}", eventId);
     }
 
     @Transactional
-    public void startEvent(String eventId) {
+    public void startEvent(String eventId,String userId) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
         event.setStatus(EventStatus.ONGOING);
         eventRepository.save(event);
         log.info("Event started: {}", eventId);
     }
 
     @Transactional
-    public void completeEvent(String eventId) {
+    public void completeEvent(String eventId,String userId) {
         Event event = getEventById(eventId);
         event.setStatus(EventStatus.COMPLETED);
         eventRepository.save(event);
@@ -162,10 +180,19 @@ public class EventService {
     @Transactional
     public void cancelEvent(String eventId, String userId) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
+        event.setStatus(EventStatus.CANCELLED);
+        eventRepository.save(event);
 
-        if (!event.getOrganizationId().equals(userId)) {
-            throw new AccessDeniedException("Only the event owner can delete this event");
-        }
+        participationRepository.updateStatusByEventId(eventId, ParticipationStatus.CANCELLED);
+
+        log.info("Event cancelled: {} by user: {}", eventId, userId);
+    }
+
+    @Transactional
+    public void deleteEventData(String eventId, String userId) {
+        Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
 
         registrationService.cancelAllRegistrationsForEvent(eventId);
         participationRepository.deleteByEventId(eventId);
@@ -176,16 +203,8 @@ public class EventService {
             chatRoomRepository.delete(room);
         });
         eventRepository.delete(event);
-        log.info("Event deleted: {} by owner: {}", eventId, userId);
+        log.info("Event data fully deleted: {} by owner: {}", eventId, userId);
     }
-
-    @Transactional
-    public void deleteEvent(String eventId) {
-        Event event = getEventById(eventId);
-        eventRepository.delete(event);
-        log.info("Event deleted: {}", eventId);
-    }
-
     public Page<Event> getAllPublishedEvents(Pageable pageable) {
         return eventRepository.findAll(pageable);
     }
