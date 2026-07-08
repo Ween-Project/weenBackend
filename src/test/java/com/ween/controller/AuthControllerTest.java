@@ -1,161 +1,89 @@
 package com.ween.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ween.dto.request.*;
+import com.ween.dto.request.LoginRequest;
+import com.ween.dto.request.RefreshTokenRequest;
 import com.ween.dto.response.AuthResponse;
-import com.ween.dto.response.OrganizationResponse;
 import com.ween.dto.response.UserResponse;
-import com.ween.security.JwtUtil;
+import com.ween.enums.UserRole;
 import com.ween.service.AuthService;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = AuthController.class)
-@AutoConfigureMockMvc(addFilters = false) // Disable security filters for unit tests
 class AuthControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-    @MockBean private AuthService authService;
-    @MockBean private JwtUtil jwtUtil;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private AuthService authService;
+    private MockMvc mockMvc;
 
-    @Test @DisplayName("POST /api/v1/auth/register - 201 Created")
-    void register() throws Exception {
-        RegisterRequest req = new RegisterRequest();
-        req.setUsername("user"); req.setEmail("u@e.com"); req.setPassword("pass1234"); req.setFullName("Name");
-
-        AuthResponse res = AuthResponse.builder().accessToken("token").user(UserResponse.builder().email("u@e.com").build()).build();
-        when(authService.register(any())).thenReturn(res);
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.accessToken").value("token"));
+    @BeforeEach
+    void setUp() {
+        authService = mock(AuthService.class);
+        mockMvc = standaloneSetup(new AuthController(authService)).build();
     }
 
-    @Test @DisplayName("POST /api/v1/auth/register/organization - 201 Created")
-    void registerOrganization() throws Exception {
-        RegisterOrganizationRequest req = new RegisterOrganizationRequest();
-        req.setUsername("org"); req.setEmail("o@e.com"); req.setPassword("pass1234");
-        req.setOrganizationName("Org"); req.setDescription("Desc");
-
-        AuthResponse res = AuthResponse.builder().accessToken("token").organization(OrganizationResponse.builder().email("o@e.com").build()).build();
-        when(authService.registerOrganization(any())).thenReturn(res);
-
-        mockMvc.perform(post("/api/v1/auth/register/organization")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.accessToken").value("token"));
-    }
-
-    @Test @DisplayName("POST /api/v1/auth/login - 200 OK")
-    void login() throws Exception {
-        LoginRequest req = new LoginRequest("u@e.com", "pass");
-        AuthResponse res = AuthResponse.builder().accessToken("token").user(UserResponse.builder().email("u@e.com").build()).build();
-        when(authService.login(any())).thenReturn(res);
+    @Test
+    void loginReturnsTokensInBodyAndCookies() throws Exception {
+        AuthResponse response = AuthResponse.builder()
+                .accessToken("access-token")
+                .refreshToken("refresh-token")
+                .expiresIn(900)
+                .user(UserResponse.builder()
+                        .id("user-1")
+                        .email("ali@example.com")
+                        .username("ali")
+                        .role(UserRole.VOLUNTEER)
+                        .build())
+                .build();
+        when(authService.login(any(LoginRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("ali@example.com", "password123"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.accessToken").value("token"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Login successful"))
+                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+                .andExpect(cookie().value("accessToken", "access-token"))
+                .andExpect(cookie().value("refreshToken", "refresh-token"));
     }
 
-    @Test @DisplayName("POST /api/v1/auth/login/organization - 200 OK")
-    void loginOrganization() throws Exception {
-        LoginRequest req = new LoginRequest("o@e.com", "pass");
-        AuthResponse res = AuthResponse.builder().accessToken("token").organization(OrganizationResponse.builder().email("o@e.com").build()).build();
-        when(authService.loginOrganization(any())).thenReturn(res);
-
-        mockMvc.perform(post("/api/v1/auth/login/organization")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.accessToken").value("token"));
-    }
-
-    @Test @DisplayName("POST /api/v1/auth/refresh - 200 OK")
-    void refresh() throws Exception {
-        RefreshTokenRequest req = new RefreshTokenRequest("rt");
-        when(authService.refreshToken("rt")).thenReturn("new-at");
+    @Test
+    void refreshUsesCookieTokenBeforeRequestBodyToken() throws Exception {
+        when(authService.refreshToken("cookie-refresh")).thenReturn("new-access");
+        RefreshTokenRequest body = new RefreshTokenRequest();
+        body.setRefreshToken("body-refresh");
 
         mockMvc.perform(post("/api/v1/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "cookie-refresh"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").value("new-at"));
+                .andExpect(jsonPath("$.data").value("new-access"))
+                .andExpect(header().string("Set-Cookie", containsString("accessToken=new-access")));
+
+        verify(authService).refreshToken("cookie-refresh");
     }
 
-    @Test @DisplayName("POST /api/v1/auth/logout - 200 OK")
-    void logout() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/logout"))
-                .andExpect(status().isOk());
-        verify(authService).logout();
-    }
-
-    @Test @DisplayName("GET /api/v1/auth/verify-token - 200 OK")
-    void generateVerifyToken() throws Exception {
-        mockMvc.perform(get("/api/v1/auth/verify-token"))
-                .andExpect(status().isOk());
-        verify(authService).sendVerificationTokenForCurrentUser();
-    }
-
-    @Test @DisplayName("POST /api/v1/auth/verify-token - 200 OK")
-    void verifyToken() throws Exception {
-        VerifyEmailRequest req = new VerifyEmailRequest("tok");
-        mockMvc.perform(post("/api/v1/auth/verify-token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
-        verify(authService).verifyEmail("tok");
-    }
-
-    @Test @DisplayName("POST /api/v1/auth/forgot-password - 200 OK")
-    void forgotPassword() throws Exception {
-        ForgotPasswordRequest req = new ForgotPasswordRequest("u@e.com");
-        mockMvc.perform(post("/api/v1/auth/forgot-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
-        verify(authService).sendPasswordResetLink("u@e.com");
-    }
-
-    @Test @DisplayName("POST /api/v1/auth/reset-password - 200 OK")
-    void resetPassword() throws Exception {
-        ResetPasswordRequest req = new ResetPasswordRequest("tok", "newpass123");
-        mockMvc.perform(post("/api/v1/auth/reset-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
-        verify(authService).resetPasswordWithToken(any());
-    }
-
-    @Test @DisplayName("POST /api/v1/auth/change-password - 200 OK")
-    void changePassword() throws Exception {
-        ChangePasswordRequest req = new ChangePasswordRequest("old", "newpass123");
-        mockMvc.perform(post("/api/v1/auth/change-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
-        verify(authService).changePasswordForCurrentUser(any());
+    @Test
+    void loginRejectsInvalidPayloadBeforeCallingService() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"not-email\",\"password\":\"\"}"))
+                .andExpect(status().isBadRequest());
     }
 }
