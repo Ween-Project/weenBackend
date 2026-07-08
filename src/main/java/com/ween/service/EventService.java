@@ -152,12 +152,17 @@ public class EventService {
     }
 
     private void validateEventAccess(Event event, String userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        if (user.getRole() == UserRole.ADMIN) {
+        if (event.getOrganizationId().equals(userId)) {
             return;
         }
-        if (!event.getOrganizationId().equals(userId)) {
+
+        boolean isAdmin = userRepository.findById(userId)
+                .map(user -> user.getRole() == UserRole.ADMIN)
+                .orElseGet(() -> organizationRepository.findById(userId)
+                        .map(org -> org.getRole() == UserRole.ADMIN)
+                        .orElse(false));
+
+        if (!isAdmin) {
             throw new AccessDeniedException("Only the event owner or admin can perform this action");
         }
     }
@@ -388,6 +393,7 @@ public class EventService {
 
     public EventStatsResponse getEventStats(String userId, String id) {
         Event event = getEventById(id);
+        validateEventAccess(event, userId);
         long totalRegistered = registrationService.getEventRegistrationCount(id);
         long totalAttended = registrationService.getEventJoinedCount(id);
 
