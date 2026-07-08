@@ -38,10 +38,10 @@ public class ParticipationController {
 
 
     @PostMapping("/complete/{eventId}")
-    public ResponseEntity<String> completeParticipation(@PathVariable String eventId) {
+    public ResponseEntity<String> completeParticipation(@PathVariable String eventId,String organizerId ){
         String currentUserId = securityUtil.getCurrentUserId();
 
-        participationService.completeParticipation(currentUserId, eventId);
+        participationService.completeParticipation(currentUserId, eventId,organizerId);
 
         return ResponseEntity.ok("Participation completed and certificate generated.");
     }
