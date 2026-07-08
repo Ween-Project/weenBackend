@@ -96,8 +96,18 @@ public class ParticipationService {
 
 
     @Transactional
-    public void completeParticipation(String userId, String eventId) {
+    public void completeParticipation(String userId, String eventId,String organizerId) {
         validateUserRegistration(eventId, userId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        com.ween.entity.User orgUser = userRepository.findById(organizerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organizer not found"));
+
+        if (orgUser.getRole() != com.ween.enums.UserRole.ADMIN && !event.getOrganizationId().equals(organizerId)) {
+            throw new AccessDeniedException("Only the event owner or admin can complete a participation");
+        }
 
         Participation participation = participationRepository.findByUserIdAndEventId(userId, eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Participation record not found"));

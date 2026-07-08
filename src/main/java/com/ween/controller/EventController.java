@@ -4,12 +4,11 @@ import com.ween.dto.request.CreateEventRequest;
 import com.ween.dto.request.UpdateEventRequest;
 import com.ween.dto.response.*;
 import com.ween.entity.Event;
-import com.ween.entity.EventRegistration;
 import com.ween.enums.EventCategory;
-import com.ween.mapper.EventMapper;
+import com.ween.enums.EventStatus;
+import com.ween.security.SecurityUtil;
 import com.ween.exception.UnauthorizedException;
 import com.ween.service.EventService;
-import com.ween.service.RegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,6 +28,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -39,8 +39,7 @@ import java.time.LocalDateTime;
 public class EventController {
 
     private final EventService eventService;
-    private final RegistrationService registrationService;
-    private final EventMapper eventMapper;
+    private final SecurityUtil securityUtil;
 
     @GetMapping
     @Operation(summary = "List events", description = "Retrieve list of events with optional filters and pagination")
@@ -97,12 +96,12 @@ public class EventController {
     public ResponseEntity<ApiResponse<Event>> createEvent(
             @Valid @RequestBody CreateEventRequest request) {
         try {
-            String orgId = getCurrentUserId();
+            String orgId = securityUtil.getCurrentUserId();
             Event response = eventService.createEvent(request, orgId);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.ok(response, "Event created successfully"));
         } catch (Exception e) {
-            log.error("Failed to create event for user: {}", getCurrentUserId(), e);
+            log.error("Failed to create event for user: {}", securityUtil.getCurrentUserId(), e);
             throw e;
         }
     }
@@ -121,7 +120,7 @@ public class EventController {
             @Parameter(description = "Event ID", required = true) @PathVariable String id,
             @Valid @RequestBody UpdateEventRequest request) {
         try {
-            String userId = getCurrentUserId();
+            String userId = securityUtil.getCurrentUserId();
             Event response = eventService.updateEvent(id, userId, request);
             return ResponseEntity.ok(ApiResponse.ok(response, "Event updated successfully"));
         } catch (Exception e) {
@@ -143,8 +142,8 @@ public class EventController {
     public ResponseEntity<ApiResponse<Void>> deleteEvent(
             @Parameter(description = "Event ID", required = true) @PathVariable String id) {
         try {
-            String userId = getCurrentUserId();
-            eventService.cancelEvent(id, userId);
+            String userId = securityUtil.getCurrentUserId();
+            eventService.deleteEventData(id, userId);
             return ResponseEntity.ok(ApiResponse.ok(null, "Event deleted successfully"));
         } catch (Exception e) {
             log.error("Failed to delete event: {}", id, e);
@@ -152,68 +151,70 @@ public class EventController {
         }
     }
 
-    @PostMapping("/{id}/register")
+    @PostMapping("/{id}/publish")
     @Transactional
-    @Operation(summary = "Register for event", description = "Register user for an event (VOLUNTEER)")
+    @Operation(summary = "Publish event", description = "Publish a draft event (ORGANIZER/ADMIN only)")
     @SecurityRequirement(name = "Bearer")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Registered successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Event not found"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Already registered or event capacity exceeded")
-    })
-    public ResponseEntity<ApiResponse<EventRegistration>> registerForEvent(
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZER')")
+    public ResponseEntity<ApiResponse<Void>> publishEvent(
             @Parameter(description = "Event ID", required = true) @PathVariable String id) {
         try {
-            String userId = getCurrentUserId();
-            EventRegistration response = registrationService.registerForEvent(id, userId);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.ok(response, "Registered successfully"));
+            String userId = securityUtil.getCurrentUserId();
+            eventService.publishEvent(id, userId);
+            return ResponseEntity.ok(ApiResponse.ok(null, "Event published successfully"));
         } catch (Exception e) {
-            log.error("Failed to register for event: {}", id, e);
+            log.error("Failed to publish event: {}", id, e);
             throw e;
         }
     }
 
-    @DeleteMapping("/{id}/register")
+    @PostMapping("/{id}/start")
     @Transactional
-    @Operation(summary = "Cancel event registration", description = "Cancel user's registration for an event")
+    @Operation(summary = "Start event", description = "Mark event as ongoing (ORGANIZER/ADMIN only)")
     @SecurityRequirement(name = "Bearer")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Registration cancelled successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Registration not found")
-    })
-    public ResponseEntity<ApiResponse<Void>> cancelEventRegistration(
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZER')")
+    public ResponseEntity<ApiResponse<Void>> startEvent(
             @Parameter(description = "Event ID", required = true) @PathVariable String id) {
         try {
-            String userId = getCurrentUserId();
-            registrationService.cancelRegistration(id, userId);
-            return ResponseEntity.ok(ApiResponse.ok(null, "Registration cancelled successfully"));
+            String userId = securityUtil.getCurrentUserId();
+            eventService.startEvent(id, userId);
+            return ResponseEntity.ok(ApiResponse.ok(null, "Event started successfully"));
         } catch (Exception e) {
-            log.error("Failed to cancel registration for event: {}", id, e);
+            log.error("Failed to start event: {}", id, e);
             throw e;
         }
     }
 
-    @GetMapping("/{id}/participants")
-    @Operation(summary = "Get event participants", description = "Get list of event participants (ORGANIZER only)")
+    @PostMapping("/{id}/complete")
+    @Transactional
+    @Operation(summary = "Complete event", description = "Mark event as completed (ORGANIZER/ADMIN only)")
     @SecurityRequirement(name = "Bearer")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Participants retrieved successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Insufficient permissions"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Event not found")
-    })
-    public ResponseEntity<ApiResponse<Page<ParticipantResponse>>> getEventParticipants(
-            @Parameter(description = "Event ID", required = true) @PathVariable String id,
-            @PageableDefault(size = 50) Pageable pageable) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZER')")
+    public ResponseEntity<ApiResponse<Void>> completeEvent(
+            @Parameter(description = "Event ID", required = true) @PathVariable String id) {
         try {
-            String userId = getCurrentUserId();
-            Page<ParticipantResponse> response = registrationService.getEventParticipants(userId, id, pageable);
-            return ResponseEntity.ok(ApiResponse.ok(response, "Participants retrieved successfully"));
+            String userId = securityUtil.getCurrentUserId();
+            eventService.completeEvent(id, userId);
+            return ResponseEntity.ok(ApiResponse.ok(null, "Event completed successfully"));
         } catch (Exception e) {
-            log.error("Failed to retrieve participants for event: {}", id, e);
+            log.error("Failed to complete event: {}", id, e);
+            throw e;
+        }
+    }
+
+    @PostMapping("/{id}/cancel")
+    @Transactional
+    @Operation(summary = "Cancel event", description = "Cancel an event (ORGANIZER/ADMIN only)")
+    @SecurityRequirement(name = "Bearer")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZER')")
+    public ResponseEntity<ApiResponse<Void>> cancelEvent(
+            @Parameter(description = "Event ID", required = true) @PathVariable String id) {
+        try {
+            String userId = securityUtil.getCurrentUserId();
+            eventService.cancelEvent(id, userId);
+            return ResponseEntity.ok(ApiResponse.ok(null, "Event cancelled successfully"));
+        } catch (Exception e) {
+            log.error("Failed to cancel event: {}", id, e);
             throw e;
         }
     }
@@ -230,7 +231,7 @@ public class EventController {
     public ResponseEntity<ApiResponse<EventStatsResponse>> getEventStats(
             @Parameter(description = "Event ID", required = true) @PathVariable String id) {
         try {
-            String userId = getCurrentUserId();
+            String userId = securityUtil.getCurrentUserId();
             EventStatsResponse response = eventService.getEventStats(userId, id);
             return ResponseEntity.ok(ApiResponse.ok(response, "Statistics retrieved successfully"));
         } catch (Exception e) {
@@ -239,14 +240,4 @@ public class EventController {
         }
     }
 
-    private String getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || authentication instanceof AnonymousAuthenticationToken
-                || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-        return (String) authentication.getPrincipal();
-    }
 }
