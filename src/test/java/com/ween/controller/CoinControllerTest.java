@@ -1,52 +1,60 @@
 package com.ween.controller;
 
-import com.ween.entity.CoinTransaction;
-import com.ween.security.JwtUtil;
+import com.ween.security.SecurityUtil;
 import com.ween.service.CoinService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
-import com.ween.service.LeaderboardService;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = CoinController.class)
-@AutoConfigureMockMvc(addFilters = false)
 class CoinControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @MockBean private CoinService coinService;
-    @MockBean private LeaderboardService leaderboardService;
-    @MockBean private JwtUtil jwtUtil;
+    private CoinService coinService;
+    private SecurityUtil securityUtil;
+    private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("test-user-id", null, List.of())
-        );
+        coinService = mock(CoinService.class);
+        securityUtil = mock(SecurityUtil.class);
+        mockMvc = standaloneSetup(new CoinController(coinService, securityUtil))
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
     }
 
-    @Test @DisplayName("GET /api/v1/coins/transactions - get coin history")
-    void getCoinHistory() throws Exception {
-        when(coinService.getUserCoinTransactions(eq("test-user-id"), any()))
-                .thenReturn(List.of(CoinTransaction.builder().amount(100).build()));
+    @Test
+    void getCoinBalanceReturnsCurrentUsersBalance() throws Exception {
+        when(securityUtil.getCurrentUserId()).thenReturn("user-1");
+        when(coinService.getUserCoinBalance("user-1")).thenReturn(125);
+
+        mockMvc.perform(get("/api/v1/coins/balance"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(125));
+
+        verify(coinService).getUserCoinBalance("user-1");
+    }
+
+    @Test
+    void getCoinTransactionsReturnsPage() throws Exception {
+        when(securityUtil.getCurrentUserId()).thenReturn("user-1");
+        when(coinService.getUserCoinTransactions(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
         mockMvc.perform(get("/api/v1/coins/transactions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.message").value("Transactions retrieved successfully"));
     }
 }
