@@ -1,18 +1,32 @@
 package com.ween.service;
 
 import com.ween.dto.request.CreateEventRequest;
+
+import com.ween.dto.request.CreateEventRequest;
 import com.ween.dto.request.UpdateEventRequest;
 import com.ween.dto.response.EventDetailResponse;
 import com.ween.dto.response.EventResponse;
 import com.ween.dto.response.EventStatsResponse;
 import com.ween.entity.Event;
+import com.ween.entity.User;
 import com.ween.entity.Organization;
 import com.ween.enums.EventCategory;
 import com.ween.enums.EventStatus;
+import com.ween.enums.UserRole;
+import com.ween.enums.ParticipationStatus;
+import com.ween.entity.Participation;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.exception.ServiceUnavailableException;
 import com.ween.mapper.EventMapper;
-import com.ween.repository.*;
+import com.ween.repository.EventRegistrationRepository;
+import com.ween.repository.EventRepository;
+import com.ween.repository.UserRepository;
+import com.ween.repository.OrganizationRepository;
+import com.ween.repository.ParticipationRepository;
+import com.ween.repository.CertificateRepository;
+import com.ween.repository.ChatRoomRepository;
+import com.ween.repository.ChatRoomMemberRepository;
+import com.ween.repository.GroupChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -37,6 +51,7 @@ import java.util.stream.Collectors;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
     private final EventRegistrationRepository registrationRepository;
     private final EventMapper eventMapper;
@@ -83,8 +98,9 @@ public class EventService {
     }
 
     @Transactional
-    public Event updateEvent(String eventId, String id, UpdateEventRequest request) {
+    public Event updateEvent(String eventId, String userId, UpdateEventRequest request) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
 
         if (request.getTitle() != null) {
             event.setTitle(request.getTitle());
@@ -135,37 +151,68 @@ public class EventService {
         return updated;
     }
 
+    private void validateEventAccess(Event event, String userId) {
+        if (event.getOrganizationId().equals(userId)) {
+            return;
+        }
+
+        boolean isAdmin = userRepository.findById(userId)
+                .map(user -> user.getRole() == UserRole.ADMIN)
+                .orElseGet(() -> organizationRepository.findById(userId)
+                        .map(org -> org.getRole() == UserRole.ADMIN)
+                        .orElse(false));
+
+        if (!isAdmin) {
+            throw new AccessDeniedException("Only the event owner or admin can perform this action");
+        }
+    }
+
     @Transactional
-    public void publishEvent(String eventId) {
+    public void publishEvent(String eventId, String userId) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
         event.setStatus(EventStatus.PUBLISHED);
         eventRepository.save(event);
-        log.info("Event published: {}", eventId);
+        log.info("Event published: {} by user: {}", eventId, userId);
     }
 
     @Transactional
-    public void startEvent(String eventId) {
+    public void startEvent(String eventId, String userId) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
         event.setStatus(EventStatus.ONGOING);
         eventRepository.save(event);
-        log.info("Event started: {}", eventId);
+        log.info("Event started: {} by user: {}", eventId, userId);
     }
 
     @Transactional
-    public void completeEvent(String eventId) {
+    public void completeEvent(String eventId, String userId) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
         event.setStatus(EventStatus.COMPLETED);
         eventRepository.save(event);
-        log.info("Event completed: {}", eventId);
+
+        participationRepository.updateStatusByEventId(eventId, ParticipationStatus.FINISHED);
+
+        log.info("Event completed: {} by user: {}", eventId, userId);
     }
 
     @Transactional
     public void cancelEvent(String eventId, String userId) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
+        event.setStatus(EventStatus.CANCELLED);
+        eventRepository.save(event);
 
-        if (!event.getOrganizationId().equals(userId)) {
-            throw new AccessDeniedException("Only the event owner can delete this event");
-        }
+        participationRepository.updateStatusByEventId(eventId, ParticipationStatus.CANCELLED);
+
+        log.info("Event cancelled: {} by user: {}", eventId, userId);
+    }
+
+    @Transactional
+    public void deleteEventData(String eventId, String userId) {
+        Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
 
         registrationService.cancelAllRegistrationsForEvent(eventId);
         participationRepository.deleteByEventId(eventId);
@@ -176,81 +223,7 @@ public class EventService {
             chatRoomRepository.delete(room);
         });
         eventRepository.delete(event);
-        log.info("Event deleted: {} by owner: {}", eventId, userId);
-    }
-
-    @Transactional
-    public void deleteEvent(String eventId) {
-        Event event = getEventById(eventId);
-        eventRepository.delete(event);
-        log.info("Event deleted: {}", eventId);
-    }
-
-    public Page<Event> getAllPublishedEvents(Pageable pageable) {
-        return eventRepository.findAll(pageable);
-    }
-
-    public long getEventParticipantCount(String eventId) {
-        return eventRepository.findById(eventId)
-                .map(event -> {
-                    // Will be calculated from EventRegistration count in RegistrationService
-                    return 0L;
-                })
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-    }
-
-    public boolean isEventCapacityFull(String eventId) {
-        Event event = getEventById(eventId);
-        if (event.getMaxParticipants() == null) {
-            return false;
-        }
-
-        // Get registrations count from repository
-        long registrationCount = eventRepository.findById(eventId)
-                .map(e -> 0L) // Will be replaced with actual count from RegistrationService
-                .orElse(0L);
-
-        return registrationCount >= event.getMaxParticipants();
-    }
-
-    public Integer getRemainingCapacity(String eventId) {
-        Event event = getEventById(eventId);
-        if (event.getMaxParticipants() == null) {
-            return Integer.MAX_VALUE;
-        }
-
-        long registrationCount = 0; // Will be fetched from RegistrationService
-        return Math.max(0, (int) (event.getMaxParticipants() - registrationCount));
-    }
-
-    public boolean isRegistrationDeadlinePassed(String eventId) {
-        Event event = getEventById(eventId);
-        if (event.getRegistrationDeadline() == null) {
-            return false;
-        }
-        return java.time.LocalDateTime.now().isAfter(event.getRegistrationDeadline());
-    }
-
-    public boolean isEventInFuture(String eventId) {
-        Event event = getEventById(eventId);
-        if (event.getStartDate() == null) {
-            return false;
-        }
-        return event.getStartDate().isAfter(java.time.LocalDateTime.now());
-    }
-
-    public boolean isEventOngoing(String eventId) {
-        Event event = getEventById(eventId);
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
-        return now.isAfter(event.getStartDate()) && now.isBefore(event.getEndDate());
-    }
-
-    @Transactional
-    public void setCustomFields(String eventId, String customFieldsJson) {
-        Event event = getEventById(eventId);
-        event.setCustomFields(customFieldsJson);
-        eventRepository.save(event);
-        log.info("Custom fields set for event: {}", eventId);
+        log.info("Event data fully deleted: {} by owner: {}", eventId, userId);
     }
 
     public List<EventResponse> getOrganizationEventsList(String orgId) {
@@ -420,6 +393,7 @@ public class EventService {
 
     public EventStatsResponse getEventStats(String userId, String id) {
         Event event = getEventById(id);
+        validateEventAccess(event, userId);
         long totalRegistered = registrationService.getEventRegistrationCount(id);
         long totalAttended = registrationService.getEventJoinedCount(id);
 
