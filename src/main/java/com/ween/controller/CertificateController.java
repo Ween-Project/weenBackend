@@ -1,9 +1,11 @@
 package com.ween.controller;
 
+import com.ween.dto.response.ApiResponse;
 import com.ween.entity.Certificate;
 import com.ween.security.SecurityUtil;
 import com.ween.service.CertificateService;
 import com.ween.repository.CertificateRepository;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -47,5 +49,12 @@ public class CertificateController {
                 .build());
 
         return new ResponseEntity<>(pdfContent, headers, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{certificateId}")
+    @Operation(summary = "Delete certificate")
+    public ResponseEntity<ApiResponse<Void>> deleteCertificate(@PathVariable String certificateId) {
+        certificateService.deleteCertificate(certificateId);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Certificate deleted successfully"));
     }
 }

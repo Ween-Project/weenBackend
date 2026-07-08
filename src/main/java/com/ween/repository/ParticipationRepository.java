@@ -8,4 +8,5 @@ import java.util.Optional;
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, String> {
     Optional<Participation> findByUserIdAndEventId(String userId, String eventId);
+    void deleteByEventId(String eventId);
 }
