@@ -75,7 +75,17 @@ public class ParticipationService {
         validateUserRegistration(eventId, userId);
 
         Participation participation = participationRepository.findByUserIdAndEventId(userId, eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Participation record not found"));
+                .orElseGet(() -> {
+                    log.info("Participation record missing for registered user. Creating new one. User: {}, Event: {}", userId, eventId);
+                    Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                    User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                    return participationRepository.save(Participation.builder()
+                            .user(user)
+                            .event(event)
+                            .status(ParticipationStatus.JOINED)
+                            .joinedAt(LocalDateTime.now())
+                            .build());
+                });
 
         if (participation.getStatus() == ParticipationStatus.APPROVED) {
             throw new AlreadyExistsException("User has already checked in to this event");
@@ -88,28 +98,44 @@ public class ParticipationService {
 
 
     @Transactional
-    public void completeParticipation(String userId, String eventId,String organizerId) {
+    public void completeParticipation(String userId, String eventId, String organizerId) {
         validateUserRegistration(eventId, userId);
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
-        com.ween.entity.User orgUser = userRepository.findById(organizerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Organizer not found"));
+        boolean isOwner = event.getOrganizationId().equals(organizerId);
+        boolean isAdmin = false;
 
-        if (orgUser.getRole() != com.ween.enums.UserRole.ADMIN && !event.getOrganizationId().equals(organizerId)) {
+        if (!isOwner) {
+            java.util.Optional<com.ween.entity.User> userOpt = userRepository.findById(organizerId);
+            if (userOpt.isPresent() && userOpt.get().getRole() == com.ween.enums.UserRole.ADMIN) {
+                isAdmin = true;
+            }
+        }
+
+        if (!isOwner && !isAdmin) {
             throw new AccessDeniedException("Only the event owner or admin can complete a participation");
         }
 
         Participation participation = participationRepository.findByUserIdAndEventId(userId, eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Participation record not found"));
+                .orElseGet(() -> {
+                    log.info("Participation record missing for registered user. Creating new one. User: {}, Event: {}", userId, eventId);
+                    User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                    return participationRepository.save(Participation.builder()
+                            .user(user)
+                            .event(event)
+                            .status(ParticipationStatus.APPROVED)
+                            .joinedAt(LocalDateTime.now())
+                            .build());
+                });
 
         participation.setStatus(ParticipationStatus.FINISHED);
         participationRepository.save(participation);
 
         log.info("Participation completed. Triggering certificate generation for User: {}, Event: {}", userId, eventId);
 
-        Certificate generatedCert=certificateTriggerService.autoGenerateCertificateRecord(
+        Certificate generatedCert = certificateTriggerService.autoGenerateCertificateRecord(
                 userId,
                 eventId,
                 participation.getEvent().getCategory()
