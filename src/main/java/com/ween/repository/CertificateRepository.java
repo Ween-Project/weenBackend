@@ -16,4 +16,5 @@ public interface CertificateRepository extends JpaRepository<Certificate, String
     Optional<Certificate> findByCertificateNumber(String number);
     void deleteById(String id);
     boolean existsByUserIdAndEventId(String userId, String eventId);
+    void deleteByEventId(String eventId);
 }
