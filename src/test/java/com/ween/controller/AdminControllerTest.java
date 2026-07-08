@@ -1,111 +1,120 @@
 package com.ween.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ween.dto.request.BadgeRequest;
 import com.ween.dto.response.AdminStatsResponse;
+import com.ween.dto.response.BadgeResponse;
 import com.ween.dto.response.OrganizationResponse;
-import com.ween.entity.Organization;
-import com.ween.entity.User;
-import com.ween.security.JwtUtil;
+import com.ween.dto.response.UserResponse;
+import com.ween.enums.AchievementType;
+import com.ween.enums.BadgeType;
 import com.ween.service.AdminService;
+import com.ween.service.BadgeService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
-@WebMvcTest(controllers = AdminController.class)
-@AutoConfigureMockMvc(addFilters = false)
 class AdminControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @MockBean private AdminService adminService;
-    @MockBean private JwtUtil jwtUtil;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private AdminService adminService;
+    private BadgeService badgeService;
+    private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("admin-id", null, List.of())
-        );
+        adminService = mock(AdminService.class);
+        badgeService = mock(BadgeService.class);
+        mockMvc = standaloneSetup(new AdminController(adminService, badgeService))
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
     }
 
-    @Test @DisplayName("GET /api/v1/admin/users - get all users")
-    void getAllUsers() throws Exception {
-        Page<com.ween.dto.response.UserResponse> page = new PageImpl<>(List.of());
-        when(adminService.getAllUsers(eq(null), any(Pageable.class))).thenReturn(page);
+    @Test
+    void getAllUsersReturnsPage() throws Exception {
+        UserResponse user = UserResponse.builder().id("user-1").username("ali").build();
+        when(adminService.getAllUsers(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(user), PageRequest.of(0, 50), 1));
 
-        mockMvc.perform(get("/api/v1/admin/users"))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/admin/users").param("search", "ali"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Users retrieved successfully"))
+                .andExpect(jsonPath("$.data.content[0].username").value("ali"));
     }
 
-    @Test @DisplayName("PUT /api/v1/admin/users/{id}/ban - ban user")
-    void banUser() throws Exception {
-        when(adminService.banUnbanUser(eq("uid"), eq(true), eq("Spam")))
-                .thenReturn(new com.ween.dto.response.UserResponse());
+    @Test
+    void banUnbanUserDelegatesToService() throws Exception {
+        when(adminService.banUnbanUser("user-1", true, "spam"))
+                .thenReturn(UserResponse.builder().id("user-1").username("ali").build());
 
-        mockMvc.perform(put("/api/v1/admin/users/uid/ban")
+        mockMvc.perform(put("/api/v1/admin/users/user-1/ban")
                         .param("ban", "true")
-                        .param("reason", "Spam"))
-                .andExpect(status().isOk());
-
-        verify(adminService).banUnbanUser("uid", true, "Spam");
+                        .param("reason", "spam"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("User banned successfully"));
     }
 
-    @Test @DisplayName("PUT /api/v1/admin/users/{id}/ban - unban user")
-    void unbanUser() throws Exception {
-        when(adminService.banUnbanUser(eq("uid"), eq(false), eq(null)))
-                .thenReturn(new com.ween.dto.response.UserResponse());
+    @Test
+    void verifyOrganizationReturnsUpdatedOrganization() throws Exception {
+        when(adminService.verifyOrganization("org-1", true, "ok"))
+                .thenReturn(OrganizationResponse.builder().id("org-1").isVerified(true).build());
 
-        mockMvc.perform(put("/api/v1/admin/users/uid/ban")
-                        .param("ban", "false"))
-                .andExpect(status().isOk());
-
-        verify(adminService).banUnbanUser("uid", false, null);
+        mockMvc.perform(put("/api/v1/admin/organizations/org-1/verify")
+                        .param("verify", "true")
+                        .param("note", "ok"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.isVerified").value(true));
     }
 
-    @Test @DisplayName("GET /api/v1/admin/organizations - get orgs")
-    void getAllOrganizations() throws Exception {
-        Page<com.ween.dto.response.OrganizationResponse> page = new PageImpl<>(List.of());
-        when(adminService.getAllOrganizations(eq(null), any(Pageable.class))).thenReturn(page);
-
-        mockMvc.perform(get("/api/v1/admin/organizations"))
-                .andExpect(status().isOk());
-    }
-
-    @Test @DisplayName("PUT /api/v1/admin/organizations/{id}/verify - verify org")
-    void verifyOrganization() throws Exception {
-        when(adminService.verifyOrganization(eq("oid"), eq(true), eq(null)))
-                .thenReturn(new OrganizationResponse());
-
-        mockMvc.perform(put("/api/v1/admin/organizations/oid/verify")
-                        .param("verify", "true"))
-                .andExpect(status().isOk());
-
-        verify(adminService).verifyOrganization("oid", true, null);
-    }
-
-    @Test @DisplayName("GET /api/v1/admin/stats - get stats")
-    void getAdminStats() throws Exception {
-        AdminStatsResponse stats = new AdminStatsResponse();
-        when(adminService.getPlatformStatistics()).thenReturn(stats);
+    @Test
+    void getPlatformStatisticsReturnsStats() throws Exception {
+        when(adminService.getPlatformStatistics()).thenReturn(AdminStatsResponse.builder().totalUsers(7L).build());
 
         mockMvc.perform(get("/api/v1/admin/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalUsers").value(7));
+    }
+
+    @Test
+    void badgeEndpointsDelegateToBadgeService() throws Exception {
+        BadgeResponse badge = BadgeResponse.builder().id("badge-1").name("Starter").build();
+        BadgeRequest request = new BadgeRequest();
+        request.setName("Starter");
+        request.setType(BadgeType.BRONZE);
+        request.setAchievementType(AchievementType.PROFILE_COMPLETION);
+        request.setAchievementThreshold(1);
+        when(badgeService.create(any(BadgeRequest.class))).thenReturn(badge);
+        when(badgeService.list(any())).thenReturn(new PageImpl<>(List.of(badge), PageRequest.of(0, 20), 1));
+
+        mockMvc.perform(get("/api/v1/admin/badges"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].name").value("Starter"));
+
+        mockMvc.perform(post("/api/v1/admin/badges")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("Badge created successfully"));
+
+        mockMvc.perform(delete("/api/v1/admin/badges/badge-1"))
                 .andExpect(status().isOk());
+        verify(badgeService).deactivate("badge-1");
     }
 }
