@@ -12,9 +12,7 @@ import com.ween.enums.EventStatus;
 import com.ween.exception.ResourceNotFoundException;
 import com.ween.exception.ServiceUnavailableException;
 import com.ween.mapper.EventMapper;
-import com.ween.repository.EventRegistrationRepository;
-import com.ween.repository.EventRepository;
-import com.ween.repository.OrganizationRepository;
+import com.ween.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -44,10 +42,18 @@ public class EventService {
     private final EventMapper eventMapper;
     private final OrganizationService organizationService;
     private final RegistrationService registrationService;
+    private final ParticipationRepository participationRepository;
+    private final CertificateRepository certificateRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final GroupChatMessageRepository groupChatMessageRepository;
 
     @Transactional
     public Event createEvent(CreateEventRequest request, String organizationId) {
         Organization organization = organizationService.getOrganizationById(organizationId);
+        if (!Boolean.TRUE.equals(organization.getIsVerified())) {
+            throw new AccessDeniedException("Your organization must be approved by a super admin before publishing events");
+        }
 
         Event event = Event.builder()
                 .title(request.getTitle())
@@ -162,6 +168,13 @@ public class EventService {
         }
 
         registrationService.cancelAllRegistrationsForEvent(eventId);
+        participationRepository.deleteByEventId(eventId);
+        certificateRepository.deleteByEventId(eventId);
+        chatRoomRepository.findByEventId(eventId).ifPresent(room -> {
+            groupChatMessageRepository.deleteByChatRoomId(room.getId());
+            chatRoomMemberRepository.deleteByChatRoomId(room.getId());
+            chatRoomRepository.delete(room);
+        });
         eventRepository.delete(event);
         log.info("Event deleted: {} by owner: {}", eventId, userId);
     }
