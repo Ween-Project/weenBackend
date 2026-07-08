@@ -1,72 +1,74 @@
 package com.ween.controller;
 
+import com.ween.dto.response.NotificationResponse;
 import com.ween.entity.Notification;
-import com.ween.security.JwtUtil;
+import com.ween.mapper.NotificationMapper;
 import com.ween.service.NotificationService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
-@WebMvcTest(controllers = NotificationController.class)
-@AutoConfigureMockMvc(addFilters = false)
 class NotificationControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @MockBean private NotificationService notificationService;
-    @MockBean private JwtUtil jwtUtil;
+    private NotificationService notificationService;
+    private NotificationMapper notificationMapper;
+    private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("user-id", null, List.of())
-        );
+        notificationService = mock(NotificationService.class);
+        notificationMapper = mock(NotificationMapper.class);
+        mockMvc = standaloneSetup(new NotificationController(notificationService, notificationMapper))
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
+        ControllerTestSupport.authenticateAs("user-1");
     }
 
-    @Test @DisplayName("GET /api/v1/notifications - get notifications")
-    void getNotifications() throws Exception {
-        Page<com.ween.dto.response.NotificationResponse> page = new PageImpl<>(List.of(com.ween.dto.response.NotificationResponse.builder().title("Title").build()));
-        when(notificationService.getUserNotificationsMapped(eq("user-id"), any(Pageable.class))).thenReturn(page);
+    @AfterEach
+    void tearDown() {
+        ControllerTestSupport.clearAuthentication();
+    }
+
+    @Test
+    void getNotificationsMapsPage() throws Exception {
+        Notification notification = Notification.builder().userId("user-1").title("Hi").build();
+        when(notificationService.getUserNotifications(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(notification), PageRequest.of(0, 20), 1));
+        when(notificationMapper.toNotificationResponse(notification))
+                .thenReturn(NotificationResponse.builder().title("Hi").build());
 
         mockMvc.perform(get("/api/v1/notifications"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[0].title").value("Title"));
+                .andExpect(jsonPath("$.data.content[0].title").value("Hi"));
     }
 
-    @Test @DisplayName("PUT /api/v1/notifications/{id}/read - mark as read")
-    void markAsRead() throws Exception {
-        Notification n = Notification.builder().isRead(true).build();
-        when(notificationService.markAsRead("user-id", "nid")).thenReturn(n);
+    @Test
+    void markReadEndpointsUseCurrentUser() throws Exception {
+        when(notificationService.markAsRead("user-1", "n-1")).thenReturn(Notification.builder().userId("user-1").build());
 
-        mockMvc.perform(put("/api/v1/notifications/nid/read"))
+        mockMvc.perform(put("/api/v1/notifications/n-1/read"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.isRead").value(true));
-    }
-
-    @Test @DisplayName("PUT /api/v1/notifications/read-all - mark all as read")
-    void markAllAsRead() throws Exception {
+                .andExpect(jsonPath("$.message").value("Notification marked as read"));
         mockMvc.perform(put("/api/v1/notifications/read-all"))
-                .andExpect(status().isOk());
-        verify(notificationService).markAllAsRead("user-id");
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("All notifications marked as read"));
+
+        verify(notificationService).markAllAsRead("user-1");
     }
 }
