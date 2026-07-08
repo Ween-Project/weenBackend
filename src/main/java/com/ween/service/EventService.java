@@ -88,8 +88,9 @@ public class EventService {
     }
 
     @Transactional
-    public Event updateEvent(String eventId, String id, UpdateEventRequest request) {
+    public Event updateEvent(String eventId, String userId, UpdateEventRequest request) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
 
         if (request.getTitle() != null) {
             event.setTitle(request.getTitle());
@@ -172,6 +173,7 @@ public class EventService {
     @Transactional
     public void completeEvent(String eventId,String userId) {
         Event event = getEventById(eventId);
+        validateEventAccess(event, userId);
         event.setStatus(EventStatus.COMPLETED);
         eventRepository.save(event);
         log.info("Event completed: {}", eventId);
