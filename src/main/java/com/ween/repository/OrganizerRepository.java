@@ -7,10 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface OrganizerRepository extends JpaRepository<Organizer, Long> {
+public interface OrganizerRepository extends JpaRepository<Organizer, String> {
 
-    Optional<Organizer> findByUserId(Long userId);
+    Optional<Organizer> findByUserId(String userId);
     
-    Optional<Organizer> findByIdAndOrganizationId(Long id, Long organizationId);
+    Optional<Organizer> findByIdAndOrganizationId(String id, String organizationId);
 
 }

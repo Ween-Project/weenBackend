@@ -18,7 +18,7 @@ public class OrganizationInvitationController {
     @PostMapping("/organizations/{orgId}/invitations")
     @PreAuthorize("hasAnyRole('ORGANIZATION_ADMIN', 'ORGANIZER')")
     public ResponseEntity<Void> inviteOrganizer(
-            @PathVariable Long orgId,
+            @PathVariable String orgId,
             @Valid @RequestBody InviteOrganizerRequest request) {
         invitationService.inviteOrganizer(orgId, request);
         return ResponseEntity.ok().build();
@@ -39,8 +39,8 @@ public class OrganizationInvitationController {
     @DeleteMapping("/organizations/{orgId}/organizers/{organizerId}")
     @PreAuthorize("hasAnyRole('ORGANIZATION_ADMIN', 'ORGANIZER')")
     public ResponseEntity<Void> removeOrganizer(
-            @PathVariable Long orgId,
-            @PathVariable Long organizerId) {
+            @PathVariable String orgId,
+            @PathVariable String organizerId) {
         invitationService.removeOrganizer(orgId, organizerId);
         return ResponseEntity.noContent().build();
     }
