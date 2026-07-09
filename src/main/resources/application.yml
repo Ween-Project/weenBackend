@@ -76,9 +76,6 @@ ween:
   frontend:
     verify-url: ${VERIFY_EMAIL_URL:http://localhost:5001/verify}
     reset-password-url: ${RESET_PASSWORD_URL:http://localhost:5001/reset-password}
-  gemini:
-    api-key: ${GEMINI_API_KEY:your-gemini-api-key-here}
-    model: gemini-2.5-flash
   cloudinary:
     environment: ${SPRING_PROFILES_ACTIVE:dev}
   api-key: ${ORGANIZER_API_KEY:your-api-key-here}
