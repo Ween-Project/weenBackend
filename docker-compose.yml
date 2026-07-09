@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ween_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: weendb
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - ween_network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ween_backend
+    ports:
+      - "5050:5050"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/weendb
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      AES_SECRET_KEY: ${AES_SECRET_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ORGANIZER_API_KEY: ${ORGANIZER_API_KEY}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      SPRING_PROFILES_ACTIVE: dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ween_network
+    restart: unless-stopped
+
+volumes:
+  db_data:
+
+networks:
+  ween_network:
+    driver: bridge
