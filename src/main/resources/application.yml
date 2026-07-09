@@ -4,7 +4,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/weendb}
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:Umut123!}
+    password: ${DB_PASSWORD:admin}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
@@ -84,3 +84,9 @@ springdoc:
     persist-authorization: true
   api-docs:
     path: /v3/api-docs
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dyb2pz75u}
+  api-key: ${CLOUDINARY_API_KEY:329973645216964}
+  api-secret: ${CLOUDINARY_API_SECRET:rRayNexvObb8m10GbEriqq8vsqQ}
+
