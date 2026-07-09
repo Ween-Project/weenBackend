@@ -4,9 +4,13 @@ import com.ween.dto.response.EventResponse;
 import com.ween.dto.response.ParticipantResponse;
 import com.ween.entity.Event;
 import com.ween.entity.EventRegistration;
+import com.ween.entity.Participation;
+import com.ween.entity.User;
+import com.ween.enums.ParticipationStatus;
 import com.ween.exception.*;
 import com.ween.repository.EventRegistrationRepository;
 import com.ween.repository.EventRepository;
+import com.ween.repository.ParticipationRepository;
 import com.ween.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +35,8 @@ public class RegistrationService {
     private final NotificationService notificationService;
     private final ChatService chatService;
     private final CoinService coinService;
-//  private final FirebaseService firebaseService;
-//  private final EventService eventService; // REMOVED - causes circular dependency
+    private final ParticipationRepository participationRepository;
+
 @Transactional
 public EventRegistration registerForEvent(String eventId, String userId) {
     Event event = eventRepository.findById(eventId)
@@ -41,6 +45,14 @@ public EventRegistration registerForEvent(String eventId, String userId) {
     // Check if already registered
     if (eventRegistrationRepository.findByEventIdAndUserId(eventId, userId).isPresent()) {
         throw new AlreadyExistsException("User already registered for this event");
+    }
+
+    if (event.getStartDate() != null && LocalDateTime.now().isAfter(event.getStartDate())) {
+        throw new RegistrationClosedException("Cannot register after the event has started");
+    }
+
+    if (event.getStatus() != com.ween.enums.EventStatus.PUBLISHED) {
+        throw new RegistrationClosedException("Cannot register for an event that is not published");
     }
 
     // Check capacity
@@ -63,6 +75,16 @@ public EventRegistration registerForEvent(String eventId, String userId) {
     EventRegistration saved = eventRegistrationRepository.save(registration);
     log.info("User {} registered for event: {}", userId, eventId);
 
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    Participation participation = Participation.builder()
+            .user(user)
+            .event(event)
+            .status(ParticipationStatus.JOINED)
+            .joinedAt(LocalDateTime.now())
+            .build();
+    participationRepository.save(participation);
+
     // Add user to Event Group Chat
     try {
         chatService.addUserToEventGroup(eventId, userId);
@@ -70,11 +92,9 @@ public EventRegistration registerForEvent(String eventId, String userId) {
         log.warn("Failed to add user to event group chat", e);
     }
 
-    // Award registration coins removed
-
     // Send notification
     try {
-        notificationService.createRegistrationNotification(userId, event.getTitle());
+        notificationService.createRegistrationNotification(userId, event.getId());
     } catch (Exception e) {
         log.warn("Failed to create registration notification", e);
     }
