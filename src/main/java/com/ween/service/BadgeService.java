@@ -20,8 +20,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,12 +38,21 @@ public class BadgeService {
     private final ReferralRepository referralRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional
     public BadgeResponse create(BadgeRequest request) {
+        return create(request, null);
+    }
+
+    @Transactional
+    public BadgeResponse create(BadgeRequest request, MultipartFile image) {
         validateRule(request);
         Badge badge = Badge.builder().build();
         apply(badge, request);
+        if (image != null && !image.isEmpty()) {
+            badge.setImageUrl(uploadBadgeImage(image));
+        }
         Badge saved = badgeRepository.save(badge);
         evaluateAllUsersForBadge(saved);
         return toResponse(saved);
@@ -49,9 +60,17 @@ public class BadgeService {
 
     @Transactional
     public BadgeResponse update(String badgeId, BadgeRequest request) {
+        return update(badgeId, request, null);
+    }
+
+    @Transactional
+    public BadgeResponse update(String badgeId, BadgeRequest request, MultipartFile image) {
         validateRule(request);
         Badge badge = getBadge(badgeId);
         apply(badge, request);
+        if (image != null && !image.isEmpty()) {
+            badge.setImageUrl(uploadBadgeImage(image));
+        }
         Badge saved = badgeRepository.save(badge);
         if (Boolean.TRUE.equals(saved.getIsActive())) {
             evaluateAllUsersForBadge(saved);
@@ -167,7 +186,9 @@ public class BadgeService {
         badge.setEventCategory(request.getAchievementType() == AchievementType.EVENT_CATEGORY_ATTENDANCE_COUNT
                 ? request.getEventCategory() : null);
         badge.setPoints(request.getPoints() == null ? 0 : request.getPoints());
-        badge.setImageUrl(request.getImageUrl());
+        if (request.getImageUrl() != null) {
+            badge.setImageUrl(request.getImageUrl());
+        }
         badge.setIsActive(request.getIsActive() == null || request.getIsActive());
     }
 
@@ -190,6 +211,15 @@ public class BadgeService {
                 .isActive(badge.getIsActive())
                 .createdAt(badge.getCreatedAt())
                 .build();
+    }
+
+    private String uploadBadgeImage(MultipartFile image) {
+        try {
+            return cloudinaryService.uploadFile(image, "badges");
+        } catch (IOException e) {
+            log.error("Failed to upload badge image to Cloudinary", e);
+            throw new RuntimeException("Badge image upload failed", e);
+        }
     }
 
     private UserBadgeResponse toUserBadgeResponse(UserBadge userBadge) {
