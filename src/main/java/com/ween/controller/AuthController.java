@@ -1,7 +1,11 @@
 package com.ween.controller;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,6 +46,18 @@ public class AuthController {
 
     private final AuthService authService;
 
+    private static final String ACCESS_TOKEN_COOKIE = "accessToken";
+    private static final String REFRESH_TOKEN_COOKIE = "refreshToken";
+
+    @Value("${ween.jwt.refresh-token-expiry:604800}")
+    private long refreshTokenExpirySeconds;
+
+    @Value("${ween.jwt.access-token-expiry:900}")
+    private long accessTokenExpirySeconds;
+
+    @Value("${ween.cookie.secure:false}")
+    private boolean secureCookies;
+
     @PostMapping("/register")
     @Operation(summary = "Register new user", description = "Create a new user account with optional referral code")
     @ApiResponses(value = {
@@ -59,6 +75,7 @@ public class AuthController {
             }
             AuthResponse response = authService.register(request);
             return ResponseEntity.status(HttpStatus.CREATED)
+                    .headers(authCookies(response))
                     .body(ApiResponse.ok(response, "User registered successfully"));
         } catch (Exception e) {
             log.error("Registration failed", e);
@@ -78,6 +95,7 @@ public class AuthController {
         try {
             AuthResponse response = authService.registerOrganization(request);
             return ResponseEntity.status(HttpStatus.CREATED)
+                    .headers(authCookies(response))
                     .body(ApiResponse.ok(response, "Organization registered successfully"));
         } catch (Exception e) {
             log.error("Organization registration failed", e);
@@ -95,7 +113,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         try {
             AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(ApiResponse.ok(response, "Login successful"));
+            return ResponseEntity.ok()
+                    .headers(authCookies(response))
+                    .body(ApiResponse.ok(response, "Login successful"));
         } catch (Exception e) {
             log.error("Login failed for email: {}", request.getEmail(), e);
             throw e;
@@ -112,7 +132,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> loginOrganization(@Valid @RequestBody LoginRequest request) {
         try {
             AuthResponse response = authService.loginOrganization(request);
-            return ResponseEntity.ok(ApiResponse.ok(response, "Organization login successful"));
+            return ResponseEntity.ok()
+                    .headers(authCookies(response))
+                    .body(ApiResponse.ok(response, "Organization login successful"));
         } catch (Exception e) {
             log.error("Organization login failed for email: {}", request.getEmail(), e);
             throw e;
@@ -125,10 +147,19 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Token refreshed successfully", content = @Content(schema = @Schema(implementation = String.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid refresh token", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ResponseEntity<ApiResponse<String>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<ApiResponse<String>> refresh(
+            @CookieValue(value = REFRESH_TOKEN_COOKIE, required = false) String refreshCookie,
+            @Valid @RequestBody(required = false) RefreshTokenRequest request) {
         try {
-            String response = authService.refreshToken(request.getRefreshToken());
-            return ResponseEntity.ok(ApiResponse.ok(response, "Token refreshed successfully"));
+            String refreshToken = refreshCookie;
+            if ((refreshToken == null || refreshToken.isBlank()) && request != null) {
+                refreshToken = request.getRefreshToken();
+            }
+
+            String response = authService.refreshToken(refreshToken);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, accessTokenCookie(response).toString())
+                    .body(ApiResponse.ok(response, "Token refreshed successfully"));
         } catch (Exception e) {
             log.error("Token refresh failed", e);
             throw e;
@@ -145,7 +176,10 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logout() {
         try {
             authService.logout();
-            return ResponseEntity.ok(ApiResponse.ok(null, "Logout successful"));
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, clearCookie(ACCESS_TOKEN_COOKIE).toString())
+                    .header(HttpHeaders.SET_COOKIE, clearCookie(REFRESH_TOKEN_COOKIE).toString())
+                    .body(ApiResponse.ok(null, "Logout successful"));
         } catch (Exception e) {
             log.error("Logout failed", e);
             throw e;
@@ -235,5 +269,34 @@ public class AuthController {
             log.error("Password change failed", e);
             throw e;
         }
+    }
+
+    private HttpHeaders authCookies(AuthResponse response) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, accessTokenCookie(response.getAccessToken()).toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie(response.getRefreshToken()).toString());
+        return headers;
+    }
+
+    private ResponseCookie accessTokenCookie(String token) {
+        return tokenCookie(ACCESS_TOKEN_COOKIE, token, accessTokenExpirySeconds);
+    }
+
+    private ResponseCookie refreshTokenCookie(String token) {
+        return tokenCookie(REFRESH_TOKEN_COOKIE, token, refreshTokenExpirySeconds);
+    }
+
+    private ResponseCookie tokenCookie(String name, String value, long maxAgeSeconds) {
+        return ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(secureCookies)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(maxAgeSeconds)
+                .build();
+    }
+
+    private ResponseCookie clearCookie(String name) {
+        return tokenCookie(name, "", 0);
     }
 }
