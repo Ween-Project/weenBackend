@@ -22,14 +22,12 @@ class ParticipationControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private ParticipationService participationService;
-    private SecurityUtil securityUtil;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         participationService = mock(ParticipationService.class);
-        securityUtil = mock(SecurityUtil.class);
-        mockMvc = standaloneSetup(new ParticipationController(participationService, securityUtil)).build();
+        mockMvc = standaloneSetup(new ParticipationController(participationService)).build();
     }
 
     @Test
@@ -43,16 +41,5 @@ class ParticipationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("CHECKED_IN"))
                 .andExpect(jsonPath("$.data.participantName").value("Ali"));
-    }
-
-    @Test
-    void completeParticipationUsesAuthenticatedUser() throws Exception {
-        when(securityUtil.getCurrentUserId()).thenReturn("user-1");
-
-        mockMvc.perform(post("/api/v1/participations/complete/event-1"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Participation completed and certificate generated."));
-
-        verify(participationService).completeParticipation("user-1", "event-1");
     }
 }

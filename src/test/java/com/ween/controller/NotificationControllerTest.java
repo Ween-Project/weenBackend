@@ -4,6 +4,7 @@ import com.ween.dto.response.NotificationResponse;
 import com.ween.entity.Notification;
 import com.ween.mapper.NotificationMapper;
 import com.ween.service.NotificationService;
+import com.ween.security.SecurityUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,13 +29,16 @@ class NotificationControllerTest {
 
     private NotificationService notificationService;
     private NotificationMapper notificationMapper;
+    private SecurityUtil securityUtil;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         notificationService = mock(NotificationService.class);
         notificationMapper = mock(NotificationMapper.class);
-        mockMvc = standaloneSetup(new NotificationController(notificationService, notificationMapper))
+        securityUtil = mock(SecurityUtil.class);
+        when(securityUtil.getCurrentUserId()).thenReturn("user-1");
+        mockMvc = standaloneSetup(new NotificationController(notificationService, notificationMapper, securityUtil))
                 .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
         ControllerTestSupport.authenticateAs("user-1");
