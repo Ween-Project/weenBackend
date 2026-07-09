@@ -44,4 +44,5 @@ public interface EventRepository extends JpaRepository<Event, String>, JpaSpecif
     @Query("SELECT e FROM Event e WHERE e.startDate BETWEEN :now AND :end AND e.status = :status")
     List<Event> findEventsStartingBetween(@Param("now") LocalDateTime now, @Param("end") LocalDateTime end, @Param("status") EventStatus status);
 
+    List<Event> findByStatusAndRegistrationDeadlineBefore(EventStatus status, LocalDateTime registrationDeadline);
 }
