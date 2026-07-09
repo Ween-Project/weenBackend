@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Slf4j
 @Service
@@ -27,6 +30,7 @@ public class UserService {
     private final CoinService coinService;
     private final FollowRepository followRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final CloudinaryService cloudinaryService;
 
     public User getUserById(String userId) {
         return userRepository.findById(userId)
@@ -40,6 +44,11 @@ public class UserService {
 
     @Transactional
     public User updateProfile(String userId, UpdateProfileRequest request) {
+        return updateProfile(userId, request, null, null);
+    }
+
+    @Transactional
+    public User updateProfile(String userId, UpdateProfileRequest request, MultipartFile profilePhoto, MultipartFile banner) {
         User user = getUserById(userId);
 
         if (request.getFullName() != null) {
@@ -85,6 +94,12 @@ public class UserService {
         }
         if (request.getBannerUrl() != null) {
             user.setBannerUrl(request.getBannerUrl());
+        }
+        if (profilePhoto != null && !profilePhoto.isEmpty()) {
+            user.setProfilePhotoUrl(uploadImage(profilePhoto, "users/profile"));
+        }
+        if (banner != null && !banner.isEmpty()) {
+            user.setBannerUrl(uploadImage(banner, "users/banners"));
         }
         if (request.getMessagePermission() != null) {
             user.setMessagePermission(request.getMessagePermission());
@@ -161,5 +176,14 @@ public class UserService {
         return "[\"" + trimmed.replace("\\", "\\\\")
                 .replace("\"", "\\\"")
                 .replace(",", "\",\"") + "\"]";
+    }
+
+    private String uploadImage(MultipartFile file, String folder) {
+        try {
+            return cloudinaryService.uploadFile(file, folder);
+        } catch (IOException e) {
+            log.error("Failed to upload user image to Cloudinary", e);
+            throw new RuntimeException("Image upload failed", e);
+        }
     }
 }

@@ -65,7 +65,7 @@ public class UserController {
         }
     }
 
-    @PutMapping("/me")
+    @PutMapping(value = "/me", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update current user profile", description = "Update authenticated user's profile information")
     @SecurityRequirement(name = "Bearer")
     @ApiResponses(value = {
@@ -74,10 +74,12 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
     })
     public ResponseEntity<ApiResponse<User>> updateProfile(
-            @Valid @RequestBody UpdateProfileRequest request) {
+            @Valid @ModelAttribute UpdateProfileRequest request,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+            @RequestParam(value = "banner", required = false) MultipartFile banner) {
         try {
             String userId = getCurrentUserId();
-            User response = userService.updateProfile(userId, request);
+            User response = userService.updateProfile(userId, request, profilePhoto, banner);
             return ResponseEntity.ok(ApiResponse.ok(response, "Profile updated successfully"));
         } catch (Exception e) {
             log.error("Failed to update user profile", e);
