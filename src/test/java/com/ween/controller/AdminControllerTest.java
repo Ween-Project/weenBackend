@@ -60,15 +60,22 @@ class AdminControllerTest {
     }
 
     @Test
-    void banUnbanUserDelegatesToService() throws Exception {
-        when(adminService.banUnbanUser("user-1", true, "spam"))
-                .thenReturn(UserResponse.builder().id("user-1").username("ali").build());
-
-        mockMvc.perform(put("/api/v1/admin/users/user-1/ban")
-                        .param("ban", "true")
+    void banUserDelegatesToService() throws Exception {
+        mockMvc.perform(put("/api/v1/admin/users/user-1/ban-user")
                         .param("reason", "spam"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("User banned successfully"));
+
+        verify(adminService).banUser("user-1", "spam");
+    }
+
+    @Test
+    void unbanUserDelegatesToService() throws Exception {
+        mockMvc.perform(put("/api/v1/admin/users/user-1/unban-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("User unbanned successfully"));
+
+        verify(adminService).unbanUser("user-1");
     }
 
     @Test
