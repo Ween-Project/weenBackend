@@ -62,7 +62,7 @@ public class OrganizationService {
 
         if (logo != null && !logo.isEmpty()) {
             try {
-                String logoUrl = cloudinaryService.uploadFile(logo, "logos");
+                String logoUrl = cloudinaryService.uploadFile(logo, "organizations/logos");
                 organization.setLogoUrl(logoUrl);
             } catch (java.io.IOException e) {
                 log.error("Failed to upload organization logo to Cloudinary", e);

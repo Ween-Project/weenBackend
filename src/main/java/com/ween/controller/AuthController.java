@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ween.dto.request.ChangePasswordRequest;
 import com.ween.dto.request.ForgotPasswordRequest;
@@ -83,7 +85,7 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/register/organization")
+    @PostMapping(value = "/register/organization", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Register new organization", description = "Create a new organization account")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Organization registered successfully", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
@@ -91,9 +93,10 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Organization already exists", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ResponseEntity<ApiResponse<AuthResponse>> registerOrganization(
-            @Valid @RequestBody RegisterOrganizationRequest request) {
+            @Valid @ModelAttribute RegisterOrganizationRequest request,
+            @RequestParam(value = "logo", required = false) MultipartFile logo) {
         try {
-            AuthResponse response = authService.registerOrganization(request);
+            AuthResponse response = authService.registerOrganization(request, logo);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .headers(authCookies(response))
                     .body(ApiResponse.ok(response, "Organization registered successfully"));
