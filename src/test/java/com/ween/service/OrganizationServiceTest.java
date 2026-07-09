@@ -25,6 +25,7 @@ class OrganizationServiceTest {
     @Mock OrganizationMapper organizationMapper;
     @Mock UserRepository userRepository;
     @Mock EventRepository eventRepository;
+    @Mock CloudinaryService cloudinaryService;
     @InjectMocks OrganizationService organizationService;
 
     @Test
