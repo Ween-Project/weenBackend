@@ -32,6 +32,7 @@ public class ParticipationService {
     private final QrService qrService;
     private final RegistrationService registrationService;
     private final SecurityUtil securityUtil;
+    private final CertificateRepository certificateRepository;
 
 
     private void validateUserRegistration(String eventId, String userId) {
@@ -97,52 +98,7 @@ public class ParticipationService {
     }
 
 
-    @Transactional
-    public void completeParticipation(String userId, String eventId, String organizerId) {
-        validateUserRegistration(eventId, userId);
 
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-
-        boolean isOwner = event.getOrganizationId().equals(organizerId);
-        boolean isAdmin = false;
-
-        if (!isOwner) {
-            java.util.Optional<com.ween.entity.User> userOpt = userRepository.findById(organizerId);
-            if (userOpt.isPresent() && userOpt.get().getRole() == com.ween.enums.UserRole.ADMIN) {
-                isAdmin = true;
-            }
-        }
-
-        if (!isOwner && !isAdmin) {
-            throw new AccessDeniedException("Only the event owner or admin can complete a participation");
-        }
-
-        Participation participation = participationRepository.findByUserIdAndEventId(userId, eventId)
-                .orElseGet(() -> {
-                    log.info("Participation record missing for registered user. Creating new one. User: {}, Event: {}", userId, eventId);
-                    User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-                    return participationRepository.save(Participation.builder()
-                            .user(user)
-                            .event(event)
-                            .status(ParticipationStatus.APPROVED)
-                            .joinedAt(LocalDateTime.now())
-                            .build());
-                });
-
-        participation.setStatus(ParticipationStatus.FINISHED);
-        participationRepository.save(participation);
-
-        log.info("Participation completed. Triggering certificate generation for User: {}, Event: {}", userId, eventId);
-
-        Certificate generatedCert = certificateTriggerService.autoGenerateCertificateRecord(
-                userId,
-                eventId,
-                participation.getEvent().getCategory()
-        );
-
-        notificationService.createCertificateNotification(userId, eventId, generatedCert.getCertificateNumber());
-    }
 
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
@@ -170,5 +126,46 @@ public class ParticipationService {
                 }
             }
         }
+    }
+
+    @Transactional
+    public Certificate completeParticipationAndGetCertificate(String userId, String eventId) {
+        Participation participation = participationRepository.findByUserIdAndEventId(userId, eventId)
+                .orElseGet(() -> {
+                    log.info("Participation record missing for registered user. Creating new one. User: {}, Event: {}", userId, eventId);
+                    User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                    Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                    return participationRepository.save(Participation.builder()
+                            .user(user)
+                            .event(event)
+                            .status(ParticipationStatus.APPROVED)
+                            .joinedAt(LocalDateTime.now())
+                            .build());
+                });
+
+        participation.setStatus(ParticipationStatus.FINISHED);
+        participationRepository.save(participation);
+
+        log.info("Participation completed. Auto-generating certificate record for User: {}, Event: {}", userId, eventId);
+
+        return certificateTriggerService.autoGenerateCertificateRecord(
+                userId,
+                eventId,
+                participation.getEvent().getCategory()
+        );
+    }
+
+    @Transactional
+    public void saveCertificateUrl(String certificateId, String pdfUrl) {
+        Certificate certificate = certificateRepository.findById(certificateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Certificate not found. ID: " + certificateId));
+        certificate.setPdfUrl(pdfUrl);
+        certificateRepository.save(certificate);
+
+        notificationService.createCertificateNotification(
+                certificate.getUserId(),
+                certificate.getEventId(),
+                certificate.getCertificateNumber()
+        );
     }
 }

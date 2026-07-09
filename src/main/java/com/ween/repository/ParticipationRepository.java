@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface ParticipationRepository extends JpaRepository<Participation, String> {
     Optional<Participation> findByUserIdAndEventId(String userId, String eventId);
     void deleteByEventId(String eventId);
+    java.util.List<Participation> findByEventIdAndStatus(String eventId, ParticipationStatus status);
 
     @Modifying
     @Query("UPDATE Participation p SET p.status = :status WHERE p.event.id = :eventId")

@@ -62,6 +62,7 @@ public class EventService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final GroupChatMessageRepository groupChatMessageRepository;
+    private final CertificateService certificateService;
 
     @Transactional
     public Event createEvent(CreateEventRequest request, String organizationId) {
@@ -189,10 +190,18 @@ public class EventService {
     public void completeEvent(String eventId, String userId) {
         Event event = getEventById(eventId);
         validateEventAccess(event, userId);
+
+        if (event.getStatus() == EventStatus.COMPLETED) {
+            throw new IllegalArgumentException("Event is already completed");
+        }
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            throw new IllegalArgumentException("Cannot complete a cancelled event");
+        }
+
         event.setStatus(EventStatus.COMPLETED);
         eventRepository.save(event);
 
-        participationRepository.updateStatusByEventId(eventId, ParticipationStatus.FINISHED);
+        certificateService.generateCertificatesForEventAsync(eventId);
 
         log.info("Event completed: {} by user: {}", eventId, userId);
     }
