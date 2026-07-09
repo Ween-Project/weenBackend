@@ -36,7 +36,7 @@ public class OrganizationInvitationService {
     private String frontendUrl;
 
     @Transactional
-    public void inviteOrganizer(Long organizationId, InviteOrganizerRequest request) {
+    public void inviteOrganizer(String organizationId, InviteOrganizerRequest request) {
         Organization org = organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
@@ -109,7 +109,7 @@ public class OrganizationInvitationService {
     }
 
     @Transactional
-    public void removeOrganizer(Long organizationId, Long organizerId) {
+    public void removeOrganizer(String organizationId, String organizerId) {
         Organizer organizer = organizerRepository.findByIdAndOrganizationId(organizerId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organizer not found for this organization"));
 

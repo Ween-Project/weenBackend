@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface OrganizationInvitationRepository extends JpaRepository<OrganizationInvitation, Long> {
+public interface OrganizationInvitationRepository extends JpaRepository<OrganizationInvitation, String> {
 
     Optional<OrganizationInvitation> findByToken(String token);
 
