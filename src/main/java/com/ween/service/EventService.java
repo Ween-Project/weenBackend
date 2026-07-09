@@ -40,7 +40,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -65,12 +67,23 @@ public class EventService {
     private final GroupChatMessageRepository groupChatMessageRepository;
     private final CertificateService certificateService;
     private final ChatService chatService;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional
     public Event createEvent(CreateEventRequest request, String organizationId) {
+        return createEvent(request, organizationId, null);
+    }
+
+    @Transactional
+    public Event createEvent(CreateEventRequest request, String organizationId, MultipartFile coverImage) {
         Organization organization = organizationService.getOrganizationById(organizationId);
         if (!Boolean.TRUE.equals(organization.getIsVerified())) {
             throw new AccessDeniedException("Your organization must be approved by a super admin before publishing events");
+        }
+
+        String coverImageUrl = request.getCoverImageUrl();
+        if (coverImage != null && !coverImage.isEmpty()) {
+            coverImageUrl = uploadEventCover(coverImage);
         }
 
         Event event = Event.builder()
@@ -79,7 +92,7 @@ public class EventService {
                 .category(request.getCategory())
                 .city(request.getCity())
                 .address(request.getAddress())
-                .coverImageUrl(request.getCoverImageUrl())
+                .coverImageUrl(coverImageUrl)
                 .customFields(request.getCustomFields())
                 .isOnline(request.getIsOnline())
                 .startDate(request.getStartDate())
@@ -102,6 +115,11 @@ public class EventService {
 
     @Transactional
     public Event updateEvent(String eventId, String userId, UpdateEventRequest request) {
+        return updateEvent(eventId, userId, request, null);
+    }
+
+    @Transactional
+    public Event updateEvent(String eventId, String userId, UpdateEventRequest request, MultipartFile coverImage) {
         Event event = getEventById(eventId);
         validateEventAccess(event, userId);
 
@@ -147,6 +165,15 @@ public class EventService {
 
         if (request.getStatus() != null) {
             event.setStatus(request.getStatus());
+        }
+        if (request.getCoverImageUrl() != null) {
+            event.setCoverImageUrl(request.getCoverImageUrl());
+        }
+        if (coverImage != null && !coverImage.isEmpty()) {
+            event.setCoverImageUrl(uploadEventCover(coverImage));
+        }
+        if (request.getCustomFields() != null) {
+            event.setCustomFields(request.getCustomFields());
         }
 
         Event updated = eventRepository.save(event);
@@ -390,6 +417,15 @@ public class EventService {
         int size = pageable == null ? 20 : Math.max(pageable.getPageSize(), 1);
 
         return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, normalizedSort));
+    }
+
+    private String uploadEventCover(MultipartFile coverImage) {
+        try {
+            return cloudinaryService.uploadFile(coverImage, "events/covers");
+        } catch (IOException e) {
+            log.error("Failed to upload event cover to Cloudinary", e);
+            throw new RuntimeException("Event cover upload failed", e);
+        }
     }
 
     public EventDetailResponse getEventDetail(String id) {
