@@ -36,6 +36,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +64,7 @@ public class EventService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final GroupChatMessageRepository groupChatMessageRepository;
     private final CertificateService certificateService;
+    private final ChatService chatService;
 
     @Transactional
     public Event createEvent(CreateEventRequest request, String organizationId) {
@@ -175,6 +177,12 @@ public class EventService {
         event.setStatus(EventStatus.PUBLISHED);
         eventRepository.save(event);
         log.info("Event published: {} by user: {}", eventId, userId);
+
+        try {
+            chatService.createEventGroup(eventId, event.getOrganizationId());
+        } catch (Exception e) {
+            log.warn("Failed to create event group chat on publish", e);
+        }
     }
 
     @Transactional
@@ -422,5 +430,19 @@ public class EventService {
                 .registrationRate(registrationRate)
                 .attendanceRate(attendanceRate)
                 .build();
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void checkAndCloseRegistrations() {
+        List<Event> eventsToClose = eventRepository.findByStatusAndRegistrationDeadlineBefore(
+                EventStatus.PUBLISHED, LocalDateTime.now());
+
+        if (!eventsToClose.isEmpty()) {
+            for (Event event : eventsToClose) {
+                event.setStatus(EventStatus.REGISTRATION_CLOSED);
+                log.info("Registration closed automatically for event: {}", event.getId());
+            }
+            eventRepository.saveAll(eventsToClose);
+        }
     }
 }
