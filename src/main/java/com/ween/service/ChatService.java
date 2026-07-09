@@ -219,15 +219,8 @@ public class ChatService {
     }
 
     public void addUserToEventGroup(String eventId, String userId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-
         ChatRoom room = chatRoomRepository.findByEventId(eventId)
-                .orElseGet(() -> chatRoomRepository.save(ChatRoom.builder()
-                        .name(event.getTitle())
-                        .type(ChatRoomType.EVENT)
-                        .eventId(eventId)
-                        .build()));
+                .orElseThrow(() -> new ResourceNotFoundException("Event group chat has not been created yet"));
 
         addMemberIfNotExists(room.getId(), userId, ChatRoomRole.MEMBER);
     }
@@ -285,7 +278,7 @@ public class ChatService {
         chatRoomMemberRepository.deleteByChatRoomIdAndUserId(roomId, targetUser.getId());
     }
 
-    public void updateRoomInfo(String requesterId, String roomId, String newName, org.springframework.web.multipart.MultipartFile photo) {
+    public void updateRoomInfo(String requesterId, String roomId, String newName, String newPhotoUrl) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
 
@@ -293,20 +286,18 @@ public class ChatService {
             throw new IllegalArgumentException("Cannot update direct chat info");
         }
 
-        chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, requesterId)
+        ChatRoomMember requester = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, requesterId)
                 .orElseThrow(() -> new UnauthorizedException("You are not in this group"));
+
+        if (requester.getRole() != ChatRoomRole.ADMIN) {
+            throw new UnauthorizedException("Only group admins can update room info");
+        }
 
         if (newName != null && !newName.isBlank()) {
             room.setName(newName);
         }
-        if (photo != null && !photo.isEmpty()) {
-            try {
-                String photoUrl = cloudinaryService.uploadFile(photo, "profiles");
-                room.setPhotoUrl(photoUrl);
-            } catch (java.io.IOException e) {
-                log.error("Failed to upload group photo to Cloudinary during update", e);
-                throw new RuntimeException("Group photo upload failed", e);
-            }
+        if (newPhotoUrl != null) {
+            room.setPhotoUrl(newPhotoUrl);
         }
         chatRoomRepository.save(room);
     }
