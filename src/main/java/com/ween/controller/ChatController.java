@@ -22,6 +22,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -121,21 +122,24 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(response, "Group message sent successfully"));
     }
 
-    @PostMapping("/rooms/group")
+    @PostMapping(value = "/rooms/group", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create a custom group chat", description = "Create a new group and add creator as ADMIN")
-    public ResponseEntity<ApiResponse<ChatRoom>> createGroup(@Valid @RequestBody GroupRoomRequest request) {
+    public ResponseEntity<ApiResponse<ChatRoom>> createGroup(
+            @Valid @ModelAttribute GroupRoomRequest request,
+            @RequestParam(value = "photo", required = false) MultipartFile photo) {
         String userId = securityUtil.getCurrentUserId();
-        ChatRoom room = chatService.createGroupRoom(userId, request.getName(), request.getPhotoUrl());
+        ChatRoom room = chatService.createGroupRoom(userId, request.getName(), photo);
         return ResponseEntity.ok(ApiResponse.ok(room, "Group created successfully"));
     }
 
-    @PutMapping("/rooms/{roomId}")
+    @PutMapping(value = "/rooms/{roomId}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update group info", description = "Update the name or photo of a group")
     public ResponseEntity<ApiResponse<Void>> updateGroupInfo(
             @PathVariable String roomId,
-            @RequestBody GroupRoomRequest request) {
+            @Valid @ModelAttribute GroupRoomRequest request,
+            @RequestParam(value = "photo", required = false) MultipartFile photo) {
         String userId = securityUtil.getCurrentUserId();
-        chatService.updateRoomInfo(userId, roomId, request.getName(), request.getPhotoUrl());
+        chatService.updateRoomInfo(userId, roomId, request.getName(), photo);
         return ResponseEntity.ok(ApiResponse.ok(null, "Group updated successfully"));
     }
 
