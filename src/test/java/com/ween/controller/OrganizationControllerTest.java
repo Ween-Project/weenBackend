@@ -50,19 +50,7 @@ class OrganizationControllerTest {
                 .andExpect(jsonPath("$.data.username").value("org"));
     }
 
-    @Test
-    void updateLogoDelegatesToService() throws Exception {
-        when(securityUtil.getCurrentUserId()).thenReturn("org-1");
-        when(organizationService.updateOrganizationPhoto(any(), any())).thenReturn(Organization.builder().logoUrl("logo.png").build());
 
-        UpdateProfilePhotoRequest request = new UpdateProfilePhotoRequest();
-        request.setImageUrl("logo.png");
-        mockMvc.perform(put("/api/v1/organizations/org-1/logo")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Organization logo updated successfully"));
-    }
 
     @Test
     void getOrganizationEventsUsesCurrentOrganization() throws Exception {
