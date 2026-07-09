@@ -91,6 +91,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/certificates/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/certificates/my").authenticated()
 
+                        // AI Features - requires auth, role checks at method level
+                        .requestMatchers("/api/v1/ai/**").authenticated()
+
                         // Coins & Leaderboard - requires auth
                         .requestMatchers("/api/v1/coins/**").authenticated()
 
