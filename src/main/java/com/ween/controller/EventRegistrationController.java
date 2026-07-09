@@ -33,24 +33,6 @@ public class EventRegistrationController {
     private final ParticipationService participationService;
     private final SecurityUtil securityUtil;
 
-    @PostMapping("/{eventId}/complete-participation/{participantId}")
-    @Transactional
-    @Operation(summary = "Complete participant's participation", description = "Mark a participant as finished and generate certificate (ORGANIZER/ADMIN only)")
-    @SecurityRequirement(name = "Bearer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZATION_ADMIN', 'ORGANIZER')")
-    public ResponseEntity<ApiResponse<Void>> completeParticipation(
-            @Parameter(description = "Event ID", required = true) @PathVariable String eventId,
-            @Parameter(description = "Participant User ID", required = true) @PathVariable String participantId) {
-        try {
-            String organizerId = securityUtil.getCurrentUserId();
-            participationService.completeParticipation(participantId, eventId, organizerId);
-            return ResponseEntity.ok(ApiResponse.ok(null, "Participation completed successfully"));
-        } catch (Exception e) {
-            log.error("Failed to complete participation for user: {} in event: {}", participantId, eventId, e);
-            throw e;
-        }
-    }
-
     @PostMapping("/{id}/register")
     @Transactional
     @Operation(summary = "Register for event", description = "Register user for an event (VOLUNTEER)")
