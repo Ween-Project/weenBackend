@@ -33,7 +33,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -63,6 +65,7 @@ public class AuthService {
     private final QrService qrService;
     private final NotificationService notificationService;
     private final ReferralService referralService;
+    private final CloudinaryService cloudinaryService;
     @Value("${ween.frontend.verify-url:http://localhost:5001/verify}")
     private String verifyEmailBaseUrl;
 
@@ -157,7 +160,7 @@ public class AuthService {
 
 
     @Transactional
-    public AuthResponse registerOrganization(RegisterOrganizationRequest request) {
+    public AuthResponse registerOrganization(RegisterOrganizationRequest request, MultipartFile logo) {
         String orgEmail = request.getEmail();
         String orgUsername = request.getUsername();
 
@@ -171,11 +174,16 @@ public class AuthService {
             throw new AlreadyExistsException("Username already taken: " + orgUsername);
         }
 
+        String logoUrl = request.getLogoUrl();
+        if (logo != null && !logo.isEmpty()) {
+            logoUrl = uploadImage(logo, "organizations/logos");
+        }
+
         // Create organization directly (without creating user account)
         Organization organization = Organization.builder()
                 .username(orgUsername)
                 .email(orgEmail)
-                .logoUrl(request.getLogoUrl())
+                .logoUrl(logoUrl)
                 .website(request.getWebsite())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .organizationName(request.getOrganizationName())
@@ -446,6 +454,15 @@ public class AuthService {
         } catch (Exception e) {
             log.warn("Failed to convert string to JSON array: {}", value, e);
             return null;
+        }
+    }
+
+    private String uploadImage(MultipartFile file, String folder) {
+        try {
+            return cloudinaryService.uploadFile(file, folder);
+        } catch (IOException e) {
+            log.error("Failed to upload image to Cloudinary", e);
+            throw new RuntimeException("Image upload failed", e);
         }
     }
 
