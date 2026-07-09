@@ -58,13 +58,15 @@ public class QrService {
         LocalDateTime expiresAt = now.plusSeconds(tokenValiditySeconds);
 
         QrToken qrToken = QrToken.builder()
-
                 .userId(userId)
                 .tokenHash(encryptedToken)
                 .issuedAt(now)
                 .expiresAt(expiresAt)
                 .isRevoked(false)
                 .build();
+
+        // Revoke all previous active QR tokens for the user
+        qrTokenRepository.revokeAllByUserId(userId);
 
         qrTokenRepository.save(qrToken);
         log.info("QR token generated for user: {}", userId);
@@ -83,7 +85,7 @@ public class QrService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             // Find and verify token record
-            QrToken qrToken = qrTokenRepository.findByUserIdAndIsRevokedFalse(userId)
+            QrToken qrToken = qrTokenRepository.findByTokenHashAndIsRevokedFalse(encryptedToken)
                     .orElseThrow(() -> new QrTokenInvalidException("Invalid QR token"));
 
             // Check expiration
