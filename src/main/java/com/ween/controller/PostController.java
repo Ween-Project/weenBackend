@@ -30,10 +30,12 @@ public class PostController {
     private final PostService postService;
     private final SecurityUtil securityUtil;
 
-    @PostMapping
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create post")
-    public ResponseEntity<ApiResponse<PostResponse>> createPost(@Valid @RequestBody CreatePostRequest request) {
-        PostResponse response = postService.createPost(securityUtil.getCurrentUserId(), request);
+    public ResponseEntity<ApiResponse<PostResponse>> createPost(
+            @RequestParam("content") String content,
+            @RequestParam(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files) {
+        PostResponse response = postService.createPost(securityUtil.getCurrentUserId(), content, files);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(response, "Post created successfully"));
     }
@@ -94,12 +96,13 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.ok(response, "Liked posts retrieved successfully"));
     }
 
-    @PutMapping("/{postId}")
+    @PutMapping(value = "/{postId}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update post")
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(
             @PathVariable String postId,
-            @Valid @RequestBody UpdatePostRequest request) {
-        PostResponse response = postService.updatePost(postId, securityUtil.getCurrentUserId(), request);
+            @Valid @ModelAttribute UpdatePostRequest request,
+            @RequestParam(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files) {
+        PostResponse response = postService.updatePost(postId, securityUtil.getCurrentUserId(), request, files);
         return ResponseEntity.ok(ApiResponse.ok(response, "Post updated successfully"));
     }
 
