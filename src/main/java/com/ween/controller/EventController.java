@@ -28,6 +28,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import java.time.LocalDateTime;
 
@@ -84,7 +85,7 @@ public class EventController {
         }
     }
 
-    @PostMapping
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     @Operation(summary = "Create event", description = "Create a new event (ORGANIZER only)")
     @SecurityRequirement(name = "Bearer")
@@ -94,10 +95,11 @@ public class EventController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Insufficient permissions")
     })
     public ResponseEntity<ApiResponse<Event>> createEvent(
-            @Valid @RequestBody CreateEventRequest request) {
+            @Valid @ModelAttribute CreateEventRequest request,
+            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage) {
         try {
             String orgId = securityUtil.getCurrentUserId();
-            Event response = eventService.createEvent(request, orgId);
+            Event response = eventService.createEvent(request, orgId, coverImage);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.ok(response, "Event created successfully"));
         } catch (Exception e) {
@@ -106,7 +108,7 @@ public class EventController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     @Operation(summary = "Update event", description = "Update event details (ORGANIZER only)")
     @SecurityRequirement(name = "Bearer")
@@ -118,10 +120,11 @@ public class EventController {
     })
     public ResponseEntity<ApiResponse<Event>> updateEvent(
             @Parameter(description = "Event ID", required = true) @PathVariable String id,
-            @Valid @RequestBody UpdateEventRequest request) {
+            @Valid @ModelAttribute UpdateEventRequest request,
+            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage) {
         try {
             String userId = securityUtil.getCurrentUserId();
-            Event response = eventService.updateEvent(id, userId, request);
+            Event response = eventService.updateEvent(id, userId, request, coverImage);
             return ResponseEntity.ok(ApiResponse.ok(response, "Event updated successfully"));
         } catch (Exception e) {
             log.error("Failed to update event: {}", id, e);
