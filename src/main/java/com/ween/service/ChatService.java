@@ -202,6 +202,22 @@ public class ChatService {
 
     // --- GROUP FEATURE METHODS ---
 
+
+    public void createEventGroup(String eventId, String creatorId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        ChatRoom room = chatRoomRepository.findByEventId(eventId)
+                .orElseGet(() -> chatRoomRepository.save(ChatRoom.builder()
+                        .name(event.getTitle())
+                        .type(ChatRoomType.EVENT)
+                        .eventId(eventId)
+                        .creatorId(creatorId)
+                        .build()));
+
+        addMemberIfNotExists(room.getId(), creatorId, ChatRoomRole.ADMIN);
+    }
+
     public void addUserToEventGroup(String eventId, String userId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
@@ -214,28 +230,6 @@ public class ChatService {
                         .build()));
 
         addMemberIfNotExists(room.getId(), userId, ChatRoomRole.MEMBER);
-    }
-
-    public ChatRoom createGroupRoom(String creatorId, String name, org.springframework.web.multipart.MultipartFile photo) {
-        String photoUrl = null;
-        if (photo != null && !photo.isEmpty()) {
-            try {
-                photoUrl = cloudinaryService.uploadFile(photo, "profiles");
-            } catch (java.io.IOException e) {
-                log.error("Failed to upload group photo to Cloudinary", e);
-                throw new RuntimeException("Group photo upload failed", e);
-            }
-        }
-
-        ChatRoom room = chatRoomRepository.save(ChatRoom.builder()
-                .name(name)
-                .photoUrl(photoUrl)
-                .type(ChatRoomType.GROUP)
-                .creatorId(creatorId)
-                .build());
-
-        addMemberIfNotExists(room.getId(), creatorId, ChatRoomRole.ADMIN);
-        return room;
     }
 
     public void addMemberToRoom(String requesterId, String roomId, String targetUsername) {
@@ -255,6 +249,23 @@ public class ChatService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + targetUsername));
 
         addMemberIfNotExists(roomId, targetUser.getId(), ChatRoomRole.MEMBER);
+    }
+
+    public void addOrganizerToEventGroup(String requesterId, String eventId, String targetUsername) {
+        ChatRoom room = chatRoomRepository.findByEventId(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event chat room not found"));
+
+        ChatRoomMember requester = chatRoomMemberRepository.findByChatRoomIdAndUserId(room.getId(), requesterId)
+                .orElseThrow(() -> new UnauthorizedException("You are not in this group"));
+
+        if (requester.getRole() != ChatRoomRole.ADMIN) {
+            throw new UnauthorizedException("Only admins can add organizers");
+        }
+
+        User targetUser = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + targetUsername));
+
+        addMemberIfNotExists(room.getId(), targetUser.getId(), ChatRoomRole.ADMIN);
     }
 
     public void removeMemberFromRoom(String requesterId, String roomId, String targetUsername) {
