@@ -47,11 +47,33 @@ class CertificateControllerTest {
 
     @Test
     void downloadCertificateReturnsPdfAttachment() throws Exception {
+        Certificate certificate = Certificate.builder()
+                .userId("user-1")
+                .eventId("event-1")
+                .certificateNumber("CERT-1")
+                .pdfUrl(null)
+                .build();
+        when(certificateRepository.findById("cert-1")).thenReturn(java.util.Optional.of(certificate));
         when(certificateService.createCertificatePdf("cert-1")).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/v1/certificates/download/cert-1"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", "application/pdf"))
                 .andExpect(content().bytes(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    void downloadCertificateRedirectsToCloudinary() throws Exception {
+        Certificate certificate = Certificate.builder()
+                .userId("user-1")
+                .eventId("event-1")
+                .certificateNumber("CERT-1")
+                .pdfUrl("https://cloudinary.com/cert.pdf")
+                .build();
+        when(certificateRepository.findById("cert-1")).thenReturn(java.util.Optional.of(certificate));
+
+        mockMvc.perform(get("/api/v1/certificates/download/cert-1"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", "https://cloudinary.com/cert.pdf"));
     }
 }

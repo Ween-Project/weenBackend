@@ -37,7 +37,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void loginReturnsTokensInBodyAndCookies() throws Exception {
+    void loginReturnsTokensInBody() throws Exception {
         AuthResponse response = AuthResponse.builder()
                 .accessToken("access-token")
                 .refreshToken("refresh-token")
@@ -57,26 +57,22 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Login successful"))
-                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
-                .andExpect(cookie().value("accessToken", "access-token"))
-                .andExpect(cookie().value("refreshToken", "refresh-token"));
+                .andExpect(jsonPath("$.data.accessToken").value("access-token"));
     }
 
     @Test
-    void refreshUsesCookieTokenBeforeRequestBodyToken() throws Exception {
-        when(authService.refreshToken("cookie-refresh")).thenReturn("new-access");
+    void refreshReturnsNewAccessToken() throws Exception {
+        when(authService.refreshToken("refresh-token")).thenReturn("new-access");
         RefreshTokenRequest body = new RefreshTokenRequest();
-        body.setRefreshToken("body-refresh");
+        body.setRefreshToken("refresh-token");
 
         mockMvc.perform(post("/api/v1/auth/refresh")
-                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "cookie-refresh"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").value("new-access"))
-                .andExpect(header().string("Set-Cookie", containsString("accessToken=new-access")));
+                .andExpect(jsonPath("$.data").value("new-access"));
 
-        verify(authService).refreshToken("cookie-refresh");
+        verify(authService).refreshToken("refresh-token");
     }
 
     @Test
