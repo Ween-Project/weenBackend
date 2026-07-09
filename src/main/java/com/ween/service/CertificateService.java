@@ -25,6 +25,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+import com.ween.enums.ParticipationStatus;
+import com.ween.entity.Participation;
+import com.ween.repository.ParticipationRepository;
+import org.springframework.scheduling.annotation.Async;
 
 @Slf4j
 @Service
@@ -37,6 +41,9 @@ public class CertificateService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final OrganizationRepository organizationRepository;
+    private final ParticipationRepository participationRepository;
+    private final ParticipationService participationService;
+    private final CloudinaryService cloudinaryService;
 
     public byte[] createCertificatePdf(String certificateId) throws Exception {
 
@@ -192,5 +199,33 @@ public class CertificateService {
 
     public String generateCertificatesAsync(String userId, String eventId) {
         return userId;
+    }
+
+    @Async("taskExecutor")
+    public void generateCertificatesForEventAsync(String eventId) {
+        log.info("Starting asynchronous batch certificate generation for event: {}", eventId);
+        List<Participation> approvedParticipations = participationRepository.findByEventIdAndStatus(eventId, ParticipationStatus.APPROVED);
+        log.info("Found {} approved participants for event: {}", approvedParticipations.size(), eventId);
+
+        for (Participation participation : approvedParticipations) {
+            String userId = participation.getUser().getId();
+            try {
+                // 1. Transaction 1: Mark participation finished and create certificate record
+                Certificate certificate = participationService.completeParticipationAndGetCertificate(userId, eventId);
+
+                // 2. Generate PDF bytes
+                byte[] pdfBytes = createCertificatePdf(certificate.getId());
+
+                // 3. Upload to Cloudinary
+                String publicId = "certificates/certificate_" + certificate.getId();
+                String secureUrl = cloudinaryService.uploadPdf(pdfBytes, publicId);
+
+                // 4. Transaction 2: Update certificate url and trigger notification
+                participationService.saveCertificateUrl(certificate.getId(), secureUrl);
+                log.info("Successfully generated and uploaded certificate for user: {} in event: {}", userId, eventId);
+            } catch (Exception e) {
+                log.error("Failed to generate and upload certificate for user: {} in event: {}", userId, eventId, e);
+            }
+        }
     }
 }
