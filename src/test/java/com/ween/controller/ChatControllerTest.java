@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
@@ -83,8 +84,6 @@ class ChatControllerTest {
 
     @Test
     void groupEndpointsDelegateToService() throws Exception {
-        GroupRoomRequest roomRequest = new GroupRoomRequest();
-        roomRequest.setName("Team");
         ChatRoom room = ChatRoom.builder().name("Team").build();
         room.setId("room-1");
         when(chatService.createGroupRoom("user-1", "Team", null)).thenReturn(room);
@@ -94,9 +93,8 @@ class ChatControllerTest {
 
         mockMvc.perform(get("/api/v1/chat/rooms")).andExpect(status().isOk());
         mockMvc.perform(get("/api/v1/chat/rooms/room-1/messages")).andExpect(status().isOk());
-        mockMvc.perform(post("/api/v1/chat/rooms/group")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(roomRequest)))
+        mockMvc.perform(multipart("/api/v1/chat/rooms/group")
+                        .param("name", "Team"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.name").value("Team"));
     }
