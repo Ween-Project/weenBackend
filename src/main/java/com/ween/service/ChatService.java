@@ -25,11 +25,14 @@ import com.ween.repository.UserRepository;
 import com.ween.repository.FollowRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +52,9 @@ public class ChatService {
     private final EventRepository eventRepository;
     private final NotificationService notificationService;
     private final CloudinaryService cloudinaryService;
+
+    @Value("${ween.chat.default-group-photo-url:https://placehold.co/200x200/e5e7eb/9ca3af.png}")
+    private String defaultGroupPhotoUrl;
 
     public ChatMessageResponse sendMessage(String senderId, ChatMessageRequest request) {
         String content = request.getContent() == null ? "" : request.getContent().trim();
@@ -212,10 +218,32 @@ public class ChatService {
                         .name(event.getTitle())
                         .type(ChatRoomType.EVENT)
                         .eventId(eventId)
+                        .photoUrl(defaultGroupPhotoUrl)
                         .creatorId(creatorId)
                         .build()));
 
         addMemberIfNotExists(room.getId(), creatorId, ChatRoomRole.ADMIN);
+    }
+
+    public ChatRoom createGroupRoom(String creatorId, String name, MultipartFile photo) {
+        String roomName = name == null ? "" : name.trim();
+        if (roomName.isBlank()) {
+            throw new IllegalArgumentException("Group name is required");
+        }
+
+        String photoUrl = defaultGroupPhotoUrl;
+        if (photo != null && !photo.isEmpty()) {
+            photoUrl = uploadGroupPhoto(photo);
+        }
+
+        ChatRoom room = chatRoomRepository.save(ChatRoom.builder()
+                .name(roomName)
+                .type(ChatRoomType.GROUP)
+                .photoUrl(photoUrl)
+                .creatorId(creatorId)
+                .build());
+        addMemberIfNotExists(room.getId(), creatorId, ChatRoomRole.ADMIN);
+        return room;
     }
 
     public void addUserToEventGroup(String eventId, String userId) {
@@ -278,7 +306,7 @@ public class ChatService {
         chatRoomMemberRepository.deleteByChatRoomIdAndUserId(roomId, targetUser.getId());
     }
 
-    public void updateRoomInfo(String requesterId, String roomId, String newName, String newPhotoUrl) {
+    public void updateRoomInfo(String requesterId, String roomId, String newName, MultipartFile photo) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
 
@@ -296,8 +324,8 @@ public class ChatService {
         if (newName != null && !newName.isBlank()) {
             room.setName(newName);
         }
-        if (newPhotoUrl != null) {
-            room.setPhotoUrl(newPhotoUrl);
+        if (photo != null && !photo.isEmpty()) {
+            room.setPhotoUrl(uploadGroupPhoto(photo));
         }
         chatRoomRepository.save(room);
     }
@@ -322,6 +350,15 @@ public class ChatService {
         return chatRoomMemberRepository.findByChatRoomId(roomId).stream()
                 .map(ChatRoomMember::getUserId)
                 .toList();
+    }
+
+    private String uploadGroupPhoto(MultipartFile photo) {
+        try {
+            return cloudinaryService.uploadFile(photo, "chat/groups");
+        } catch (IOException e) {
+            log.error("Failed to upload group photo to Cloudinary", e);
+            throw new RuntimeException("Group photo upload failed", e);
+        }
     }
 
     private ChatConversationResponse toConversationResponse(String userId, ChatMessage message) {
