@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -55,7 +56,7 @@ public class OrganizationController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     @Operation(summary = "Update current organization profile", description = "Update organization details (owner only)")
     @SecurityRequirement(name = "Bearer")
@@ -67,11 +68,12 @@ public class OrganizationController {
     })
     public ResponseEntity<ApiResponse<Organization>> updateOrganization(
             @Parameter(description = "Organization ID", required = true)
-            @Valid @RequestBody UpdateOrganizationRequest request) {
+            @Valid @ModelAttribute UpdateOrganizationRequest request,
+            @RequestParam(value = "logo", required = false) MultipartFile logo) {
         String orgId = null;
         try {
             orgId = securityUtil.getCurrentUserId();
-            Organization response = organizationService.updateOrganization(orgId, request);
+            Organization response = organizationService.updateOrganization(orgId, request, logo);
             return ResponseEntity.ok(ApiResponse.ok(response, "Organization updated successfully"));
         } catch (Exception e) {
             log.error("Failed to update organization: {}", orgId, e);
@@ -80,29 +82,7 @@ public class OrganizationController {
     }
 
 
-    @PutMapping("/{id}/logo")
-    @Transactional
-    @Operation(summary = "Update current organization logo", description = "Update organization logo (owner only)")
-    @SecurityRequirement(name = "Bearer")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization updated successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Only owner can update"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Organization not found")
-    })
-    public ResponseEntity<ApiResponse<Organization>> updateOrganizationLogo(
-            @Parameter(description = "Organization ID", required = true)
-            @Valid @RequestBody UpdateProfilePhotoRequest request) {
-        String organizationId=null;
-        try {
-            organizationId = securityUtil.getCurrentUserId();
-            Organization response = organizationService.updateOrganizationPhoto(organizationId,request);
-            return ResponseEntity.ok(ApiResponse.ok(response, "Organization logo updated successfully"));
-        } catch (Exception e) {
-            log.error("Failed to update organization: {}", organizationId, e);
-            throw e;
-        }
-    }
+
 
 
     @GetMapping("/current-organization-events")

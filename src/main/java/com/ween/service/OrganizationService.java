@@ -32,6 +32,7 @@ public class OrganizationService {
     private final OrganizationMapper organizationMapper;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final CloudinaryService cloudinaryService;
 
     public Organization getOrganizationById(String organizationId) {
         return organizationRepository.findById(organizationId)
@@ -39,7 +40,7 @@ public class OrganizationService {
     }
 
     @Transactional
-    public Organization updateOrganization(String organizationId, UpdateOrganizationRequest request) {
+    public Organization updateOrganization(String organizationId, UpdateOrganizationRequest request, org.springframework.web.multipart.MultipartFile logo) {
         Organization organization = getOrganizationById(organizationId);
 
         if (!organization.getId().equals(organizationId)) {
@@ -59,8 +60,14 @@ public class OrganizationService {
             organization.setEmail(request.getContactEmail());
         }
 
-        if (request.getLogoUrl() != null) {
-            organization.setLogoUrl(request.getLogoUrl());
+        if (logo != null && !logo.isEmpty()) {
+            try {
+                String logoUrl = cloudinaryService.uploadFile(logo, "logos");
+                organization.setLogoUrl(logoUrl);
+            } catch (java.io.IOException e) {
+                log.error("Failed to upload organization logo to Cloudinary", e);
+                throw new RuntimeException("Logo upload failed", e);
+            }
         }
 
         if (request.getWebsite() != null) {
@@ -72,19 +79,7 @@ public class OrganizationService {
         return updated;
     }
 
-    @Transactional
-    public Organization updateOrganizationPhoto(String organizationId, UpdateProfilePhotoRequest request){
 
-        Organization organization = getOrganizationById(organizationId);
-
-        if(request.getImageUrl() !=null){
-            organization.setLogoUrl(request.getImageUrl());
-        }
-        Organization updated = organizationRepository.save(organization);
-
-        log.info("User profile photo updated: {}", organizationId);
-        return updated;
-    }
 
     @Transactional
     public void deleteOrganization(String organizationId) {
