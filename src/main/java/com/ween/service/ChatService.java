@@ -48,6 +48,7 @@ public class ChatService {
     private final FollowRepository followRepository;
     private final EventRepository eventRepository;
     private final NotificationService notificationService;
+    private final CloudinaryService cloudinaryService;
 
     public ChatMessageResponse sendMessage(String senderId, ChatMessageRequest request) {
         String content = request.getContent() == null ? "" : request.getContent().trim();
@@ -215,7 +216,17 @@ public class ChatService {
         addMemberIfNotExists(room.getId(), userId, ChatRoomRole.MEMBER);
     }
 
-    public ChatRoom createGroupRoom(String creatorId, String name, String photoUrl) {
+    public ChatRoom createGroupRoom(String creatorId, String name, org.springframework.web.multipart.MultipartFile photo) {
+        String photoUrl = null;
+        if (photo != null && !photo.isEmpty()) {
+            try {
+                photoUrl = cloudinaryService.uploadFile(photo, "profiles");
+            } catch (java.io.IOException e) {
+                log.error("Failed to upload group photo to Cloudinary", e);
+                throw new RuntimeException("Group photo upload failed", e);
+            }
+        }
+
         ChatRoom room = chatRoomRepository.save(ChatRoom.builder()
                 .name(name)
                 .photoUrl(photoUrl)
@@ -263,7 +274,7 @@ public class ChatService {
         chatRoomMemberRepository.deleteByChatRoomIdAndUserId(roomId, targetUser.getId());
     }
 
-    public void updateRoomInfo(String requesterId, String roomId, String newName, String newPhotoUrl) {
+    public void updateRoomInfo(String requesterId, String roomId, String newName, org.springframework.web.multipart.MultipartFile photo) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
 
@@ -277,8 +288,14 @@ public class ChatService {
         if (newName != null && !newName.isBlank()) {
             room.setName(newName);
         }
-        if (newPhotoUrl != null) {
-            room.setPhotoUrl(newPhotoUrl);
+        if (photo != null && !photo.isEmpty()) {
+            try {
+                String photoUrl = cloudinaryService.uploadFile(photo, "profiles");
+                room.setPhotoUrl(photoUrl);
+            } catch (java.io.IOException e) {
+                log.error("Failed to upload group photo to Cloudinary during update", e);
+                throw new RuntimeException("Group photo upload failed", e);
+            }
         }
         chatRoomRepository.save(room);
     }
