@@ -11,6 +11,5 @@ public class UpdateOrganizationRequest {
     private String name;
     private String description;
     private String contactEmail;
-    private String logoUrl;
     private String website;
 }
