@@ -231,6 +231,59 @@ public class EmailService {
                 "</html>";
     }
 
+    public void sendOrganizerInvitationEmail(String to, String orgName, String approveLink, String rejectLink) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(appName + " - Organization Organizer Invitation");
+            helper.setText(buildOrganizerInvitationEmailHtml(orgName, approveLink, rejectLink), true);
+
+            mailSender.send(mimeMessage);
+            log.info("Organizer invitation email sent to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send organizer invitation email to: {}", to, e);
+            throw new RuntimeException("Failed to send organizer invitation email", e);
+        }
+    }
+
+    private String buildOrganizerInvitationEmailHtml(String orgName, String approveLink, String rejectLink) {
+        String safeOrgName = escapeHtml(orgName);
+        String safeApproveLink = escapeHtml(approveLink);
+        String safeRejectLink = escapeHtml(rejectLink);
+
+        return "<!DOCTYPE html>" +
+                "<html lang=\"en\">" +
+                "<head>" +
+                "  <meta charset=\"UTF-8\" />" +
+                "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />" +
+                "  <title>Ween - Organizer Invitation</title>" +
+                "  <style>" +
+                "    * { margin: 0; padding: 0; box-sizing: border-box; }" +
+                "    body { background-color: #f0f4f0; font-family: sans-serif; color: #1a1a1a; padding: 40px 16px; }" +
+                "    .card { background-color: #ffffff; padding: 44px 40px 36px; max-width: 580px; margin: 0 auto; border-radius: 16px; }" +
+                "    .greeting { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; }" +
+                "    .intro-text { font-size: 15px; color: #444444; line-height: 1.7; margin-bottom: 28px; }" +
+                "    .btn { display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px; }" +
+                "    .btn-approve { background-color: #2d7a3a; color: white !important; }" +
+                "    .btn-reject { background-color: #d9534f; color: white !important; }" +
+                "  </style>" +
+                "</head>" +
+                "<body>" +
+                "  <div class=\"card\">" +
+                "    <p class=\"greeting\">Hello!</p>" +
+                "    <p class=\"intro-text\">Organization <strong>" + safeOrgName + "</strong> wants to invite you to become an organizer for their organization.</p>" +
+                "    <div>" +
+                "      <a href=\"" + safeApproveLink + "\" class=\"btn btn-approve\">Approve</a>" +
+                "      <a href=\"" + safeRejectLink + "\" class=\"btn btn-reject\">Reject</a>" +
+                "    </div>" +
+                "  </div>" +
+                "</body>" +
+                "</html>";
+    }
+
     private String escapeHtml(String input) {
         if (input == null) {
             return "";
