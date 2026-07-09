@@ -26,6 +26,8 @@ import java.io.IOException;
 @Transactional
 public class PostService {
 
+    private static final String POST_MEDIA_UPLOAD_ERROR = "Post media upload failed";
+
     private final PostRepository postRepository;
     private final PostCommentRepository postCommentRepository;
     private final PostLikeRepository postLikeRepository;
@@ -38,20 +40,7 @@ public class PostService {
     private final CloudinaryService cloudinaryService;
 
     public PostResponse createPost(String currentUserId, String content, java.util.List<MultipartFile> files) {
-        java.util.List<String> urls = new java.util.ArrayList<>();
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                if (file != null && !file.isEmpty()) {
-                    try {
-                        String url = cloudinaryService.uploadFile(file, "posts");
-                        urls.add(url);
-                    } catch (IOException e) {
-                        log.error("Failed to upload image to Cloudinary", e);
-                        throw new RuntimeException("Image upload failed", e);
-                    }
-                }
-            }
-        }
+        java.util.List<String> urls = uploadPostMediaFiles(files);
         String mediaUrl = urls.isEmpty() ? null : String.join(",", urls);
 
         Post.PostBuilder postBuilder = Post.builder()
@@ -127,18 +116,7 @@ public class PostService {
         post.setContent(request.getContent());
 
         if (files != null && !files.isEmpty()) {
-            java.util.List<String> urls = new java.util.ArrayList<>();
-            for (MultipartFile file : files) {
-                if (file != null && !file.isEmpty()) {
-                    try {
-                        String url = cloudinaryService.uploadFile(file, "posts");
-                        urls.add(url);
-                    } catch (IOException e) {
-                        log.error("Failed to upload image to Cloudinary during update", e);
-                        throw new RuntimeException("Image upload failed", e);
-                    }
-                }
-            }
+            java.util.List<String> urls = uploadPostMediaFiles(files);
             if (!urls.isEmpty()) {
                 post.setMediaUrl(String.join(",", urls));
             }
@@ -260,6 +238,26 @@ public class PostService {
     private Post getInternalPost(String postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
+    }
+
+    private java.util.List<String> uploadPostMediaFiles(java.util.List<MultipartFile> files) {
+        java.util.List<String> urls = new java.util.ArrayList<>();
+        if (files == null || files.isEmpty()) {
+            return urls;
+        }
+
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            try {
+                urls.add(cloudinaryService.uploadPostMedia(file));
+            } catch (IOException e) {
+                log.error("Failed to upload post media to Cloudinary", e);
+                throw new RuntimeException(POST_MEDIA_UPLOAD_ERROR, e);
+            }
+        }
+        return urls;
     }
 
     private void ensurePostOwner(Post post, String currentUserId) {
