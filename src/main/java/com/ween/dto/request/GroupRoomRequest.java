@@ -8,6 +8,4 @@ public class GroupRoomRequest {
 
     @NotBlank(message = "Group name is required")
     private String name;
-
-    private String photoUrl;
 }

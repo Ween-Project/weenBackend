@@ -17,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 @Slf4j
 @Service
@@ -33,11 +35,28 @@ public class PostService {
     private final OrganizationRepository organizationRepository;
     private final NotificationService notificationService;
     private final PostMapper postMapper;
+    private final CloudinaryService cloudinaryService;
 
-    public PostResponse createPost(String currentUserId, CreatePostRequest request) {
+    public PostResponse createPost(String currentUserId, String content, java.util.List<MultipartFile> files) {
+        java.util.List<String> urls = new java.util.ArrayList<>();
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    try {
+                        String url = cloudinaryService.uploadFile(file, "posts");
+                        urls.add(url);
+                    } catch (IOException e) {
+                        log.error("Failed to upload image to Cloudinary", e);
+                        throw new RuntimeException("Image upload failed", e);
+                    }
+                }
+            }
+        }
+        String mediaUrl = urls.isEmpty() ? null : String.join(",", urls);
+
         Post.PostBuilder postBuilder = Post.builder()
-                .content(request.getContent())
-                .mediaUrl(request.getMediaUrl());
+                .content(content)
+                .mediaUrl(mediaUrl);
 
         Organization organization = organizationRepository.findById(currentUserId).orElse(null);
         if (organization != null) {
@@ -101,12 +120,30 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
     }
 
-    public PostResponse updatePost(String postId, String currentUserId, UpdatePostRequest request) {
+    public PostResponse updatePost(String postId, String currentUserId, UpdatePostRequest request, java.util.List<MultipartFile> files) {
         Post post = getInternalPost(postId);
         ensurePostOwner(post, currentUserId);
 
         post.setContent(request.getContent());
-        post.setMediaUrl(request.getMediaUrl());
+
+        if (files != null && !files.isEmpty()) {
+            java.util.List<String> urls = new java.util.ArrayList<>();
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    try {
+                        String url = cloudinaryService.uploadFile(file, "posts");
+                        urls.add(url);
+                    } catch (IOException e) {
+                        log.error("Failed to upload image to Cloudinary during update", e);
+                        throw new RuntimeException("Image upload failed", e);
+                    }
+                }
+            }
+            if (!urls.isEmpty()) {
+                post.setMediaUrl(String.join(",", urls));
+            }
+        }
+
         postRepository.save(post);
         log.info("User {} updated post {}", currentUserId, postId);
         return getPost(postId, currentUserId);
