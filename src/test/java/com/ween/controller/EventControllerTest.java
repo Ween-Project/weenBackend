@@ -11,6 +11,8 @@ import com.ween.enums.EventCategory;
 import com.ween.mapper.EventMapper;
 import com.ween.service.EventService;
 import com.ween.service.RegistrationService;
+import com.ween.service.ParticipationService;
+import com.ween.security.SecurityUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,13 +40,19 @@ class EventControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private EventService eventService;
     private RegistrationService registrationService;
+    private SecurityUtil securityUtil;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         eventService = mock(EventService.class);
         registrationService = mock(RegistrationService.class);
-        mockMvc = standaloneSetup(new EventController(eventService, registrationService, mock(EventMapper.class)))
+        securityUtil = mock(SecurityUtil.class);
+        when(securityUtil.getCurrentUserId()).thenReturn("user-1");
+        mockMvc = standaloneSetup(
+                new EventController(eventService, securityUtil),
+                new EventRegistrationController(registrationService, mock(ParticipationService.class), securityUtil)
+        )
                 .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
     }
@@ -79,6 +87,7 @@ class EventControllerTest {
     @Test
     void createEventUsesAuthenticatedOrganizationId() throws Exception {
         ControllerTestSupport.authenticateAs("org-1");
+        when(securityUtil.getCurrentUserId()).thenReturn("org-1");
         Event event = Event.builder().title("Cleanup").organizationId("org-1").build();
         event.setId("event-1");
         when(eventService.createEvent(any(CreateEventRequest.class), eq("org-1"))).thenReturn(event);
@@ -107,6 +116,7 @@ class EventControllerTest {
     @Test
     void registerForEventUsesAuthenticatedUserId() throws Exception {
         ControllerTestSupport.authenticateAs("user-1");
+        when(securityUtil.getCurrentUserId()).thenReturn("user-1");
         EventRegistration registration = EventRegistration.builder().eventId("event-1").userId("user-1").build();
         registration.setId("registration-1");
         when(registrationService.registerForEvent("event-1", "user-1")).thenReturn(registration);
