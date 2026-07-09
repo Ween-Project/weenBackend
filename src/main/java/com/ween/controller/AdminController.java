@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RestController
@@ -190,21 +191,24 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.ok(badgeService.list(pageable), "Badges retrieved successfully"));
     }
 
-    @PostMapping("/badges")
+    @PostMapping(value = "/badges", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create an achievement badge")
     @SecurityRequirement(name = "Bearer")
-    public ResponseEntity<ApiResponse<BadgeResponse>> createBadge(@Valid @RequestBody BadgeRequest request) {
+    public ResponseEntity<ApiResponse<BadgeResponse>> createBadge(
+            @Valid @ModelAttribute BadgeRequest request,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
         return ResponseEntity.status(201)
-                .body(ApiResponse.ok(badgeService.create(request), "Badge created successfully"));
+                .body(ApiResponse.ok(badgeService.create(request, image), "Badge created successfully"));
     }
 
-    @PutMapping("/badges/{badgeId}")
+    @PutMapping(value = "/badges/{badgeId}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update an achievement badge")
     @SecurityRequirement(name = "Bearer")
     public ResponseEntity<ApiResponse<BadgeResponse>> updateBadge(
             @PathVariable String badgeId,
-            @Valid @RequestBody BadgeRequest request) {
-        return ResponseEntity.ok(ApiResponse.ok(badgeService.update(badgeId, request), "Badge updated successfully"));
+            @Valid @ModelAttribute BadgeRequest request,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+        return ResponseEntity.ok(ApiResponse.ok(badgeService.update(badgeId, request, image), "Badge updated successfully"));
     }
 
     @DeleteMapping("/badges/{badgeId}")
