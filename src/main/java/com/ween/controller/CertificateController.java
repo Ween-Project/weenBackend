@@ -34,9 +34,18 @@ public class CertificateController {
     /**
      * Generates and downloads the PDF for a specific certificate ID.
      */
-    @GetMapping(value="/download/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> downloadCertificate(@PathVariable String id) throws Exception {
-        // Generate the PDF byte array using the service
+    @GetMapping(value="/download/{id}")
+    public ResponseEntity<?> downloadCertificate(@PathVariable String id) throws Exception {
+        Certificate certificate = certificateRepository.findById(id)
+                .orElseThrow(() -> new com.ween.exception.ResourceNotFoundException("Certificate not found. ID: " + id));
+
+        if (certificate.getPdfUrl() != null && !certificate.getPdfUrl().isBlank()) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(java.net.URI.create(certificate.getPdfUrl()));
+            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        }
+
+        // Generate the PDF byte array using the service (fallback)
         byte[] pdfContent = certificateService.createCertificatePdf(id);
 
         // Prepare HTTP headers for file download
