@@ -33,9 +33,9 @@ public class PostController {
     @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create post")
     public ResponseEntity<ApiResponse<PostResponse>> createPost(
-            @RequestParam("content") String content,
+            @Valid @org.springframework.web.bind.annotation.RequestPart("request") CreatePostRequest request,
             @RequestParam(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files) {
-        PostResponse response = postService.createPost(securityUtil.getCurrentUserId(), content, files);
+        PostResponse response = postService.createPost(securityUtil.getCurrentUserId(), request.getContent(), files);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(response, "Post created successfully"));
     }

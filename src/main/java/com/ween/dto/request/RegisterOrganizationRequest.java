@@ -31,8 +31,7 @@ public class RegisterOrganizationRequest {
     @Size(min = 8, max = 255, message = "Password must be between 8 and 255 characters")
     private String password;
 
-    @Size(max = 500, message = "Logo URL cannot exceed 500 characters")
-    private String logoUrl;
+
 
     @Size(max = 300, message = "Website URL cannot exceed 300 characters")
     private String website;

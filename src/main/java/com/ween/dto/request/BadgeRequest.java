@@ -23,6 +23,5 @@ public class BadgeRequest {
     private EventCategory eventCategory;
     @Min(0)
     private Integer points = 0;
-    private String imageUrl;
     private Boolean isActive = true;
 }

@@ -186,9 +186,6 @@ public class BadgeService {
         badge.setEventCategory(request.getAchievementType() == AchievementType.EVENT_CATEGORY_ATTENDANCE_COUNT
                 ? request.getEventCategory() : null);
         badge.setPoints(request.getPoints() == null ? 0 : request.getPoints());
-        if (request.getImageUrl() != null) {
-            badge.setImageUrl(request.getImageUrl());
-        }
         badge.setIsActive(request.getIsActive() == null || request.getIsActive());
     }
 

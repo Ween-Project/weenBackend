@@ -47,6 +47,4 @@ public class RegisterRequest {
     private String interests;
     
     private String skills;
-    
-    private String referralCode;
 }

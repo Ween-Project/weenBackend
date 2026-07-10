@@ -1,8 +1,6 @@
 package com.ween.service;
 
-import com.ween.dto.request.CreateOrganizationRequest;
 import com.ween.dto.request.UpdateOrganizationRequest;
-import com.ween.dto.request.UpdateProfilePhotoRequest;
 import com.ween.entity.Event;
 import com.ween.entity.Organization;
 import com.ween.entity.User;
@@ -40,7 +38,7 @@ public class OrganizationService {
     }
 
     @Transactional
-    public Organization updateOrganization(String organizationId, UpdateOrganizationRequest request, org.springframework.web.multipart.MultipartFile logo) {
+    public Organization updateOrganization(String organizationId, UpdateOrganizationRequest request, org.springframework.web.multipart.MultipartFile logo, org.springframework.web.multipart.MultipartFile banner) {
         Organization organization = getOrganizationById(organizationId);
 
         if (!organization.getId().equals(organizationId)) {
@@ -68,6 +66,16 @@ public class OrganizationService {
             } catch (java.io.IOException e) {
                 log.error("Failed to upload organization logo to Cloudinary", e);
                 throw new RuntimeException("Logo upload failed", e);
+            }
+        }
+
+        if (banner != null && !banner.isEmpty()) {
+            try {
+                String bannerUrl = cloudinaryService.uploadFile(banner, "organizations/banners");
+                organization.setBannerUrl(bannerUrl);
+            } catch (java.io.IOException e) {
+                log.error("Failed to upload organization banner to Cloudinary", e);
+                throw new RuntimeException("Banner upload failed", e);
             }
         }
 
