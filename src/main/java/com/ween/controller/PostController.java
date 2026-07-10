@@ -100,7 +100,7 @@ public class PostController {
     @Operation(summary = "Update post")
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(
             @PathVariable String postId,
-            @io.swagger.v3.oas.annotations.Parameter(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") UpdatePostRequest request,
+            @org.springdoc.core.annotations.ParameterObject @Valid @ModelAttribute UpdatePostRequest request,
             @RequestParam(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files) {
         PostResponse response = postService.updatePost(postId, securityUtil.getCurrentUserId(), request, files);
         return ResponseEntity.ok(ApiResponse.ok(response, "Post updated successfully"));
