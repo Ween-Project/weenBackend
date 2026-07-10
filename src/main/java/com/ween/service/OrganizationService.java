@@ -48,16 +48,17 @@ public class OrganizationService {
         }
 
 
-        if (request.getName() != null) {
-            organization.setOrganizationName(request.getName());
+        if (request.getOrganizationName() != null) {
+            organization.setOrganizationName(request.getOrganizationName());
         }
-
         if (request.getDescription() != null) {
             organization.setDescription(request.getDescription());
         }
-
-        if (request.getContactEmail() != null) {
-            organization.setEmail(request.getContactEmail());
+        if (request.getWebsite() != null) {
+            organization.setWebsite(request.getWebsite());
+        }
+        if (request.getEmail() != null) {
+            organization.setEmail(request.getEmail());
         }
 
         if (logo != null && !logo.isEmpty()) {

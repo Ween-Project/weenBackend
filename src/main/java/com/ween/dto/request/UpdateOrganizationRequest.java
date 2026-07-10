@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateOrganizationRequest {
-    private String name;
+    private String organizationName;
     private String description;
-    private String contactEmail;
+    private String email;
     private String website;
 }

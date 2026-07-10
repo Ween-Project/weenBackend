@@ -18,6 +18,7 @@ public class OrganizationResponse {
     private String organizationName;
     private String description;
     private String logoUrl;
+    private String bannerUrl;
     private String email;
     private String website;
     private UserRole role;
