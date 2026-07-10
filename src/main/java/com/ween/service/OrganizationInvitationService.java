@@ -45,7 +45,7 @@ public class OrganizationInvitationService {
                 .orElseGet(() -> userRepository.findByUsername(identifier)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found")));
 
-        if (organizerRepository.findByUserId(user.getId()).isPresent()) {
+        if (user.getRole() == UserRole.ORGANIZER) {
             throw new IllegalArgumentException("User is already an organizer for an organization");
         }
 
@@ -79,20 +79,22 @@ public class OrganizationInvitationService {
             throw new IllegalArgumentException("Invitation has expired");
         }
 
+        User user = invitation.getUser();
+        if (user.getRole() == UserRole.ORGANIZER) {
+            throw new IllegalArgumentException("User is already an organizer in another organization");
+        }
+
         invitation.setStatus(InvitationStatus.APPROVED);
         invitationRepository.save(invitation);
 
-        User user = invitation.getUser();
-        if (organizerRepository.findByUserId(user.getId()).isEmpty()) {
-            Organizer organizer = Organizer.builder()
-                    .user(user)
-                    .organization(invitation.getOrganization())
-                    .build();
-            organizerRepository.save(organizer);
+        Organizer organizer = Organizer.builder()
+                .user(user)
+                .organization(invitation.getOrganization())
+                .build();
+        organizerRepository.save(organizer);
 
-            user.setRole(UserRole.ORGANIZER);
-            userRepository.save(user);
-        }
+        user.setRole(UserRole.ORGANIZER);
+        userRepository.save(user);
     }
 
     @Transactional
