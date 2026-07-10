@@ -95,7 +95,7 @@ public class EventController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Insufficient permissions")
     })
     public ResponseEntity<ApiResponse<Event>> createEvent(
-            @io.swagger.v3.oas.annotations.Parameter(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") CreateEventRequest request,
+            @org.springdoc.core.annotations.ParameterObject @Valid @ModelAttribute CreateEventRequest request,
             @RequestParam(value = "coverImage", required = false) MultipartFile coverImage) {
         try {
             String orgId = securityUtil.getCurrentUserId();
@@ -120,7 +120,7 @@ public class EventController {
     })
     public ResponseEntity<ApiResponse<Event>> updateEvent(
             @Parameter(description = "Event ID", required = true) @PathVariable String id,
-            @io.swagger.v3.oas.annotations.Parameter(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") UpdateEventRequest request,
+            @org.springdoc.core.annotations.ParameterObject @Valid @ModelAttribute UpdateEventRequest request,
             @RequestParam(value = "coverImage", required = false) MultipartFile coverImage) {
         try {
             String userId = securityUtil.getCurrentUserId();
