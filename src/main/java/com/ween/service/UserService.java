@@ -89,12 +89,7 @@ public class UserService {
         if (request.getSkills() != null) {
             user.setSkills(normalizeTags(request.getSkills()));
         }
-        if (request.getProfilePhotoUrl() != null) {
-            user.setProfilePhotoUrl(request.getProfilePhotoUrl());
-        }
-        if (request.getBannerUrl() != null) {
-            user.setBannerUrl(request.getBannerUrl());
-        }
+
         if (profilePhoto != null && !profilePhoto.isEmpty()) {
             user.setProfilePhotoUrl(uploadImage(profilePhoto, "users/profile"));
         }

@@ -81,7 +81,7 @@ public class EventService {
             throw new AccessDeniedException("Your organization must be approved by a super admin before publishing events");
         }
 
-        String coverImageUrl = request.getCoverImageUrl();
+        String coverImageUrl = null;
         if (coverImage != null && !coverImage.isEmpty()) {
             coverImageUrl = uploadEventCover(coverImage);
         }
@@ -166,9 +166,7 @@ public class EventService {
         if (request.getStatus() != null) {
             event.setStatus(request.getStatus());
         }
-        if (request.getCoverImageUrl() != null) {
-            event.setCoverImageUrl(request.getCoverImageUrl());
-        }
+
         if (coverImage != null && !coverImage.isEmpty()) {
             event.setCoverImageUrl(uploadEventCover(coverImage));
         }
