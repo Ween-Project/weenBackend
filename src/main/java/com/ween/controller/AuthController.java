@@ -93,7 +93,7 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Organization already exists", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ResponseEntity<ApiResponse<AuthResponse>> registerOrganization(
-            @Valid @ModelAttribute RegisterOrganizationRequest request,
+            @io.swagger.v3.oas.annotations.Parameter(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") RegisterOrganizationRequest request,
             @RequestParam(value = "logo", required = false) MultipartFile logo) {
         try {
             AuthResponse response = authService.registerOrganization(request, logo);
