@@ -67,8 +67,7 @@ public class OrganizationController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Organization not found")
     })
     public ResponseEntity<ApiResponse<Organization>> updateOrganization(
-            @Parameter(description = "Organization ID", required = true)
-            @Valid @org.springframework.web.bind.annotation.RequestPart("request") UpdateOrganizationRequest request,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Request body", required = true, content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") UpdateOrganizationRequest request,
             @RequestParam(value = "logo", required = false) MultipartFile logo) {
         String orgId = null;
         try {

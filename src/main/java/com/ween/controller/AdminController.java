@@ -195,7 +195,7 @@ public class AdminController {
     @Operation(summary = "Create an achievement badge")
     @SecurityRequirement(name = "Bearer")
     public ResponseEntity<ApiResponse<BadgeResponse>> createBadge(
-            @Valid @org.springframework.web.bind.annotation.RequestPart("request") BadgeRequest request,
+            @io.swagger.v3.oas.annotations.Parameter(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") BadgeRequest request,
             @RequestParam(value = "image", required = false) MultipartFile image) {
         return ResponseEntity.status(201)
                 .body(ApiResponse.ok(badgeService.create(request, image), "Badge created successfully"));
@@ -206,7 +206,7 @@ public class AdminController {
     @SecurityRequirement(name = "Bearer")
     public ResponseEntity<ApiResponse<BadgeResponse>> updateBadge(
             @PathVariable String badgeId,
-            @Valid @org.springframework.web.bind.annotation.RequestPart("request") BadgeRequest request,
+            @io.swagger.v3.oas.annotations.Parameter(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") BadgeRequest request,
             @RequestParam(value = "image", required = false) MultipartFile image) {
         return ResponseEntity.ok(ApiResponse.ok(badgeService.update(badgeId, request, image), "Badge updated successfully"));
     }

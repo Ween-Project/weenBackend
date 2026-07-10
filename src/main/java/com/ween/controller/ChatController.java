@@ -125,7 +125,7 @@ public class ChatController {
     @PostMapping(value = "/rooms/group", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create a custom group chat", description = "Create a new group and add creator as ADMIN")
     public ResponseEntity<ApiResponse<ChatRoom>> createGroup(
-            @Valid @org.springframework.web.bind.annotation.RequestPart("request") GroupRoomRequest request,
+            @io.swagger.v3.oas.annotations.Parameter(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") GroupRoomRequest request,
             @RequestParam(value = "photo", required = false) MultipartFile photo) {
         String userId = securityUtil.getCurrentUserId();
         ChatRoom room = chatService.createGroupRoom(userId, request.getName(), photo);
@@ -136,7 +136,7 @@ public class ChatController {
     @Operation(summary = "Update group info", description = "Update the name or photo of a group")
     public ResponseEntity<ApiResponse<Void>> updateGroupInfo(
             @PathVariable String roomId,
-            @Valid @org.springframework.web.bind.annotation.RequestPart("request") GroupRoomRequest request,
+            @io.swagger.v3.oas.annotations.Parameter(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")) @Valid @org.springframework.web.bind.annotation.RequestPart("request") GroupRoomRequest request,
             @RequestParam(value = "photo", required = false) MultipartFile photo) {
         String userId = securityUtil.getCurrentUserId();
         chatService.updateRoomInfo(userId, roomId, request.getName(), photo);
