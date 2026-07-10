@@ -42,6 +42,9 @@ public class Organization extends BaseEntity {
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
+    @Column(name = "banner_url")
+    private String bannerUrl;
+
     @Column(length = 300)
     private String website;
 

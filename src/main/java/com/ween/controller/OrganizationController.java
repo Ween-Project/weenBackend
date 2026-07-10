@@ -1,10 +1,7 @@
 package com.ween.controller;
 
 
-import com.ween.dto.request.CreateOrganizationRequest;
-import com.ween.dto.request.UpdateOrganizationProfileRequest;
 import com.ween.dto.request.UpdateOrganizationRequest;
-import com.ween.dto.request.UpdateProfilePhotoRequest;
 import com.ween.dto.response.*;
 import com.ween.entity.Organization;
 import com.ween.security.SecurityUtil;
@@ -68,11 +65,12 @@ public class OrganizationController {
     })
     public ResponseEntity<ApiResponse<Organization>> updateOrganization(
             @Valid @org.springframework.web.bind.annotation.RequestPart("request") UpdateOrganizationRequest request,
-            @RequestParam(value = "logo", required = false) MultipartFile logo) {
+            @RequestParam(value = "logo", required = false) MultipartFile logo,
+            @RequestParam(value = "banner", required = false) MultipartFile banner) {
         String orgId = null;
         try {
             orgId = securityUtil.getCurrentUserId();
-            Organization response = organizationService.updateOrganization(orgId, request, logo);
+            Organization response = organizationService.updateOrganization(orgId, request, logo, banner);
             return ResponseEntity.ok(ApiResponse.ok(response, "Organization updated successfully"));
         } catch (Exception e) {
             log.error("Failed to update organization: {}", orgId, e);
