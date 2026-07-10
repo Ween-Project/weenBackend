@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EventRegistrationRequest {
-    private String customAnswers;
+    private String customFields;
 }
