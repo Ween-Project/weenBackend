@@ -74,7 +74,7 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
     })
     public ResponseEntity<ApiResponse<User>> updateProfile(
-            @Valid @ModelAttribute UpdateProfileRequest request,
+            @Valid @org.springframework.web.bind.annotation.RequestPart("request") UpdateProfileRequest request,
             @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
             @RequestParam(value = "banner", required = false) MultipartFile banner) {
         try {
