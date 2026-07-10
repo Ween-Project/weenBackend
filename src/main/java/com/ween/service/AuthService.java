@@ -73,7 +73,7 @@ public class AuthService {
     private String resetPasswordBaseUrl;
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request, MultipartFile profilePhoto, MultipartFile banner, String referralCode) {
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail()) || organizationRepository.existsByEmail(request.getEmail())) {
             throw new AlreadyExistsException("Email already registered: " + request.getEmail());
@@ -82,6 +82,16 @@ public class AuthService {
         // Check if username already exists
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new AlreadyExistsException("Username already taken: " + request.getUsername());
+        }
+
+        String profilePhotoUrl = null;
+        if (profilePhoto != null && !profilePhoto.isEmpty()) {
+            profilePhotoUrl = uploadImage(profilePhoto, "users/profiles");
+        }
+
+        String bannerUrl = null;
+        if (banner != null && !banner.isEmpty()) {
+            bannerUrl = uploadImage(banner, "users/banners");
         }
 
         // Create new user
@@ -97,6 +107,8 @@ public class AuthService {
                 .course(request.getCourse())
                 .interests(convertToJsonArray(request.getInterests()))
                 .skills(convertToJsonArray(request.getSkills()))
+                .profilePhotoUrl(profilePhotoUrl)
+                .bannerUrl(bannerUrl)
                 .role(UserRole.VOLUNTEER)
                 .referralCode(generateReferralCode())
                 .weenCoinBalance(0)
@@ -127,7 +139,7 @@ public class AuthService {
         coinService.awardSignupBonus(savedUser.getId());
 
         // Handle referral if provided
-        String referralCode = request.getReferralCode();
+        // Handle referral if provided
         if (referralCode != null && !referralCode.trim().isEmpty()) {
             try {
                 referralService.processReferralAtSignup(referralCode.trim(), savedUser.getId());
@@ -160,7 +172,7 @@ public class AuthService {
 
 
     @Transactional
-    public AuthResponse registerOrganization(RegisterOrganizationRequest request, MultipartFile logo) {
+    public AuthResponse registerOrganization(RegisterOrganizationRequest request, MultipartFile logo, MultipartFile banner) {
         String orgEmail = request.getEmail();
         String orgUsername = request.getUsername();
 
@@ -174,9 +186,14 @@ public class AuthService {
             throw new AlreadyExistsException("Username already taken: " + orgUsername);
         }
 
-        String logoUrl = request.getLogoUrl();
+        String logoUrl = null;
         if (logo != null && !logo.isEmpty()) {
             logoUrl = uploadImage(logo, "organizations/logos");
+        }
+
+        String bannerUrl = null;
+        if (banner != null && !banner.isEmpty()) {
+            bannerUrl = uploadImage(banner, "organizations/banners");
         }
 
         // Create organization directly (without creating user account)
@@ -184,6 +201,7 @@ public class AuthService {
                 .username(orgUsername)
                 .email(orgEmail)
                 .logoUrl(logoUrl)
+                .bannerUrl(bannerUrl)
                 .website(request.getWebsite())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .organizationName(request.getOrganizationName())

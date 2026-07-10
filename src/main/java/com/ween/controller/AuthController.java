@@ -60,7 +60,7 @@ public class AuthController {
     @Value("${ween.cookie.secure:false}")
     private boolean secureCookies;
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Register new user", description = "Create a new user account with optional referral code")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "User registered successfully", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
@@ -68,14 +68,13 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "User already exists", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ResponseEntity<ApiResponse<AuthResponse>> register(
-            @Valid @RequestBody RegisterRequest request,
+            @Valid @org.springframework.web.bind.annotation.RequestPart("request") RegisterRequest request,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+            @RequestParam(value = "banner", required = false) MultipartFile banner,
             @Parameter(description = "Optional referral code")
             @RequestParam(value = "ref", required = false) String referralCode) {
         try {
-            if (referralCode != null && !referralCode.isEmpty()) {
-                request.setReferralCode(referralCode);
-            }
-            AuthResponse response = authService.register(request);
+            AuthResponse response = authService.register(request, profilePhoto, banner, referralCode);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .headers(authCookies(response))
                     .body(ApiResponse.ok(response, "User registered successfully"));
@@ -94,9 +93,10 @@ public class AuthController {
     })
     public ResponseEntity<ApiResponse<AuthResponse>> registerOrganization(
             @Valid @org.springframework.web.bind.annotation.RequestPart("request") RegisterOrganizationRequest request,
-            @RequestParam(value = "logo", required = false) MultipartFile logo) {
+            @RequestParam(value = "logo", required = false) MultipartFile logo,
+            @RequestParam(value = "banner", required = false) MultipartFile banner) {
         try {
-            AuthResponse response = authService.registerOrganization(request, logo);
+            AuthResponse response = authService.registerOrganization(request, logo, banner);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .headers(authCookies(response))
                     .body(ApiResponse.ok(response, "Organization registered successfully"));
