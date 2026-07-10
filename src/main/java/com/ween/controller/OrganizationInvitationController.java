@@ -6,8 +6,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.ween.dto.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Organization Invitations", description = "Endpoints for managing organization organizer invitations")
+@SecurityRequirement(name = "Bearer")
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -17,31 +23,35 @@ public class OrganizationInvitationController {
 
     @PostMapping("/organizations/{orgId}/invitations")
     @PreAuthorize("hasAnyRole('ORGANIZATION_ADMIN', 'ORGANIZER')")
-    public ResponseEntity<Void> inviteOrganizer(
+    @Operation(summary = "Invite an organizer", description = "Send an invitation to a user to become an organizer for this organization")
+    public ResponseEntity<ApiResponse<Void>> inviteOrganizer(
             @PathVariable String orgId,
             @Valid @RequestBody InviteOrganizerRequest request) {
         invitationService.inviteOrganizer(orgId, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.ok(null, "Invitation sent successfully"));
     }
 
     @GetMapping("/invitations/approve")
-    public ResponseEntity<String> approveInvitation(@RequestParam String token) {
+    @Operation(summary = "Approve an invitation", description = "Approve an organization invitation using the provided token")
+    public ResponseEntity<ApiResponse<Void>> approveInvitation(@RequestParam String token) {
         invitationService.approveInvitation(token);
-        return ResponseEntity.ok("Invitation approved successfully. You are now an organizer.");
+        return ResponseEntity.ok(ApiResponse.ok(null, "Invitation approved successfully. You are now an organizer."));
     }
 
     @GetMapping("/invitations/reject")
-    public ResponseEntity<String> rejectInvitation(@RequestParam String token) {
+    @Operation(summary = "Reject an invitation", description = "Reject an organization invitation using the provided token")
+    public ResponseEntity<ApiResponse<Void>> rejectInvitation(@RequestParam String token) {
         invitationService.rejectInvitation(token);
-        return ResponseEntity.ok("Invitation rejected successfully.");
+        return ResponseEntity.ok(ApiResponse.ok(null, "Invitation rejected successfully."));
     }
 
     @DeleteMapping("/organizations/{orgId}/organizers/{organizerId}")
     @PreAuthorize("hasAnyRole('ORGANIZATION_ADMIN', 'ORGANIZER')")
-    public ResponseEntity<Void> removeOrganizer(
+    @Operation(summary = "Remove an organizer", description = "Remove an existing organizer from the organization")
+    public ResponseEntity<ApiResponse<Void>> removeOrganizer(
             @PathVariable String orgId,
             @PathVariable String organizerId) {
         invitationService.removeOrganizer(orgId, organizerId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok(null, "Organizer removed successfully"));
     }
 }

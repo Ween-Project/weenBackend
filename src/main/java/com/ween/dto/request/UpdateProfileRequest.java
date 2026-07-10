@@ -24,9 +24,6 @@ public class UpdateProfileRequest {
     private String githubUrl;
     private String interests;
     private String skills;
-    @Size(max = 500)
-    private String profilePhotoUrl;
-    @Size(max = 500)
-    private String bannerUrl;
+
     private MessagePermission messagePermission;
 }

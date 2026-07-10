@@ -40,7 +40,6 @@ public class CreateEventRequest {
     @Min(value = 1, message = "Max participants must be at least 1")
     private Integer maxParticipants;
 
-    private String coverImageUrl;
 
     private String customFields;
 }
