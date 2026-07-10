@@ -68,7 +68,7 @@ public class OrganizationController {
     })
     public ResponseEntity<ApiResponse<Organization>> updateOrganization(
             @Parameter(description = "Organization ID", required = true)
-            @Valid @ModelAttribute UpdateOrganizationRequest request,
+            @Valid @org.springframework.web.bind.annotation.RequestPart("request") UpdateOrganizationRequest request,
             @RequestParam(value = "logo", required = false) MultipartFile logo) {
         String orgId = null;
         try {
