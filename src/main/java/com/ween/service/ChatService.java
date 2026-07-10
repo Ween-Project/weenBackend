@@ -392,7 +392,7 @@ public class ChatService {
                 .read(message.getReadAt() != null)
                 .readAt(message.getReadAt())
                 .createdAt(message.getCreatedAt())
-                .request(message.getRequest())
+                .isRequest(message.getRequest())
                 .build();
     }
 
