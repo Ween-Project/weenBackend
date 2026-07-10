@@ -40,6 +40,13 @@ public class PostService {
     private final CloudinaryService cloudinaryService;
 
     public PostResponse createPost(String currentUserId, String content, java.util.List<MultipartFile> files) {
+        boolean hasContent = content != null && !content.trim().isEmpty();
+        boolean hasFiles = files != null && !files.isEmpty() && files.stream().anyMatch(f -> !f.isEmpty());
+
+        if (!hasContent && !hasFiles) {
+            throw new IllegalArgumentException("Post must contain either text content or media files");
+        }
+
         java.util.List<String> urls = uploadPostMediaFiles(files);
         String mediaUrl = urls.isEmpty() ? null : String.join(",", urls);
 
