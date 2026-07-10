@@ -23,6 +23,6 @@ public class UpdateEventRequest {
     private LocalDateTime registrationDeadline;
     private Integer maxParticipants;
     private EventStatus status;
-    private String coverImageUrl;
+
     private String customFields;
 }
