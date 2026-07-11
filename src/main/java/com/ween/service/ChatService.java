@@ -23,6 +23,8 @@ import com.ween.repository.ChatRoomRepository;
 import com.ween.repository.EventRepository;
 import com.ween.repository.UserRepository;
 import com.ween.repository.FollowRepository;
+import com.ween.repository.EventRegistrationRepository;
+import com.ween.repository.OrganizerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +52,8 @@ public class ChatService {
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
     private final EventRepository eventRepository;
+    private final OrganizerRepository organizerRepository;
+    private final EventRegistrationRepository eventRegistrationRepository;
     private final NotificationService notificationService;
     private final CloudinaryService cloudinaryService;
 
@@ -253,6 +257,12 @@ public class ChatService {
         addMemberIfNotExists(room.getId(), userId, ChatRoomRole.MEMBER);
     }
 
+    public void removeUserFromEventGroup(String eventId, String userId) {
+        chatRoomRepository.findByEventId(eventId).ifPresent(room -> {
+            leaveRoom(userId, room.getId());
+        });
+    }
+
     public void addMemberToRoom(String requesterId, String roomId, String targetUsername) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
@@ -261,36 +271,75 @@ public class ChatService {
             throw new IllegalArgumentException("Cannot add members to a direct chat");
         }
 
-        if (room.getType() == ChatRoomType.GROUP) {
-            ChatRoomMember requester = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, requesterId)
-                    .orElseThrow(() -> new UnauthorizedException("You are not in this group"));
+        ChatRoomMember requester = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, requesterId)
+                .orElseThrow(() -> new UnauthorizedException("You are not in this group"));
+        
+        if (requester.getRole() != ChatRoomRole.ADMIN) {
+            throw new UnauthorizedException("Only group admins can add members");
+        }
+
+        User targetUser = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + targetUsername));
+
+        ChatRoomRole assignedRole = ChatRoomRole.MEMBER;
+
+        if (room.getType() == ChatRoomType.EVENT) {
+            Event event = eventRepository.findById(room.getEventId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
             
-            if (requester.getRole() != ChatRoomRole.ADMIN) {
-                throw new UnauthorizedException("Only group admins can add members");
+            boolean isOrganizer = organizerRepository.findByUserId(targetUser.getId())
+                    .map(org -> org.getOrganization().getId().equals(event.getOrganizationId()))
+                    .orElse(false);
+            
+            if (isOrganizer) {
+                assignedRole = ChatRoomRole.ADMIN;
+            } else {
+                boolean isRegistered = eventRegistrationRepository.findByEventIdAndUserId(event.getId(), targetUser.getId()).isPresent();
+                if (!isRegistered) {
+                    throw new IllegalArgumentException("Cannot add non-registered users to event group");
+                }
             }
         }
 
-        User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + targetUsername));
-
-        addMemberIfNotExists(roomId, targetUser.getId(), ChatRoomRole.MEMBER);
+        addMemberIfNotExists(roomId, targetUser.getId(), assignedRole);
     }
 
-    public void addOrganizerToEventGroup(String requesterId, String eventId, String targetUsername) {
-        ChatRoom room = chatRoomRepository.findByEventId(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event chat room not found"));
+    public void changeMemberRole(String requesterId, String roomId, String targetUsername, ChatRoomRole newRole) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
 
-        ChatRoomMember requester = chatRoomMemberRepository.findByChatRoomIdAndUserId(room.getId(), requesterId)
+        if (room.getType() == ChatRoomType.DIRECT) {
+            throw new IllegalArgumentException("Cannot change roles in a direct chat");
+        }
+
+        ChatRoomMember requester = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, requesterId)
                 .orElseThrow(() -> new UnauthorizedException("You are not in this group"));
 
         if (requester.getRole() != ChatRoomRole.ADMIN) {
-            throw new UnauthorizedException("Only admins can add organizers");
+            throw new UnauthorizedException("Only group admins can change roles");
         }
 
         User targetUser = userRepository.findByUsername(targetUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + targetUsername));
 
-        addMemberIfNotExists(room.getId(), targetUser.getId(), ChatRoomRole.ADMIN);
+        ChatRoomMember targetMember = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, targetUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Target user is not in this group"));
+
+        if (targetMember.getRole() == newRole) {
+            throw new IllegalArgumentException("User already has this role");
+        }
+
+        if (targetUser.getId().equals(requesterId) && newRole == ChatRoomRole.MEMBER) {
+            long adminCount = chatRoomMemberRepository.findByChatRoomId(roomId).stream()
+                    .filter(m -> m.getRole() == ChatRoomRole.ADMIN)
+                    .count();
+            if (adminCount <= 1) {
+                throw new IllegalArgumentException("You are the only admin. Assign someone else as admin before demoting yourself.");
+            }
+        }
+
+        targetMember.setRole(newRole);
+        chatRoomMemberRepository.save(targetMember);
     }
 
     public void removeMemberFromRoom(String requesterId, String roomId, String targetUsername) {
