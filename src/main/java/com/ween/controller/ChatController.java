@@ -10,6 +10,7 @@ import com.ween.dto.response.GroupMessageResponse;
 import com.ween.entity.ChatRoom;
 import com.ween.security.SecurityUtil;
 import com.ween.service.ChatService;
+import com.ween.enums.ChatRoomRole;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -144,13 +145,24 @@ public class ChatController {
     }
 
     @PostMapping("/rooms/{roomId}/members")
-    @Operation(summary = "Add member to group", description = "Add a user by their username")
+    @Operation(summary = "Add member to group", description = "Add a user by their username (Supports Event Fallbacks)")
     public ResponseEntity<ApiResponse<Void>> addMember(
             @PathVariable String roomId,
             @RequestParam String username) {
         String userId = securityUtil.getCurrentUserId();
         chatService.addMemberToRoom(userId, roomId, username);
         return ResponseEntity.ok(ApiResponse.ok(null, "Member added successfully"));
+    }
+
+    @PutMapping("/rooms/{roomId}/members/{username}/role")
+    @Operation(summary = "Change member role", description = "Change the role of an existing member (Admin only)")
+    public ResponseEntity<ApiResponse<Void>> changeMemberRole(
+            @PathVariable String roomId,
+            @PathVariable String username,
+            @RequestParam ChatRoomRole role) {
+        String userId = securityUtil.getCurrentUserId();
+        chatService.changeMemberRole(userId, roomId, username, role);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Member role updated successfully"));
     }
 
     @DeleteMapping("/rooms/{roomId}/members/{username}")
