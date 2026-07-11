@@ -22,6 +22,7 @@ import com.ween.repository.EventRegistrationRepository;
 import com.ween.repository.EventRepository;
 import com.ween.repository.UserRepository;
 import com.ween.repository.OrganizationRepository;
+import com.ween.repository.OrganizerRepository;
 import com.ween.repository.ParticipationRepository;
 import com.ween.repository.CertificateRepository;
 import com.ween.repository.ChatRoomRepository;
@@ -59,6 +60,7 @@ public class EventService {
     private final EventRegistrationRepository registrationRepository;
     private final EventMapper eventMapper;
     private final OrganizationService organizationService;
+    private final OrganizerRepository organizerRepository;
     private final RegistrationService registrationService;
     private final ParticipationRepository participationRepository;
     private final CertificateRepository certificateRepository;
@@ -190,8 +192,16 @@ public class EventService {
                         .map(org -> org.getRole() == UserRole.ADMIN)
                         .orElse(false));
 
-        if (!isAdmin) {
-            throw new AccessDeniedException("Only the event owner or admin can perform this action");
+        if (isAdmin) {
+            return;
+        }
+
+        boolean isOrganizer = organizerRepository.findByUserId(userId)
+                .map(org -> org.getOrganization().getId().equals(event.getOrganizationId()))
+                .orElse(false);
+
+        if (!isOrganizer) {
+            throw new AccessDeniedException("Only the event owner, organizer or admin can perform this action");
         }
     }
 
