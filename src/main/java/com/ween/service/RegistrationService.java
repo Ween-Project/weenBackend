@@ -110,7 +110,15 @@ public EventRegistration registerForEvent(String eventId, String userId) {
         eventRegistrationRepository.delete(registration);
         log.info("User {} cancelled registration for event: {}", userId, eventId);
 
-        // Debit coins removed
+        participationRepository.findByUserIdAndEventId(userId, eventId).ifPresent(participation -> {
+            participationRepository.delete(participation);
+        });
+
+        try {
+            chatService.removeUserFromEventGroup(eventId, userId);
+        } catch (Exception e) {
+            log.warn("Failed to remove user from event group chat upon cancellation", e);
+        }
     }
 
     @Transactional
