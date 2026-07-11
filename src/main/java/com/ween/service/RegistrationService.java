@@ -158,30 +158,24 @@ public EventRegistration registerForEvent(String eventId, String userId) {
     }
 
     public Page<EventResponse> getUserEvents(String userId, Pageable pageable) {
-        List<EventRegistration> registrations = getUserRegistrations(userId);
-        List<EventResponse> eventResponses = registrations.stream()
-                .map(reg -> eventRepository.findById(reg.getEventId())
-                        .map(event -> EventResponse.builder()
-                                .id(event.getId())
-                                .title(event.getTitle())
-                                .description(event.getDescription())
-                                .category(event.getCategory())
-                                .city(event.getCity())
-                                .address(event.getAddress())
-                                .isOnline(event.getIsOnline())
-                                .startDate(event.getStartDate())
-                                .endDate(event.getEndDate())
-                                .maxParticipants(event.getMaxParticipants())
-                                .build())
-                        .orElse(null))
-                .filter(r -> r != null)
-                .collect(java.util.stream.Collectors.toList());
-        return new PageImpl<>(eventResponses, pageable, eventResponses.size());
+        Page<Event> eventPage = eventRepository.findEventsByRegisteredUserId(userId, pageable);
+        return eventPage.map(event -> EventResponse.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .category(event.getCategory())
+                .city(event.getCity())
+                .address(event.getAddress())
+                .isOnline(event.getIsOnline())
+                .startDate(event.getStartDate())
+                .endDate(event.getEndDate())
+                .maxParticipants(event.getMaxParticipants())
+                .build());
     }
 
     public Page<ParticipantResponse> getEventParticipants(String userId, String eventId, Pageable pageable) {
-        List<EventRegistration> registrations = getEventRegistrations(eventId);
-        List<ParticipantResponse> participants = registrations.stream()
+        Page<EventRegistration> registrationsPage = eventRegistrationRepository.findByEventId(eventId, pageable);
+        List<ParticipantResponse> participants = registrationsPage.getContent().stream()
                 .map(reg -> userRepository.findById(reg.getUserId())
                         .map(user -> ParticipantResponse.builder()
                                 .id(user.getId())
@@ -196,6 +190,6 @@ public EventRegistration registerForEvent(String eventId, String userId) {
                         .orElse(null))
                 .filter(p -> p != null)
                 .collect(java.util.stream.Collectors.toList());
-        return new PageImpl<>(participants, pageable, participants.size());
+        return new PageImpl<>(participants, pageable, registrationsPage.getTotalElements());
     }
 }
