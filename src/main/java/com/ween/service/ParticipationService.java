@@ -33,6 +33,7 @@ public class ParticipationService {
     private final RegistrationService registrationService;
     private final SecurityUtil securityUtil;
     private final CertificateRepository certificateRepository;
+    private final OrganizerRepository organizerRepository;
 
 
     private void validateUserRegistration(String eventId, String userId) {
@@ -49,8 +50,14 @@ public class ParticipationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
 
         String currentUserId = securityUtil.getCurrentUserId();
-        if (!event.getOrganizationId().equals(currentUserId)) {
-            throw new AccessDeniedException("Only the event owner can perform check-in");
+        
+        boolean isOwner = event.getOrganizationId().equals(currentUserId);
+        boolean isOrganizer = organizerRepository.findByUserId(currentUserId)
+                .map(org -> org.getOrganization().getId().equals(event.getOrganizationId()))
+                .orElse(false);
+
+        if (!isOwner && !isOrganizer) {
+            throw new AccessDeniedException("Only the event owner or organizer can perform check-in");
         }
 
         String participantUserId = qrService.validateAndDecryptQrToken(qrToken);
