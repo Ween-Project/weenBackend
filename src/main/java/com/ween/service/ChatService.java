@@ -262,8 +262,12 @@ public class ChatService {
         }
 
         if (room.getType() == ChatRoomType.GROUP) {
-            chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, requesterId)
+            ChatRoomMember requester = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, requesterId)
                     .orElseThrow(() -> new UnauthorizedException("You are not in this group"));
+            
+            if (requester.getRole() != ChatRoomRole.ADMIN) {
+                throw new UnauthorizedException("Only group admins can add members");
+            }
         }
 
         User targetUser = userRepository.findByUsername(targetUsername)
@@ -331,6 +335,31 @@ public class ChatService {
     }
 
     public void leaveRoom(String userId, String roomId) {
+        ChatRoomMember leavingMember = chatRoomMemberRepository.findByChatRoomIdAndUserId(roomId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+
+        List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoomId(roomId);
+        if (members.size() == 1) {
+            groupChatMessageRepository.deleteByChatRoomId(roomId);
+            chatRoomMemberRepository.deleteByChatRoomId(roomId);
+            chatRoomRepository.deleteById(roomId);
+            return;
+        }
+
+        if (leavingMember.getRole() == ChatRoomRole.ADMIN) {
+            long adminCount = members.stream().filter(m -> m.getRole() == ChatRoomRole.ADMIN).count();
+            if (adminCount == 1) {
+                ChatRoomMember oldestMember = members.stream()
+                        .filter(m -> !m.getUserId().equals(userId))
+                        .min(java.util.Comparator.comparing(ChatRoomMember::getJoinedAt))
+                        .orElse(null);
+                if (oldestMember != null) {
+                    oldestMember.setRole(ChatRoomRole.ADMIN);
+                    chatRoomMemberRepository.save(oldestMember);
+                }
+            }
+        }
+
         chatRoomMemberRepository.deleteByChatRoomIdAndUserId(roomId, userId);
     }
 
