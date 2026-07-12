@@ -35,27 +35,25 @@ public class OrganizationController {
 
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get current organization profile", description = "Retrieve detailed information about an organization")
+    @Operation(summary = "Get organization profile", description = "Retrieve detailed information about an organization")
     @SecurityRequirement(name = "Bearer")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization retrieved successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Organization not found")
     })
-    public ResponseEntity<ApiResponse<Organization>> getOrganization() {
-        String orgId = null;
+    public ResponseEntity<ApiResponse<Organization>> getOrganization(@PathVariable String id) {
         try {
-            orgId = securityUtil.getCurrentUserId();
-            Organization response = organizationService.getOrganizationById(orgId);
+            Organization response = organizationService.getOrganizationById(id);
             return ResponseEntity.ok(ApiResponse.ok(response, "Organization retrieved successfully"));
         } catch (Exception e) {
-            log.error("Failed to retrieve organization: {}", orgId, e);
+            log.error("Failed to retrieve organization: {}", id, e);
             throw e;
         }
     }
 
     @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
-    @Operation(summary = "Update current organization profile", description = "Update organization details (owner only)")
+    @Operation(summary = "Update organization profile", description = "Update organization details (owner only)")
     @SecurityRequirement(name = "Bearer")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization updated successfully"),
@@ -64,16 +62,19 @@ public class OrganizationController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Organization not found")
     })
     public ResponseEntity<ApiResponse<Organization>> updateOrganization(
+            @PathVariable String id,
             @Valid @org.springframework.web.bind.annotation.RequestPart("request") UpdateOrganizationRequest request,
             @RequestParam(value = "logo", required = false) MultipartFile logo,
             @RequestParam(value = "banner", required = false) MultipartFile banner) {
-        String orgId = null;
         try {
-            orgId = securityUtil.getCurrentUserId();
-            Organization response = organizationService.updateOrganization(orgId, request, logo, banner);
+            String currentUserId = securityUtil.getCurrentUserId();
+            if (!id.equals(currentUserId)) {
+                throw new org.springframework.security.access.AccessDeniedException("You can only update your own organization profile");
+            }
+            Organization response = organizationService.updateOrganization(id, request, logo, banner);
             return ResponseEntity.ok(ApiResponse.ok(response, "Organization updated successfully"));
         } catch (Exception e) {
-            log.error("Failed to update organization: {}", orgId, e);
+            log.error("Failed to update organization: {}", id, e);
             throw e;
         }
     }

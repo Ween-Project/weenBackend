@@ -151,23 +151,24 @@ public class LeaderboardService {
         try {
             leaderboardEntryRepository.deleteAll();
             LocalDateTime startDate = LocalDateTime.now().minusMonths(1);
+            LocalDateTime endDate = LocalDateTime.now();
 
-            List<User> activeUsers = userRepository.findAll();
-            Map<String, Integer> userScores = new HashMap<>();
+            List<CoinTransactionRepository.UserCoinSum> userScores = 
+                coinTransactionRepository.getCoinSumsBetween(startDate, endDate);
 
-            for (User user : activeUsers) {
-                int score = coinTransactionRepository.findAllByUserId(user.getId()).stream()
-                        .filter(t -> t.getCreatedAt() != null && t.getCreatedAt().isAfter(startDate))
-                        .map(CoinTransaction::getAmount)
-                        .reduce(0, Integer::sum);
+            int rank = 1;
+            for (CoinTransactionRepository.UserCoinSum entry : userScores) {
+                LeaderboardEntry leaderboardEntry = LeaderboardEntry.builder()
+                        .userId(entry.getUserId())
+                        .rankPosition(rank)
+                        .coinCount(entry.getTotalCoins())
+                        .calculatedAt(LocalDateTime.now())
+                        .build();
 
-                if (score > 0) {
-                    userScores.put(user.getId(), score);
-                }
+                leaderboardEntryRepository.save(leaderboardEntry);
+                rank++;
             }
-
-            saveLeaderboardEntries(userScores);
-            log.info("Successfully completed active leaderboard recalculation");
+            log.info("Active Leaderboard recalculated with {} entries", userScores.size());
         } catch (Exception e) {
             log.error("Failed to recalculate active leaderboard", e);
         }
@@ -206,37 +207,22 @@ public class LeaderboardService {
             LocalDateTime startOfMonth = currentMonth.atDay(1).atStartOfDay();
             LocalDateTime endOfMonth = currentMonth.atEndOfMonth().atTime(23, 59, 59);
 
-            List<User> users = userRepository.findAll();
-            Map<String, Integer> userScores = new HashMap<>();
-
-            for (User user : users) {
-                int score = coinTransactionRepository.findAllByUserId(user.getId()).stream()
-                        .filter(t -> t.getCreatedAt() != null && !t.getCreatedAt().isBefore(startOfMonth) && !t.getCreatedAt().isAfter(endOfMonth))
-                        .map(CoinTransaction::getAmount)
-                        .reduce(0, Integer::sum);
-
-                if (score > 0) {
-                    userScores.put(user.getId(), score);
-                }
-            }
+            List<CoinTransactionRepository.UserCoinSum> userScores = 
+                coinTransactionRepository.getCoinSumsBetween(startOfMonth, endOfMonth);
 
             if (userScores.isEmpty()) {
                 log.info("No active users found for this month to award badge.");
                 return;
             }
 
-            Map.Entry<String, Integer> topUser = userScores.entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .orElse(null);
+            CoinTransactionRepository.UserCoinSum topUser = userScores.get(0);
 
-            if (topUser != null) {
-                badgeRepository.findFirstByTypeAndIsActiveTrue(BadgeType.MONTHLY_WINNER)
-                        .ifPresent(badge -> {
-                            String specialKey = currentMonth.toString(); // e.g. "2026-06"
-                            badgeService.awardBadgeToUser(topUser.getKey(), badge.getId(), specialKey);
-                            log.info("Awarded MONTHLY_WINNER badge to user {} for month {}", topUser.getKey(), specialKey);
-                        });
-            }
+            badgeRepository.findFirstByTypeAndIsActiveTrue(BadgeType.MONTHLY_WINNER)
+                    .ifPresent(badge -> {
+                        String specialKey = currentMonth.toString(); // e.g. "2026-06"
+                        badgeService.awardBadgeToUser(topUser.getUserId(), badge.getId(), specialKey);
+                        log.info("Awarded MONTHLY_WINNER badge to user {} for month {}", topUser.getUserId(), specialKey);
+                    });
         } catch (Exception e) {
             log.error("Failed to award monthly winner badges", e);
         }

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public interface EventRegistrationRepository extends JpaRepository<EventRegistration, String> {
     Optional<EventRegistration> findByEventIdAndUserId(String eventId, String userId);
     List<EventRegistration> findByEventId(String eventId);
+    org.springframework.data.domain.Page<EventRegistration> findByEventId(String eventId, org.springframework.data.domain.Pageable pageable);
     List<EventRegistration> findByEventIdAndIsJoinedTrue(String eventId);
     long countByEventId(String eventId);
     long countByEventIdAndIsJoinedTrue(String eventId);

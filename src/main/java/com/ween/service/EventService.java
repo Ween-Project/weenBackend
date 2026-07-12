@@ -279,18 +279,19 @@ public class EventService {
     }
 
     public List<EventResponse> getOrganizationEventsList(String orgId) {
-
         String orgName = organizationRepository.findById(orgId)
                 .map(Organization::getOrganizationName)
                 .orElse(null);
 
         List<Event> events = eventRepository.findByOrganizationId(orgId);
+        List<String> eventIds = events.stream().map(Event::getId).toList();
+        
+        Map<String, Long> registrationCounts = eventIds.isEmpty() ? new HashMap<>() : registrationRepository.countsByEventIds(eventIds);
 
         List<EventResponse> responseList = new ArrayList<>();
 
         for (Event event : events) {
-
-            long count = registrationService.getEventRegistrationCount(event.getId());
+            long count = registrationCounts.getOrDefault(event.getId(), 0L);
 
             EventResponse eventDto = EventResponse.builder()
                     .id(event.getId())

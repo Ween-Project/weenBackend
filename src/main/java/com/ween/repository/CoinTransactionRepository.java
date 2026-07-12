@@ -26,4 +26,12 @@ public interface CoinTransactionRepository extends JpaRepository<CoinTransaction
 
     @Query("SELECT COALESCE(SUM(ct.amount), 0L) FROM CoinTransaction ct")
     Long sumAllCoins();
+
+    @Query("SELECT ct.userId as userId, CAST(SUM(ct.amount) AS integer) as totalCoins FROM CoinTransaction ct WHERE ct.createdAt >= :startDate AND ct.createdAt <= :endDate GROUP BY ct.userId HAVING SUM(ct.amount) > 0 ORDER BY SUM(ct.amount) DESC")
+    List<UserCoinSum> getCoinSumsBetween(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+
+    interface UserCoinSum {
+        String getUserId();
+        Integer getTotalCoins();
+    }
 }
