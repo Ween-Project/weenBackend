@@ -82,8 +82,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/events/**").hasAnyRole("ORGANIZER", "ORGANIZATION_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/events/**").hasAnyRole("ORGANIZER", "ORGANIZATION_ADMIN", "ADMIN")
 
-                        // QR check-in - authenticated organizer flow
-                        .requestMatchers(HttpMethod.POST, "/api/v1/qr/checkin").hasAnyRole("ORGANIZER", "ORGANIZATION_ADMIN")
+
 
                         // Certificates - public verify, requires auth for download
                         .requestMatchers(HttpMethod.GET, "/api/v1/certificates/verify/**").permitAll()
