@@ -38,6 +38,7 @@ public class PostService {
     private final NotificationService notificationService;
     private final PostMapper postMapper;
     private final CloudinaryService cloudinaryService;
+    private final FollowRepository followRepository;
 
     public PostResponse createPost(String currentUserId, String content, java.util.List<MultipartFile> files) {
         boolean hasContent = content != null && !content.trim().isEmpty();
@@ -70,6 +71,25 @@ public class PostService {
     @Transactional(readOnly = true)
     public Page<PostResponse> listPosts(String currentUserId, Pageable pageable) {
         return postRepository.findAllPostsWithStats(currentUserId, pageable)
+                .map(postMapper::toPostResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PostResponse> listFollowingPosts(String currentUserId, Pageable pageable) {
+        User currentUser = getUser(currentUserId);
+        Page<Follow> followsPage = followRepository.findByFollower(
+                currentUser, org.springframework.data.domain.PageRequest.of(0, Integer.MAX_VALUE)
+        );
+
+        java.util.List<User> followedUsers = followsPage.getContent().stream()
+                .map(Follow::getFollowing)
+                .collect(java.util.stream.Collectors.toList());
+
+        if (followedUsers.isEmpty()) {
+            return Page.empty();
+        }
+
+        return postRepository.findPostsWithStatsByFollowedUsers(followedUsers, currentUserId, pageable)
                 .map(postMapper::toPostResponse);
     }
 
@@ -116,6 +136,7 @@ public class PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
     }
 
+    @Transactional
     public PostResponse updatePost(String postId, String currentUserId, UpdatePostRequest request, java.util.List<MultipartFile> files) {
         Post post = getInternalPost(postId);
         ensurePostOwner(post, currentUserId);
@@ -134,6 +155,7 @@ public class PostService {
         return getPost(postId, currentUserId);
     }
 
+    @Transactional
     public void deletePost(String postId, String currentUserId) {
         Post post = getInternalPost(postId);
         ensurePostOwner(post, currentUserId);
@@ -146,6 +168,7 @@ public class PostService {
         log.info("User {} deleted post {}", currentUserId, postId);
     }
 
+    @Transactional
     public PostResponse likePost(String postId, String currentUserId) {
         Post post = getInternalPost(postId);
         User user = getUser(currentUserId);
@@ -156,6 +179,7 @@ public class PostService {
         return getPost(postId, currentUserId);
     }
 
+    @Transactional
     public PostResponse unlikePost(String postId, String currentUserId) {
         Post post = getInternalPost(postId);
         User user = getUser(currentUserId);
@@ -163,6 +187,7 @@ public class PostService {
         return getPost(postId, currentUserId);
     }
 
+    @Transactional
     public PostResponse savePost(String postId, String currentUserId) {
         Post post = getInternalPost(postId);
         User user = getUser(currentUserId);
@@ -172,6 +197,7 @@ public class PostService {
         return getPost(postId, currentUserId);
     }
 
+    @Transactional
     public PostResponse unsavePost(String postId, String currentUserId) {
         Post post = getInternalPost(postId);
         User user = getUser(currentUserId);
@@ -179,6 +205,7 @@ public class PostService {
         return getPost(postId, currentUserId);
     }
 
+    @Transactional
     public PostResponse repost(String postId, String currentUserId) {
         Post post = getInternalPost(postId);
         User user = getUser(currentUserId);
@@ -189,6 +216,7 @@ public class PostService {
         return getPost(postId, currentUserId);
     }
 
+    @Transactional
     public PostResponse unrepost(String postId, String currentUserId) {
         Post post = getInternalPost(postId);
         User user = getUser(currentUserId);
@@ -196,6 +224,7 @@ public class PostService {
         return getPost(postId, currentUserId);
     }
 
+    @Transactional
     public PostCommentResponse addComment(String postId, String currentUserId, AddPostCommentRequest request) {
         Post post = getInternalPost(postId);
         User author = getUser(currentUserId);
@@ -218,6 +247,7 @@ public class PostService {
                 .map(postMapper::toCommentResponse);
     }
 
+    @Transactional
     public void deleteComment(String postId, String commentId, String currentUserId) {
         Post post = getInternalPost(postId);
         PostComment comment = postCommentRepository.findById(commentId)
