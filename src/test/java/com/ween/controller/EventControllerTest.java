@@ -102,8 +102,7 @@ class EventControllerTest {
                 LocalDateTime.now().plusDays(1),
                 LocalDateTime.now().plusDays(1).plusHours(2),
                 LocalDateTime.now().plusHours(12),
-                25,
-                null);
+                25);
 
         mockMvc.perform(multipart("/api/v1/events")
                         .file(new org.springframework.mock.web.MockMultipartFile(
