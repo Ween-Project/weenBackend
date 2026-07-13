@@ -33,6 +33,16 @@ public interface PostMapper {
     @Mapping(target = "updatedAt", source = "projection.post.updatedAt")
     PostResponse toPostResponse(PostWithStatsProjection projection);
 
+    @Mapping(target = "author", expression = "java(toAuthorResponse(post))")
+    @Mapping(target = "likeCount", ignore = true)
+    @Mapping(target = "commentCount", ignore = true)
+    @Mapping(target = "saveCount", ignore = true)
+    @Mapping(target = "repostCount", ignore = true)
+    @Mapping(target = "likedByMe", ignore = true)
+    @Mapping(target = "savedByMe", ignore = true)
+    @Mapping(target = "repostedByMe", ignore = true)
+    PostResponse toAdminPostResponse(Post post);
+
     @Mapping(target = "id", source = "comment.id")
     @Mapping(target = "postId", source = "comment.post.id")
     @Mapping(target = "author", source = "comment.author")
