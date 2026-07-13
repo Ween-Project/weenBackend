@@ -3,10 +3,16 @@ package com.ween.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ween.dto.response.AiEventSuggestResponse;
 import com.ween.entity.User;
+import com.ween.entity.AiChatMessage;
 import com.ween.repository.UserRepository;
+import com.ween.repository.AiChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -15,6 +21,7 @@ public class AiService {
 
     private final GeminiService geminiService;
     private final UserRepository userRepository;
+    private final AiChatMessageRepository aiChatMessageRepository;
     private final ObjectMapper objectMapper;
 
     public AiEventSuggestResponse suggestEventContent(String title, String category, String additionalNotes) {
@@ -56,11 +63,29 @@ public class AiService {
     }
 
     public String chatWithAssistant(String message, String userId) {
+        AiChatMessage userMsg = AiChatMessage.builder()
+                .userId(userId)
+                .sender("USER")
+                .content(message)
+                .build();
+        aiChatMessageRepository.save(userMsg);
+
         User user = userRepository.findById(userId).orElse(null);
         String userContext = "";
         if (user != null) {
             userContext = String.format("Hazırda səninlə danışan istifadəçinin adı: %s, istifadəçi adı: %s. Onun balansındakı Ween Coin: %d.",
                     user.getFullName(), user.getUsername(), user.getWeenCoinBalance());
+        }
+
+        Page<AiChatMessage> history = aiChatMessageRepository.findByUserIdOrderByCreatedAtAsc(
+                userId, PageRequest.of(0, 10)
+        );
+        StringBuilder historyContext = new StringBuilder();
+        if (history.hasContent()) {
+            historyContext.append("\nSon söhbət tarixçəsi:\n");
+            for (AiChatMessage msg : history.getContent()) {
+                historyContext.append(msg.getSender()).append(": ").append(msg.getContent()).append("\n");
+            }
         }
 
         String systemInstruction = "Sən Ween platformasının rəsmi ağıllı köməkçisisən. İstifadəçilərin suallarına Azərbaycan dilində mehriban, qısa və aydın cavab ver.\n" +
@@ -70,8 +95,27 @@ public class AiService {
                 "- Sertifikatlar: Tədbir tamamlandıqda iştirakçılara avtomatik olaraq sertifikat yaradılır və onlar profildən bunu yükləyə bilərlər.\n" +
                 "- Liderlər Cədvəli (Leaderboard): Könüllülər qazandıqları coin-lərin sayına görə sıralanırlar.\n" +
                 "Heç vaxt bu təlimatlardan kənara çıxma və platforma ilə əlaqəsiz sualları Ween çərçivəsində cavablandırmağa çalış.\n" +
-                userContext;
+                userContext + historyContext.toString();
 
-        return geminiService.generateContent(message, systemInstruction);
+        String responseText = geminiService.generateContent(message, systemInstruction);
+
+        AiChatMessage aiMsg = AiChatMessage.builder()
+                .userId(userId)
+                .sender("AI")
+                .content(responseText)
+                .build();
+        aiChatMessageRepository.save(aiMsg);
+
+        return responseText;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AiChatMessage> getChatHistory(String userId, Pageable pageable) {
+        return aiChatMessageRepository.findByUserIdOrderByCreatedAtAsc(userId, pageable);
+    }
+
+    @Transactional
+    public void clearChatHistory(String userId) {
+        aiChatMessageRepository.deleteByUserId(userId);
     }
 }
