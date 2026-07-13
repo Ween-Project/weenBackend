@@ -35,4 +35,6 @@ public class UserResponse {
     private String referralCode;
     private String category;
     private String course;
+    private Boolean banned;
+    private String banReason;
 }
