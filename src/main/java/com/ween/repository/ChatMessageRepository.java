@@ -28,11 +28,12 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
     @Query("""
             select m from ChatMessage m
             where (m.senderId = :userId or m.recipientId = :userId)
-              and m.request = false
+              and (m.request = false or (m.request = true and m.senderId = :userId))
               and not exists (
                 select 1 from ChatMessage newer
                 where ((newer.senderId = m.senderId and newer.recipientId = m.recipientId)
                        or (newer.senderId = m.recipientId and newer.recipientId = m.senderId))
+                  and (newer.request = false or (newer.request = true and newer.senderId = :userId))
                   and newer.createdAt > m.createdAt
               )
             order by m.createdAt desc

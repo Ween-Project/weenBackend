@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -26,6 +27,7 @@ public class Organization extends BaseEntity {
     @Column(length = 150, nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore
     @Column(name = "password_hash", length = 255, nullable = false)
     private String passwordHash;
 

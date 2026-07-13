@@ -4,6 +4,7 @@ import com.ween.enums.UserRole;
 import com.ween.enums.MessagePermission;
 import lombok.*;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +29,7 @@ public class User extends BaseEntity {
     @Column(length = 150, nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore
     @Column(name = "password_hash", length = 255, nullable = false)
     private String passwordHash;
 

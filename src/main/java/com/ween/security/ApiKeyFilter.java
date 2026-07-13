@@ -29,19 +29,33 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String requestPath = request.getRequestURI();
 
-        if (requestPath.contains("/api/v1/qr/checkin")) {
+        if (requestPath.contains("/api/v1/participations/checkin-join")) {
             String apiKey = request.getHeader("X-Api-Key");
+            String authHeader = request.getHeader("Authorization");
 
-            if (apiKey != null && apiKey.equals(validApiKey)) {
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                "api-client",
-                                null,
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_API_KEY"))
-                        );
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("API Key authentication successful");
+            boolean hasBearer = authHeader != null && authHeader.startsWith("Bearer ");
+            boolean hasValidApiKey = apiKey != null && apiKey.equals(validApiKey);
+
+            if (hasBearer) {
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            if (!hasValidApiKey) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"message\":\"Invalid API Key or Bearer Token\"}");
+                return;
+            }
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            "api-client",
+                            null,
+                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_API_KEY"))
+                    );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.debug("API Key authentication successful");
         }
 
         filterChain.doFilter(request, response);
