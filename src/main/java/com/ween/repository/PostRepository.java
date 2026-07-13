@@ -21,6 +21,10 @@ public interface PostRepository extends JpaRepository<Post, String> {
     @EntityGraph(attributePaths = {"userAuthor", "organizationAuthor"})
     Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    @Query("SELECT p FROM Post p WHERE LOWER(p.content) LIKE LOWER(CONCAT('%', :search, '%'))")
+    @EntityGraph(attributePaths = {"userAuthor", "organizationAuthor"})
+    Page<Post> searchPosts(@Param("search") String search, Pageable pageable);
+
     @EntityGraph(attributePaths = {"userAuthor", "organizationAuthor"})
     Page<Post> findByUserAuthorOrderByCreatedAtDesc(User userAuthor, Pageable pageable);
 
@@ -69,6 +73,24 @@ public interface PostRepository extends JpaRepository<Post, String> {
     @EntityGraph(attributePaths = {"userAuthor", "organizationAuthor"})
     Page<PostWithStatsProjection> findPostsWithStatsByOrganization(
             @Param("organization") Organization organization,
+            @Param("currentUserId") String currentUserId,
+            Pageable pageable);
+
+    @Query("""
+        SELECT p AS post,
+               (SELECT COUNT(l) FROM PostLike l WHERE l.post = p) AS likeCount,
+               (SELECT COUNT(c) FROM PostComment c WHERE c.post = p) AS commentCount,
+               (SELECT COUNT(s) FROM PostSave s WHERE s.post = p) AS saveCount,
+               (SELECT COUNT(r) FROM PostRepost r WHERE r.originalPost = p) AS repostCount,
+               (SELECT CASE WHEN COUNT(l2) > 0 THEN true ELSE false END FROM PostLike l2 WHERE l2.post = p AND l2.user.id = :currentUserId) AS likedByMe,
+               (SELECT CASE WHEN COUNT(s2) > 0 THEN true ELSE false END FROM PostSave s2 WHERE s2.post = p AND s2.user.id = :currentUserId) AS savedByMe,
+               (SELECT CASE WHEN COUNT(r2) > 0 THEN true ELSE false END FROM PostRepost r2 WHERE r2.originalPost = p AND r2.user.id = :currentUserId) AS repostedByMe
+        FROM Post p
+        WHERE p.userAuthor IN :followedUsers
+        """)
+    @EntityGraph(attributePaths = {"userAuthor", "organizationAuthor"})
+    Page<PostWithStatsProjection> findPostsWithStatsByFollowedUsers(
+            @Param("followedUsers") java.util.Collection<User> followedUsers,
             @Param("currentUserId") String currentUserId,
             Pageable pageable);
 
