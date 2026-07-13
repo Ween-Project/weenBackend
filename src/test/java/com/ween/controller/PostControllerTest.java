@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
@@ -46,14 +47,14 @@ class PostControllerTest {
 
     @Test
     void createAndGetPostUseCurrentUser() throws Exception {
-        when(postService.createPost(any(), any())).thenReturn(PostResponse.builder().id("post-1").content("Hi").build());
+        when(postService.createPost(any(), any(), any())).thenReturn(PostResponse.builder().id("post-1").content("Hi").build());
         when(postService.getPost("post-1", "user-1")).thenReturn(PostResponse.builder().id("post-1").content("Hi").build());
         CreatePostRequest request = new CreatePostRequest();
         request.setContent("Hi");
 
-        mockMvc.perform(post("/api/v1/posts")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/api/v1/posts")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "request", "", "application/json", objectMapper.writeValueAsBytes(request))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.id").value("post-1"));
         mockMvc.perform(get("/api/v1/posts/post-1"))
