@@ -48,6 +48,7 @@ class AuthServiceTest {
     @Mock private QrService qrService;
     @Mock private NotificationService notificationService;
     @Mock private ReferralService referralService;
+    @Mock private CloudinaryService cloudinaryService;
 
     private AuthService authService;
 
@@ -65,7 +66,8 @@ class AuthServiceTest {
                 coinService,
                 qrService,
                 notificationService,
-                referralService);
+                referralService,
+                cloudinaryService);
         ReflectionTestUtils.setField(authService, "verifyEmailBaseUrl", "http://localhost:5001/verify");
         ReflectionTestUtils.setField(authService, "resetPasswordBaseUrl", "http://localhost:5001/reset-password");
     }
@@ -83,8 +85,7 @@ class AuthServiceTest {
                 "CS",
                 "3",
                 "java, spring",
-                "teamwork",
-                "REF123");
+                "teamwork");
         User savedUser = User.builder()
                 .username("ali")
                 .email("ali@example.com")
@@ -105,7 +106,7 @@ class AuthServiceTest {
         when(jwtUtil.generateRefreshToken("user-1")).thenReturn("refresh");
         when(jwtUtil.getAccessTokenExpiration()).thenReturn(900_000L);
 
-        AuthResponse response = authService.register(request);
+        AuthResponse response = authService.register(request, null, null, "REF123");
 
         assertThat(response.getAccessToken()).isEqualTo("access");
         assertThat(response.getRefreshToken()).isEqualTo("refresh");
@@ -126,7 +127,7 @@ class AuthServiceTest {
         request.setUsername("ali");
         when(userRepository.existsByEmail("ali@example.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.register(request))
+        assertThatThrownBy(() -> authService.register(request, null, null, null))
                 .isInstanceOf(AlreadyExistsException.class)
                 .hasMessageContaining("Email already registered");
 

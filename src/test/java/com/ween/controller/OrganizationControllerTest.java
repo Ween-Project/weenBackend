@@ -1,7 +1,6 @@
 package com.ween.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ween.dto.request.UpdateProfilePhotoRequest;
 import com.ween.entity.Organization;
 import com.ween.security.SecurityUtil;
 import com.ween.service.EventService;
