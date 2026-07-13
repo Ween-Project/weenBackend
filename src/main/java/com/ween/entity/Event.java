@@ -61,6 +61,4 @@ public class Event extends BaseEntity {
     @Column(name = "cover_image_url", length = 500)
     private String coverImageUrl;
 
-    @Column(name = "custom_fields", columnDefinition = "TEXT")
-    private String customFields;
 }

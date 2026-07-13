@@ -95,7 +95,6 @@ public class EventService {
                 .city(request.getCity())
                 .address(request.getAddress())
                 .coverImageUrl(coverImageUrl)
-                .customFields(request.getCustomFields())
                 .isOnline(request.getIsOnline())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
@@ -171,9 +170,6 @@ public class EventService {
 
         if (coverImage != null && !coverImage.isEmpty()) {
             event.setCoverImageUrl(uploadEventCover(coverImage));
-        }
-        if (request.getCustomFields() != null) {
-            event.setCustomFields(request.getCustomFields());
         }
 
         Event updated = eventRepository.save(event);
@@ -308,7 +304,6 @@ public class EventService {
                     .organizationId(event.getOrganizationId())
                     .status(event.getStatus())
                     .coverImageUrl(event.getCoverImageUrl())
-                    .customFields(event.getCustomFields())
                     .createdAt(event.getCreatedAt())
                     .updatedAt(event.getUpdatedAt())
                     .organizationName(orgName)

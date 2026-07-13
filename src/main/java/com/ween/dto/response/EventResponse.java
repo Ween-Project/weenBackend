@@ -30,7 +30,6 @@ public class EventResponse {
     private String organizationName;
     private EventStatus status;
     private String coverImageUrl;
-    private String customFields;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
