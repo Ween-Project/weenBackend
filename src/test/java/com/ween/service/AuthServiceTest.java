@@ -29,6 +29,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -193,5 +195,37 @@ class AuthServiceTest {
 
         assertThat(user.getPasswordHash()).isEqualTo("new-encoded");
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void initiatePasswordResetSendsEmailWhenUserExists() {
+        String email = "ali@example.com";
+        User user = User.builder()
+                .email(email)
+                .fullName("Ali Valiyev")
+                .role(UserRole.VOLUNTEER)
+                .build();
+        user.setId("user-1");
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+        authService.initiatePasswordReset(email);
+
+        verify(passwordResetTokenRepository).deleteByUserId("user-1");
+        verify(passwordResetTokenRepository).save(any());
+        verify(emailService).sendPasswordResetEmail(eq(email), eq("Ali Valiyev"), anyString());
+    }
+
+    @Test
+    void initiatePasswordResetReturnsSilentlyWhenUserDoesNotExist() {
+        String email = "nonexistent@example.com";
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(organizationRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        authService.initiatePasswordReset(email);
+
+        verify(passwordResetTokenRepository, never()).deleteByUserId(anyString());
+        verify(passwordResetTokenRepository, never()).save(any());
+        verify(emailService, never()).sendPasswordResetEmail(anyString(), anyString(), anyString());
     }
 }

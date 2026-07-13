@@ -146,7 +146,6 @@ public class AuthService {
         coinService.awardSignupBonus(savedUser.getId());
 
         // Handle referral if provided
-        // Handle referral if provided
         if (referralCode != null && !referralCode.trim().isEmpty()) {
             try {
                 referralService.processReferralAtSignup(referralCode.trim(), savedUser.getId());
@@ -362,8 +361,12 @@ public class AuthService {
         Organization organization = null;
 
         if (user == null) {
-            organization = organizationRepository.findByEmail(email)
-                    .orElseThrow(() -> new ResourceNotFoundException("Account not found with email: " + email));
+            organization = organizationRepository.findByEmail(email).orElse(null);
+        }
+
+        if (user == null && organization == null) {
+            log.info("Password reset requested for non-existent email: {}", email);
+            return;
         }
 
         String accountId = user != null ? user.getId() : organization.getId();
