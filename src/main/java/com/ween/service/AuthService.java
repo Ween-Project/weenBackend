@@ -72,8 +72,15 @@ public class AuthService {
     @Value("${ween.frontend.reset-password-url:http://localhost:5001/reset-password}")
     private String resetPasswordBaseUrl;
 
+    @Value("${admin.seed.email:super_admin@ween.com}")
+    private String adminEmail;
+
     @Transactional
     public AuthResponse register(RegisterRequest request, MultipartFile profilePhoto, MultipartFile banner, String referralCode) {
+        if (request.getEmail().equalsIgnoreCase(adminEmail)) {
+            throw new IllegalArgumentException("Registration not allowed for this email address");
+        }
+
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail()) || organizationRepository.existsByEmail(request.getEmail())) {
             throw new AlreadyExistsException("Email already registered: " + request.getEmail());
