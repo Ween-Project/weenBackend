@@ -1,6 +1,7 @@
 package com.ween.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ween.dto.request.ForgotPasswordRequest;
 import com.ween.dto.request.LoginRequest;
 import com.ween.dto.request.RefreshTokenRequest;
 import com.ween.dto.response.AuthResponse;
@@ -81,5 +82,19 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"not-email\",\"password\":\"\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void forgotPasswordReturnsOkAndCallsService() throws Exception {
+        ForgotPasswordRequest body = new ForgotPasswordRequest();
+        body.setEmail("ali@example.com");
+
+        mockMvc.perform(post("/api/v1/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password reset link sent to your email"));
+
+        verify(authService).sendPasswordResetLink("ali@example.com");
     }
 }
