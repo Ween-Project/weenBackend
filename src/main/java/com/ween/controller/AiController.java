@@ -15,9 +15,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import com.ween.entity.AiChatMessage;
 
 @RestController
 @RequestMapping("/api/v1/ai")
@@ -51,5 +57,24 @@ public class AiController {
         String responseText = aiService.chatWithAssistant(request.getMessage(), userId);
         AiChatResponse response = AiChatResponse.builder().response(responseText).build();
         return ResponseEntity.ok(ApiResponse.ok(response, "Response generated successfully"));
+    }
+
+    @GetMapping("/history")
+    @Operation(summary = "Get AI chat history", description = "Retrieve paginated AI chat messages for the current user")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<ApiResponse<Page<AiChatMessage>>> getHistory(
+            @PageableDefault(size = 50) Pageable pageable) {
+        String userId = securityUtil.getCurrentUserId();
+        Page<AiChatMessage> response = aiService.getChatHistory(userId, pageable);
+        return ResponseEntity.ok(ApiResponse.ok(response, "AI chat history retrieved successfully"));
+    }
+
+    @DeleteMapping("/history")
+    @Operation(summary = "Clear AI chat history", description = "Delete all AI chat messages for the current user")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<ApiResponse<Void>> clearHistory() {
+        String userId = securityUtil.getCurrentUserId();
+        aiService.clearChatHistory(userId);
+        return ResponseEntity.ok(ApiResponse.ok(null, "AI chat history cleared successfully"));
     }
 }
