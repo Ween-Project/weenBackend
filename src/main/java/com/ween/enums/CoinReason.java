@@ -4,5 +4,6 @@ public enum CoinReason {
     SIGNUP,
     ATTENDANCE,
     REFERRAL,
-    PROFILE_COMPLETE
+    PROFILE_COMPLETE,
+    ADMIN_ADJUSTMENT
 }
