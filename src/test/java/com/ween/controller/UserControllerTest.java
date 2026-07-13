@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
@@ -50,13 +51,13 @@ class UserControllerTest {
         followService = mock(FollowService.class);
         badgeService = mock(BadgeService.class);
         mockMvc = standaloneSetup(new UserController(
-                        userService,
-                        registrationService,
-                        certificateService,
-                        followService,
-                        mock(UserMapper.class),
-                        mock(CertificateMapper.class),
-                        badgeService))
+                userService,
+                registrationService,
+                certificateService,
+                followService,
+                mock(UserMapper.class),
+                mock(CertificateMapper.class),
+                badgeService))
                 .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
         ControllerTestSupport.authenticateAs("user-1");
@@ -77,9 +78,13 @@ class UserControllerTest {
         mockMvc.perform(get("/api/v1/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("ali"));
-        mockMvc.perform(put("/api/v1/users/me")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new UpdateProfileRequest())))
+        mockMvc.perform(multipart("/api/v1/users/me")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "request", "", "application/json", objectMapper.writeValueAsBytes(new UpdateProfileRequest())))
+                        .with(request -> {
+                            request.setMethod("PUT");
+                            return request;
+                        }))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Profile updated successfully"));
     }

@@ -93,8 +93,11 @@ class ChatControllerTest {
 
         mockMvc.perform(get("/api/v1/chat/rooms")).andExpect(status().isOk());
         mockMvc.perform(get("/api/v1/chat/rooms/room-1/messages")).andExpect(status().isOk());
+        GroupRoomRequest request = new GroupRoomRequest();
+        request.setName("Team");
         mockMvc.perform(multipart("/api/v1/chat/rooms/group")
-                        .param("name", "Team"))
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "request", "", "application/json", objectMapper.writeValueAsBytes(request))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.name").value("Team"));
     }

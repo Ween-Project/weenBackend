@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -90,7 +91,7 @@ class EventControllerTest {
         when(securityUtil.getCurrentUserId()).thenReturn("org-1");
         Event event = Event.builder().title("Cleanup").organizationId("org-1").build();
         event.setId("event-1");
-        when(eventService.createEvent(any(CreateEventRequest.class), eq("org-1"))).thenReturn(event);
+        when(eventService.createEvent(any(CreateEventRequest.class), eq("org-1"), any())).thenReturn(event);
         CreateEventRequest request = new CreateEventRequest(
                 "Cleanup",
                 "Community cleanup day",
@@ -102,12 +103,11 @@ class EventControllerTest {
                 LocalDateTime.now().plusDays(1).plusHours(2),
                 LocalDateTime.now().plusHours(12),
                 25,
-                null,
                 null);
 
-        mockMvc.perform(post("/api/v1/events")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/api/v1/events")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "request", "", "application/json", objectMapper.writeValueAsBytes(request))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("Event created successfully"))
                 .andExpect(jsonPath("$.data.id").value("event-1"));
