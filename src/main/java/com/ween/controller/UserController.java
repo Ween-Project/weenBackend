@@ -97,7 +97,7 @@ public class UserController {
             @Parameter(description = "Username", required = true)
             @PathVariable String username) {
         try {
-            PublicProfileResponse response = userService.getPublicProfile(username, getCurrentUserId());
+            PublicProfileResponse response = userService.getPublicProfile(username, getCurrentUserIdOptional());
             return ResponseEntity.ok(ApiResponse.ok(response, "Profile retrieved successfully"));
         } catch (Exception e) {
             log.error("Failed to retrieve public profile for username: {}", username, e);
@@ -253,6 +253,17 @@ public class UserController {
                 || authentication instanceof AnonymousAuthenticationToken
                 || "anonymousUser".equals(authentication.getPrincipal())) {
             throw new UnauthorizedException("User not authenticated");
+        }
+        return (String) authentication.getPrincipal();
+    }
+
+    private String getCurrentUserIdOptional() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return null;
         }
         return (String) authentication.getPrincipal();
     }
