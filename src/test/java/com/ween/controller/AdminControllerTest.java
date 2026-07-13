@@ -17,6 +17,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
@@ -45,6 +49,13 @@ class AdminControllerTest {
         mockMvc = standaloneSetup(new AdminController(adminService, badgeService))
                 .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getPrincipal()).thenReturn("admin-1");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
     }
 
     @Test
@@ -66,7 +77,7 @@ class AdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("User banned successfully"));
 
-        verify(adminService).banUser("user-1", "spam");
+        verify(adminService).banUser("user-1", "spam", "admin-1");
     }
 
     @Test
@@ -75,12 +86,12 @@ class AdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("User unbanned successfully"));
 
-        verify(adminService).unbanUser("user-1");
+        verify(adminService).unbanUser("user-1", "admin-1");
     }
 
     @Test
     void verifyOrganizationReturnsUpdatedOrganization() throws Exception {
-        when(adminService.verifyOrganization("org-1", true, "ok"))
+        when(adminService.verifyOrganization("org-1", true, "ok", "admin-1"))
                 .thenReturn(OrganizationResponse.builder().id("org-1").isVerified(true).build());
 
         mockMvc.perform(put("/api/v1/admin/organizations/org-1/verify")
@@ -114,9 +125,9 @@ class AdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].name").value("Starter"));
 
-        mockMvc.perform(post("/api/v1/admin/badges")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/api/v1/admin/badges")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "request", "", "application/json", objectMapper.writeValueAsBytes(request))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("Badge created successfully"));
 
