@@ -1,6 +1,9 @@
 package com.ween.security;
 
 import com.ween.enums.UserRole;
+import com.ween.entity.User;
+import com.ween.repository.OrganizationRepository;
+import com.ween.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -25,6 +28,8 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final OrganizationRepository organizationRepository;
     private static final String ACCESS_TOKEN_COOKIE = "accessToken";
 
 
@@ -52,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
 
                     String userId = jwtUtil.extractUserId(token);
-                    UserRole role = jwtUtil.extractRole(token);
+                    UserRole role = resolveCurrentRole(userId);
                     log.info("Extracted userId: {}, role: {}", userId, role);
 
                     if (role != null) {
@@ -79,6 +84,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private UserRole resolveCurrentRole(String accountId) {
+        User user = userRepository.findById(accountId).orElse(null);
+        if (user != null) {
+            if (Boolean.TRUE.equals(user.getBanned())) {
+                log.warn("Authentication rejected for suspended user: {}", accountId);
+                return null;
+            }
+            return user.getRole();
+        }
+        return organizationRepository.findById(accountId)
+                .map(organization -> organization.getRole())
+                .orElse(null);
     }
 
     private String resolveToken(HttpServletRequest request) {
