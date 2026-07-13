@@ -47,6 +47,13 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.ok(response, "Posts retrieved successfully"));
     }
 
+    @GetMapping("/following")
+    @Operation(summary = "List followed users' posts")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> listFollowingPosts(@PageableDefault(size = 20) Pageable pageable) {
+        Page<PostResponse> response = postService.listFollowingPosts(securityUtil.getCurrentUserId(), pageable);
+        return ResponseEntity.ok(ApiResponse.ok(response, "Followed users' posts retrieved successfully"));
+    }
+
     @GetMapping("/{postId}")
     @Operation(summary = "Get post detail")
     public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable String postId) {

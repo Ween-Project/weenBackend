@@ -26,7 +26,7 @@ public interface PostRepostRepository extends JpaRepository<PostRepost, String> 
         FROM PostRepost pr
         WHERE pr.user = :user
         """)
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"post", "post.userAuthor", "post.organizationAuthor"})
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"originalPost", "originalPost.userAuthor", "originalPost.organizationAuthor"})
     org.springframework.data.domain.Page<com.ween.dto.projection.PostWithStatsProjection> findRepostedPostsWithStats(
             @org.springframework.data.repository.query.Param("user") User user, 
             @org.springframework.data.repository.query.Param("currentUserId") String currentUserId, 
