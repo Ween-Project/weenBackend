@@ -26,8 +26,8 @@ public interface UserRepository extends JpaRepository<User, String> {
                OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%'))
                OR LOWER(COALESCE(u.university, '')) LIKE LOWER(CONCAT('%', :query, '%'))
                OR LOWER(COALESCE(u.major, '')) LIKE LOWER(CONCAT('%', :query, '%'))
-               OR LOWER(COALESCE(u.skills, '')) LIKE LOWER(CONCAT('%', :query, '%'))
-               OR LOWER(COALESCE(u.interests, '')) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(COALESCE(CAST(u.skills AS string), '')) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(COALESCE(CAST(u.interests AS string), '')) LIKE LOWER(CONCAT('%', :query, '%'))
             """)
     Page<User> searchPublicProfiles(@Param("query") String query, Pageable pageable);
 
