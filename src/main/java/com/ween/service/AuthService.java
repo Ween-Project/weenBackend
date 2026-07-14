@@ -580,7 +580,13 @@ public class AuthService {
         emailVerificationTokenRepository.save(token);
 
         String verificationLink = verifyEmailBaseUrl + "?token=" + URLEncoder.encode(rawToken, StandardCharsets.UTF_8);
-        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), verificationLink);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), verificationLink);
+            } catch (Exception e) {
+                log.error("Failed to send verification email for user: {}", user.getEmail(), e);
+            }
+        });
     }
 
     private void createAndSendEmailVerification(Organization organization) {
@@ -599,6 +605,12 @@ public class AuthService {
         emailVerificationTokenRepository.save(token);
 
         String verificationLink = verifyEmailBaseUrl + "?token=" + URLEncoder.encode(rawToken, StandardCharsets.UTF_8);
-        emailService.sendVerificationEmail(organization.getEmail(), organization.getOrganizationName(), verificationLink);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendVerificationEmail(organization.getEmail(), organization.getOrganizationName(), verificationLink);
+            } catch (Exception e) {
+                log.error("Failed to send verification email for organization: {}", organization.getEmail(), e);
+            }
+        });
     }
 }
