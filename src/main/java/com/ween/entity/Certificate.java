@@ -35,6 +35,6 @@ public class Certificate extends BaseEntity {
     @Column(name = "template_type")
     private EventCategory templateType = EventCategory.EDUCATION;
 
-    @Column(name = "issued_at", columnDefinition = "DATETIME(6)")
+    @Column(name = "issued_at")
     private LocalDateTime issuedAt;
 }

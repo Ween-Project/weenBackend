@@ -30,6 +30,6 @@ public class LeaderboardEntry {
     @Column(name = "coin_count")
     private Integer coinCount;
 
-    @Column(name = "calculated_at", columnDefinition = "DATETIME(6)")
+    @Column(name = "calculated_at")
     private LocalDateTime calculatedAt;
 }

@@ -30,10 +30,10 @@ public class EmailVerificationToken extends BaseEntity {
     @Column(name = "token", length = 180, nullable = false, unique = true)
     private String token;
 
-    @Column(name = "expires_at", columnDefinition = "DATETIME(6)", nullable = false)
+    @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
-    @Column(name = "verified_at", columnDefinition = "DATETIME(6)")
+    @Column(name = "verified_at")
     private LocalDateTime verifiedAt;
 
     @Column(name = "is_used", nullable = false)
