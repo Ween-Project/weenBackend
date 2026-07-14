@@ -22,10 +22,10 @@ public class AdminSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final AuditLogRepository auditLogRepository;
 
-    @Value("${admin.seed.email:super_admin@ween.com}")
+    @Value("${admin.seed.email}")
     private String adminEmail;
 
-    @Value("${admin.seed.password:super1234!}")
+    @Value("${admin.seed.password}")
     private String adminPassword;
 
     @Override

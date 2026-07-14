@@ -72,7 +72,7 @@ public class AuthService {
     @Value("${ween.frontend.reset-password-url:http://localhost:5001/reset-password}")
     private String resetPasswordBaseUrl;
 
-    @Value("${admin.seed.email:super_admin@ween.com}")
+    @Value("${admin.seed.email}")
     private String adminEmail;
 
     @Transactional

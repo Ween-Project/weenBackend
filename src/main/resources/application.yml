@@ -31,7 +31,7 @@ spring:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:weenorganization@gmail.com}
-    password: "${MAIL_PASSWORD:kkhs sgna fdfi kmyg}"
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -60,11 +60,11 @@ logging:
 
 ween:
   jwt:
-    secret: ${JWT_SECRET:your-secret-key-min-32-characters-required}
+    secret: ${JWT_SECRET}
     access-token-expiry: 900
     refresh-token-expiry: 604800
   aes:
-    secret-key: ${AES_SECRET_KEY:16-character-key}
+    secret-key: ${AES_SECRET_KEY}
   firebase:
     credentials-path: ${FIREBASE_CREDS_PATH:/app/config/firebase-admin-key.json}
   mail:
@@ -73,11 +73,11 @@ ween:
     verify-url: ${VERIFY_EMAIL_URL:http://localhost:5001/verify}
     reset-password-url: ${RESET_PASSWORD_URL:http://localhost:5001/reset-password}
   gemini:
-    api-key: ${GEMINI_API_KEY:your-gemini-api-key-here}
+    api-key: ${GEMINI_API_KEY}
     model: gemini-2.5-flash
   cloudinary:
     environment: ${SPRING_PROFILES_ACTIVE:dev}
-  api-key: ${ORGANIZER_API_KEY:your-api-key-here}
+  api-key: ${ORGANIZER_API_KEY}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:5000,http://localhost:5001,http://localhost:5173,https://ween.az,https://api.ween.az}
   app:
@@ -94,6 +94,6 @@ springdoc:
     path: /v3/api-docs
 
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME:dyb2pz75u}
-  api-key: ${CLOUDINARY_API_KEY:329973645216964}
-  api-secret: ${CLOUDINARY_API_SECRET:rRayNexvObb8m10GbEriqq8vsqQ}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
