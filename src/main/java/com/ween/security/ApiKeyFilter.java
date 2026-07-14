@@ -33,10 +33,21 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             String apiKey = request.getHeader("X-Api-Key");
             String authHeader = request.getHeader("Authorization");
 
+            String cookieToken = null;
+            if (request.getCookies() != null) {
+                for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                    if ("accessToken".equals(cookie.getName())) {
+                        cookieToken = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+
             boolean hasBearer = authHeader != null && authHeader.startsWith("Bearer ");
+            boolean hasCookieToken = cookieToken != null && !cookieToken.isBlank();
             boolean hasValidApiKey = apiKey != null && apiKey.equals(validApiKey);
 
-            if (hasBearer) {
+            if (hasBearer || hasCookieToken) {
                 filterChain.doFilter(request, response);
                 return;
             }
