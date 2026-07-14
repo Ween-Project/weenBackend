@@ -39,13 +39,13 @@ public class Event extends BaseEntity {
     @Column(name = "is_online")
     private Boolean isOnline = false;
 
-    @Column(name = "start_date", columnDefinition = "DATETIME(6)")
+    @Column(name = "start_date", columnDefinition = "TIMESTAMP(6)")
     private LocalDateTime startDate;
 
-    @Column(name = "end_date", columnDefinition = "DATETIME(6)")
+    @Column(name = "end_date", columnDefinition = "TIMESTAMP(6)")
     private LocalDateTime endDate;
 
-    @Column(name = "registration_deadline", columnDefinition = "DATETIME(6)")
+    @Column(name = "registration_deadline", columnDefinition = "TIMESTAMP(6)")
     private LocalDateTime registrationDeadline;
 
     @Column(name = "max_participants")

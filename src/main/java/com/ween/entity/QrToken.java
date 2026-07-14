@@ -22,10 +22,10 @@ public class QrToken extends BaseEntity {
     @Column(name = "token_hash", length = 1000, nullable = false)
     private String tokenHash;
 
-    @Column(name = "issued_at", columnDefinition = "DATETIME(6)")
+    @Column(name = "issued_at", columnDefinition = "TIMESTAMP(6)")
     private LocalDateTime issuedAt;
 
-    @Column(name = "expires_at", columnDefinition = "DATETIME(6)")
+    @Column(name = "expires_at", columnDefinition = "TIMESTAMP(6)")
     private LocalDateTime expiresAt;
 
     @Column(name = "is_revoked")

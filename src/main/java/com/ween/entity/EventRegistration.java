@@ -24,7 +24,7 @@ public class EventRegistration extends BaseEntity {
     @Column(name = "user_id", columnDefinition = "CHAR(36)", nullable = false)
     private String userId;
 
-    @Column(name = "registered_at", columnDefinition = "DATETIME(6)")
+    @Column(name = "registered_at", columnDefinition = "TIMESTAMP(6)")
     private LocalDateTime registeredAt;
 
     @Column(name = "custom_answers", columnDefinition = "JSON")
@@ -34,6 +34,6 @@ public class EventRegistration extends BaseEntity {
     @Builder.Default
     private Boolean isJoined = false;
 
-    @Column(name = "joined_at", columnDefinition = "DATETIME(6)")
+    @Column(name = "joined_at", columnDefinition = "TIMESTAMP(6)")
     private LocalDateTime joinedAt;
 }
