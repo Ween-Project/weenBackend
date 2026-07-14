@@ -1,535 +1,292 @@
-# Ween Platform - Youth Volunteering Backend
+﻿# Ween Backend
 
-A complete, production-ready Spring Boot 3.x backend for the Ween platform, a student/youth volunteering platform for Azerbaijan. This project implements a full-featured microservice architecture for managing volunteers, organizations, events, certificates, and gamification elements.
+Ween is a Youth Volunteering and Social Impact Platform built for connecting young volunteers with organizations, community events, certificates, social activity, and measurable impact. This repository contains the Spring Boot backend API for authentication, event discovery, event registration, organization management, posts, chat, QR check-in, certificates, coins, badges, notifications, leaderboards, AI helpers, and administration.
 
-## 📋 Project Overview
+The project is developed by Team Enthuzone.
 
-**Ween** is a digital platform connecting student volunteers with NGOs and community organizations for meaningful volunteer work. The platform features:
+## Documentation Index
 
-- **User Management:** Volunteers and Organization accounts with profiles
-- **Event Management:** Organizations can create and manage events
-- **Registration System:** Volunteers register for events with tracking
-- **Gamification:** Ween Coins reward system with leaderboards
-- **Certificates:** Automatic PDF certificate generation for participants
-- **QR Check-in:** Secure QR-based attendance verification
-- **Notifications:** In-app and email notifications
-- **Referral Program:** Coin rewards for successful referrals
-- **Admin Dashboard:** Platform statistics and user management
+The detailed project documentation is stored in the `docs` folder:
 
-## 🏗️ Technology Stack
+- [Architecture](docs/architecture.md)
+- [Entity Relationship Diagram](docs/erd.md)
+- [User Flow](docs/user-flow.md)
+- [API Reference](docs/api-reference.md)
+- [Setup Guide](docs/setup.md)
+- [Security Model](docs/security.md)
+- [Testing Guide](docs/testing.md)
+- [Grading Requirements Alignment](docs/grading-alignment.md)
 
-| Category | Technology |
-|----------|-----------|
-| **Framework** | Spring Boot 3.2.3 |
-| **Language** | Java 17+ |
-| **Build** | Maven 3.9.0 |
-| **Security** | Spring Security 6, JWT, AES-256 |
-| **Database** | MySQL 8.0 (InnoDB) |
-| **Cache** | Redis 7 |
-| **ORM** | Hibernate JPA |
-| **Migrations** | Flyway |
-| **File Storage** | AWS S3 / MinIO |
-| **Notifications** | Firebase Admin SDK |
-| **PDF Generation** | iText 7 |
-| **QR Codes** | ZXing |
-| **Email** | JavaMailSender |
-| **Mapping** | MapStruct |
-| **Rate Limiting** | Bucket4j |
-| **API Docs** | SpringDoc OpenAPI 3 / Swagger UI |
-| **Testing** | JUnit 5, Mockito, Testcontainers |
-| **Code Coverage** | JaCoCo (70% minimum) |
-| **Docker** | Docker & Docker Compose |
+## Project Summary
 
-## 📦 Project Structure
+Ween solves the problem of fragmented volunteer discovery and impact tracking. Volunteers need a simple way to find relevant opportunities, register for events, prove participation, receive certificates, and build a visible social impact profile. Organizations need a controlled way to publish events, manage participants, communicate with users, verify attendance, and review platform activity.
 
-```
-ween-backend/
-├── pom.xml
-├── Dockerfile
-├── docker-compose.yml
-├── .env.example
-├── README.md
-└── src/
-    ├── main/
-    │   ├── java/com/ween/
-    │   │   ├── WeenApplication.java
-    │   │   ├── config/
-    │   │   │   ├── SecurityConfig.java
-    │   │   │   ├── RedisConfig.java
-    │   │   │   ├── S3Config.java
-    │   │   │   ├── FirebaseConfig.java
-    │   │   │   ├── OpenApiConfig.java
-    │   │   │   └── AsyncConfig.java
-    │   │   ├── entity/
-    │   │   │   ├── BaseEntity.java
-    │   │   │   ├── User.java
-    │   │   │   ├── Organization.java
-    │   │   │   ├── Event.java
-    │   │   │   ├── EventRegistration.java
-    │   │   │   ├── QrToken.java
-    │   │   │   ├── Certificate.java
-    │   │   │   ├── CoinTransaction.java
-    │   │   │   ├── LeaderboardEntry.java
-    │   │   │   ├── Notification.java
-    │   │   │   └── Referral.java
-    │   │   ├── enums/
-    │   │   │   ├── UserRole.java
-    │   │   │   ├── EventCategory.java
-    │   │   │   ├── EventStatus.java
-    │   │   │   ├── CoinReason.java
-    │   │   │   ├── CertificateTemplate.java
-    │   │   │   ├── SubscriptionPlan.java
-    │   │   │   ├── NotificationType.java
-    │   │   │   ├── LeaderboardPeriod.java
-    │   │   │   └── LeaderboardScope.java
-    │   │   ├── repository/ (10 repositories)
-    │   │   ├── dto/
-    │   │   │   ├── request/ (12 request DTOs)
-    │   │   │   └── response/ (15 response DTOs)
-    │   │   ├── mapper/ (6 MapStruct mappers)
-    │   │   ├── service/ (14 services)
-    │   │   ├── controller/ (9 controllers)
-    │   │   ├── security/ (JWT, AES, Filters)
-    │   │   ├── exception/ (Custom exceptions)
-    │   │   └── scheduler/ (Background jobs)
-    │   └── resources/
-    │       ├── application.yml
-    │       ├── application-dev.yml
-    │       ├── application-prod.yml
-    │       └── db/migration/
-    │           ├── V1__create_tables.sql
-    │           ├── V2__add_constraints.sql
-    │           ├── V3__add_indexes.sql
-    │           └── V4__seed_data.sql
-    └── test/
-        └── java/com/ween/
-            ├── service/ (5 unit test classes)
-            └── controller/ (3 integration test classes)
-```
+The backend exposes a REST API under `/api/v1`, uses JWT authentication, applies role-based authorization, stores data through JPA/Hibernate, and uses Flyway migrations for database schema management.
 
-## 🚀 Quick Start
+## Core Features
 
-### Prerequisites
-- Java 17+
-- Maven 3.9.0+
-- Docker & Docker Compose
-- MySQL 8.0 (if not using Docker)
-- Redis 7 (if not using Docker)
+- User registration, organization registration, login, refresh, logout, email verification, password reset, and password change.
+- JWT-based stateless authentication with HTTP-only token cookies and Bearer token support.
+- Role-based access control for `VOLUNTEER`, `ORGANIZER`, `ORGANIZATION_ADMIN`, and `ADMIN`.
+- Event CRUD with categories, status transitions, filters, public reads, organizer writes, and participant statistics.
+- Event registration and cancellation for volunteers.
+- QR generation and check-in flow for participation verification.
+- Organization profile management, organizer invitations, approval, rejection, and organizer removal.
+- Social posts with media, likes, saves, reposts, and comments.
+- User profile, public profile, followers, following, badges, certificates, events, and coin data.
+- Direct and room-based chat with REST endpoints and WebSocket support.
+- Certificates for completed participation.
+- Ween Coins, transaction history, leaderboards, badges, and referrals.
+- Notifications for user-facing platform activity.
+- Admin moderation for users, organizations, events, posts, comments, certificates, coins, badges, referrals, audit logs, and AI statistics.
+- AI endpoints for event content assistance and chat history.
+- Global exception handling with consistent error responses.
+- OpenAPI/Swagger documentation.
+- Docker and Docker Compose support.
 
-### Using Docker Compose (Recommended)
+## Technology Stack
 
-```bash
-# Clone repository
-git clone <repository-url>
-cd ween-backend
+| Area | Technology |
+| --- | --- |
+| Language | Java 17 |
+| Framework | Spring Boot 3.2.3 |
+| Web API | Spring Web MVC |
+| Security | Spring Security, JWT, BCrypt |
+| Database | MySQL 8.0, PostgreSQL runtime driver available |
+| ORM | Spring Data JPA, Hibernate |
+| Migrations | Flyway |
+| Validation | Jakarta Bean Validation |
+| Mapping | MapStruct |
+| File Uploads | Multipart API, Cloudinary SDK |
+| Email | Spring Boot Mail |
+| PDF Rendering | Thymeleaf, Flying Saucer OpenPDF, iText dependency |
+| Realtime | Spring WebSocket, STOMP configuration |
+| API Docs | SpringDoc OpenAPI, Swagger UI |
+| Testing | JUnit 5, Mockito, Spring Security Test, Testcontainers |
+| Build | Maven |
+| Deployment | Docker, Docker Compose |
 
-# Copy environment variables
-cp .env.example .env
-
-# Start all services (MySQL, Redis, MinIO, MailHog, App)
-docker-compose up -d
-
-# Wait for app to start
-docker logs -f ween-backend
-
-# Access the application
-# API: http://localhost:5000
-# Swagger UI: http://localhost:5000/swagger-ui.html
-# MinIO Console: http://localhost:9001 (minioadmin/minioadmin)
-# MailHog: http://localhost:8025
-```
-
-### Deploying on Render
-
-This project includes a `render.yaml` blueprint for a Docker-based web service.
-
-1. Render does not provide a managed MySQL database, so you must use an external MySQL provider (PlanetScale, Aiven, DigitalOcean Managed MySQL, Railway, etc.).
-2. In Render, create a new Web Service from this repository and use the Dockerfile.
-3. Set the service environment to `prod` via `SPRING_PROFILES_ACTIVE=prod`.
-4. Fill the required environment variables in Render:
-  - `DB_URL`
-  - `DB_USERNAME`
-  - `DB_PASSWORD`
-  - `MAIL_HOST`
-  - `MAIL_USERNAME`
-  - `MAIL_PASSWORD`
-  - `JWT_SECRET`
-  - `AES_SECRET_KEY`
-  - `ORGANIZER_API_KEY`
-  - `CORS_ORIGINS`
-5. Keep the public URLs aligned with your frontend:
-  - `VERIFY_EMAIL_URL=https://ween.az/verify-email`
-  - `RESET_PASSWORD_URL=https://ween.az/change-password`
-6. Deploy. Render will set `PORT` automatically; the app reads it from the environment.
-
-Important: if any of `DB_URL`, `DB_USERNAME`, or `DB_PASSWORD` are missing, the app will start and then fail during JPA initialization.
-
-### MySQL Connection Example
-
-Use a real public MySQL endpoint, not localhost:
+## Repository Structure
 
 ```text
-DB_URL=jdbc:mysql://YOUR_MYSQL_HOST:3306/YOUR_DB?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-DB_USERNAME=YOUR_DB_USER
-DB_PASSWORD=YOUR_DB_PASSWORD
+weenBackend/
+  .github/
+  src/
+    main/
+      java/com/ween/
+        config/
+        controller/
+        dto/
+        entity/
+        enums/
+        exception/
+        mapper/
+        repository/
+        security/
+        seeder/
+        service/
+        WeenApplication.java
+      resources/
+        db.migration/
+        templates/
+    test/
+      java/com/ween/
+        controller/
+        security/
+        service/
+      resources/
+        application-test.yml
+  docker-compose.yml
+  Dockerfile
+  pom.xml
+  README.md
+  docs/
 ```
 
-If `DB_URL` points to `localhost`, the Render service will fail because `localhost` is the container itself.
+## Main API Areas
 
-### Render Notes
+| Area | Base Path | Purpose |
+| --- | --- | --- |
+| Authentication | `/api/v1/auth` | Register, login, refresh, logout, verification, password flows |
+| Users | `/api/v1/users` | Current profile, public profiles, search, user events, badges, certificates |
+| Follows | `/api/v1/users/{userId}` | Follow, unfollow, followers, following |
+| Organizations | `/api/v1/organizations` | Organization details, update, current organization events |
+| Invitations | `/api/v1/organizations/{orgId}/invitations` | Invite and manage organizers |
+| Events | `/api/v1/events` | Event list, detail, create, update, delete, publish, start, complete, cancel |
+| Registrations | `/api/v1/events/{id}/register` | Volunteer event registration and cancellation |
+| Participations | `/api/v1/participations` | QR-based check-in join flow |
+| QR | `/api/v1/qr` | Generate QR token |
+| Posts | `/api/v1/posts` | Feed, CRUD, likes, saves, reposts, comments |
+| Chat | `/api/v1/chat` | Conversations, requests, direct messages, rooms, group messages |
+| Certificates | `/api/v1/certificates` | My certificates, download, delete |
+| Coins | `/api/v1/coins` | Balance and transaction history |
+| Leaderboard | `/api/v1/leaderboard` | Ranked volunteer impact data |
+| Notifications | `/api/v1/notifications` | Notification list and read states |
+| AI | `/api/v1/ai` | Event suggestions, chat, history |
+| Admin | `/api/v1/admin` | Platform moderation and statistics |
 
-- The app uses `PORT` from the environment, so do not hardcode a different server port in Render.
-- Swagger remains available at `/swagger-ui.html`.
-- For email sending, use a Gmail App Password in `MAIL_PASSWORD` and the Gmail address in `MAIL_USERNAME`.
+See [API Reference](docs/api-reference.md) for a more complete endpoint map.
 
-### Local Development
+## Requirement Highlights
 
-```bash
-# Build project
-mvn clean install
+This backend directly supports the major backend grading requirements:
 
-# Run with dev profile
-SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run
+- REST API with proper HTTP method usage across 18 controllers.
+- DTO-based request and response handling.
+- Full CRUD support for events and posts, plus administrative CRUD-style management for users, organizations, badges, events, posts, comments, and certificates.
+- Input validation through annotations such as `@NotBlank`, `@NotNull`, `@Size`, `@Email`, and `@Min`.
+- Global exception handling through `GlobalExceptionHandler`.
+- MySQL database support with JPA/Hibernate and Flyway migrations.
+- JWT registration, login, refresh, logout, protected endpoints, and role-based authorization.
+- Four roles: `VOLUNTEER`, `ORGANIZER`, `ORGANIZATION_ADMIN`, and `ADMIN`.
+- Swagger/OpenAPI API documentation.
+- Unit and controller test coverage across service, controller, and security layers.
 
-# Or create application-local.yml and use it
-SPRING_PROFILES_ACTIVE=local mvn spring-boot:run
-```
+See [Grading Requirements Alignment](docs/grading-alignment.md) for a grader-friendly checklist.
 
-## 🔐 Security
+## Quick Start
 
-- **Authentication:** JWT-based stateless authentication
-- **Authorization:** Role-based access control (VOLUNTEER, ORGANIZER, ADMIN)
-- **Password Hashing:** BCrypt strength 12
-- **Token Storage:** Redis-based token blacklist
-- **API Key Auth:** For QR check-in endpoints
-- **AES-256 Encryption:** For QR token payloads
-- **CORS:** Configurable allowed origins
-- **Rate Limiting:** Bucket4j for API rate limiting
+### Prerequisites
 
-### JWT Token Flow
-```
-User -> POST /api/v1/auth/login 
-        -> Receive accessToken (15 min) + refreshToken (7 days)
-User -> Include Bearer token in Authorization header
-        -> Filter validates & sets SecurityContext
-User -> POST /api/v1/auth/logout 
-        -> Token added to Redis blacklist
-```
-
-## 💰 Coin System
-
-Users earn Ween Coins through various activities:
-
-| Activity | Coins | Frequency |
-|----------|-------|-----------|
-| Sign Up | 50 | Once |
-| Event Registration | 10 | Per event |
-| Event Attendance | 50 | Per event |
-| Certificate Earned | 30 | Per event |
-| Complete Profile | 100 | Once |
-| Successful Referral | 25 | Per referral |
-| International Event | 150 | Per event |
-| Leaderboard Top 10 | 200 | Monthly |
-| Annual Achievement (5+ events) | 500 | Once per year |
-
-## 📊 REST API Endpoints
-
-All endpoints return wrapped `ApiResponse<T>` objects:
-
-```json
-{
-  "success": true,
-  "data": { /* response data */ },
-  "message": "OK",
-  "timestamp": "2025-01-15T10:30:00Z"
-}
-```
-
-### Authentication
-- `POST /api/v1/auth/register` - Register new user
-- `POST /api/v1/auth/login` - User login
-- `POST /api/v1/auth/refresh` - Refresh token
-- `POST /api/v1/auth/logout` - Logout
-
-### Events
-- `GET /api/v1/events` - List events with filters
-- `GET /api/v1/events/{id}` - Event detail
-- `POST /api/v1/events` - Create event (ORGANIZER)
-- `PUT /api/v1/events/{id}` - Update event (ORGANIZER)
-- `POST /api/v1/events/{id}/register` - Register for event
-- `GET /api/v1/events/{id}/participants` - Participant list (ORGANIZER)
-
-### Users
-- `GET /api/v1/users/me` - Current user profile
-- `PUT /api/v1/users/me` - Update profile
-- `GET /api/v1/users/@{username}` - Public profile
-
-### Certificates
-- `POST /api/v1/certificates/generate/{eventId}` - Generate certificates (async)
-- `GET /api/v1/certificates/verify/{certNumber}` - Verify certificate
-- `GET /api/v1/certificates/{id}/download` - Download PDF
-
-### QR & Check-in
-- `GET /api/v1/qr/my-qr` - Get QR code
-- `POST /api/v1/qr/checkin` - Check-in at event (API Key)
-
-### Coins & Leaderboard
-- `GET /api/v1/coins/balance` - Coin balance
-- `GET /api/v1/coins/transactions` - Transaction history
-- `GET /api/v1/coins/leaderboard` - Leaderboard
-
-### Organizations
-- `POST /api/v1/organizations` - Create organization (ORGANIZER)
-- `GET /api/v1/organizations/{id}` - Organization detail
-- `GET /api/v1/organizations/{id}/events` - Organization events
-
-See [API Documentation](API.md) for complete endpoint reference.
-
-## 🗄️ Database Schema
-
-The project uses MySQL 8.0 with InnoDB storage engine. Key tables:
-
-- **users** - User profiles with coin balance
-- **organizations** - NGO/organizer organizations
-- **events** - Events created by organizations
-- **event_registrations** - User event participation tracking
-- **certificates** - Generated certificates
-- **coin_transactions** - Coin earning history
-- **qr_tokens** - QR tokens for check-in
-- **leaderboard_entries** - Leaderboard rankings
-- **notifications** - User notifications
-- **referrals** - Referral relationships
-
-All tables use UUID primary keys (CHAR(36)) and include audit timestamps (created_at, updated_at).
-
-## 📝 Configuration
+- Java 17 or newer
+- Maven 3.9 or newer, or the included Maven wrapper
+- Docker and Docker Compose
+- MySQL 8.0 if running without Docker
 
 ### Environment Variables
 
-Create `.env` file (copy from `.env.example`):
+Copy `.env.example` to `.env` and fill in real values.
 
 ```env
-# Database
-DB_URL=jdbc:mysql://localhost:3306/ween
-DB_USERNAME=ween_user
-DB_PASSWORD=ween_password
-
-# Redis
-REDIS_HOST=localhost
-
-# S3/MinIO
-S3_ENDPOINT=http://localhost:9000
-S3_ACCESS_KEY=minioadmin
-S3_SECRET_KEY=minioadmin
-
-# JWT
-JWT_SECRET=your-32-character-min-secret-key
-
-# AES
+DB_USERNAME=your-db-username
+DB_PASSWORD=your-db-password
+JWT_SECRET=your-secret-key-min-32-characters-required
 AES_SECRET_KEY=16-character-key
-
-# API Key
-ORGANIZER_API_KEY=your-api-key
-
-# Email
-MAIL_HOST=localhost
-MAIL_FROM=noreply@ween.az
-
-# CORS
-CORS_ORIGINS=http://localhost:3000
+ORGANIZER_API_KEY=your-api-key-here
+GEMINI_API_KEY=your-gemini-api-key-here
+MAIL_USERNAME=your-email@example.com
+MAIL_PASSWORD=your-smtp-app-password
 ```
 
-### Application Properties
-
-- **application.yml** - Production defaults
-- **application-dev.yml** - Development (verbose logs, local services)
-- **application-prod.yml** - Production (optimized, external services)
-- **application-test.yml** - Testing (test database)
-
-## 🧪 Testing
-
-### Unit Tests (5 test classes, ~70 tests)
-- `CoinServiceTest` - Coin crediting and balance logic
-- `QrServiceTest` - QR generation and check-in
-- `CertificateServiceTest` - PDF generation
-- `EventServiceTest` - Event filtering and capacity
-- `AuthServiceTest` - Registration and JWT generation
-
-### Integration Tests (3 test classes, ~40 tests)
-- `AuthControllerIT` - Full registration-to-login flow
-- `EventControllerIT` - Event creation and registration
-- `CheckinControllerIT` - QR generation and check-in flow
-
-### Running Tests
+### Run With Docker Compose
 
 ```bash
-# All tests
-mvn test
-
-# Unit tests only
-mvn test -Dtest=*ServiceTest
-
-# Integration tests only
-mvn test -Dtest=*IT
-
-# Specific test
-mvn test -Dtest=CoinServiceTest
-
-# With coverage report
-mvn clean test jacoco:report
-# View report: target/site/jacoco/index.html
+docker compose up --build
 ```
 
-### Code Coverage
+Default service URLs:
 
-- **Target:** 70% minimum (enforced by JaCoCo)
-- **Current:** 72% (services and controllers)
-- **Excluded:** Entities, DTOs, enums, configs
+- Backend API: `http://localhost:5050`
+- Swagger UI: `http://localhost:5050/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:5050/v3/api-docs`
+- MySQL: `localhost:3306`
 
-## 🔄 Background Jobs
-
-### LeaderboardScheduler
-- **Cron:** Daily at midnight (`0 0 0 * * *`)
-- **Tasks:**
-  - Recalculate monthly, quarterly, annual leaderboards
-  - Award +200 coins to top 10 monthly performers
-  - Updates based on coin transactions
-
-### AnnualAchievementScheduler
-- **Cron:** Jan 1 at midnight (`0 0 0 1 1 *`)
-- **Tasks:**
-  - Identify users with 5+ event attendances in the year
-  - Award +500 coins for annual achievement
-  - Limited to once per user per year
-
-## 📧 Email Templates
-
-The application sends emails for:
-
-1. **Email Verification** - After registration
-2. **Password Reset** - Forgot password flow
-3. **Event Reminder** - Upcoming event notification
-4. **Certificate Ready** - After certificate generation
-5. **Event Confirmation** - After registration
-
-All templates are customizable in `EmailService`.
-
-## 📱 Firebase Integration
-
-Push notifications for:
-- Event reminders
-- Certificate ready notifications
-- Attendance confirmations
-- Referral bonuses
-- Leaderboard updates
-
-Configuration: `FirebaseConfig.java`
-
-## 💾 Backup & Maintenance
+### Run Locally With Maven
 
 ```bash
-# Database backup
-docker exec ween-mysql mysqldump -uween_user -p ween > backup.sql
-
-# Restore from backup
-docker exec -i ween-mysql mysql -uween_user -p ween < backup.sql
-
-# View logs
-docker logs -f ween-backend --tail=100
-
-# Restart services
-docker-compose restart app
+./mvnw clean test
+./mvnw spring-boot:run
 ```
 
-## 📚 API Documentation
+On Windows PowerShell:
 
-OpenAPI/Swagger documentation available at:
-- Swagger UI: `http://localhost:5000/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:5000/v3/api-docs`
+```powershell
+.\mvnw.cmd clean test
+.\mvnw.cmd spring-boot:run
+```
 
-## 🐛 Troubleshooting
+## Authentication Flow
 
-### Database Connection Issues
+1. A volunteer registers with `POST /api/v1/auth/register`, or an organization registers with `POST /api/v1/auth/register/organization`.
+2. The user logs in with `POST /api/v1/auth/login` or `POST /api/v1/auth/login/organization`.
+3. The API returns authentication data and sets HTTP-only `accessToken` and `refreshToken` cookies.
+4. Protected endpoints are called with an authenticated request.
+5. The access token can be refreshed with `POST /api/v1/auth/refresh`.
+6. Logout is handled through `POST /api/v1/auth/logout`.
+
+## Development Workflow
+
+The requested branch for README work is `update/readme`. Do not develop directly on `main`. For project tasks, use a task branch such as:
+
+```text
+feature/user-authentication
+feature/event-crud
+feature/post-feed
+fix/login-validation
+update/readme
+```
+
+Recommended commit discipline:
+
+- Keep commits focused.
+- Use descriptive messages such as `Document backend architecture` or `Add API reference documentation`.
+- Avoid large unrelated changes in the same commit.
+- Do not mix documentation updates with backend behavior changes unless they belong to the same task.
+
+## Testing
+
+Run the complete test suite:
+
 ```bash
-# Check MySQL is running
-docker-compose ps mysql
-
-# Verify credentials in .env
-# Restart MySQL
-docker-compose restart mysql
+./mvnw test
 ```
 
-### Redis Connection Issues
+Run service tests only:
+
 ```bash
-# Check Redis is running
-docker-compose ps redis
-
-# Check Redis connectivity
-docker exec ween-redis redis-cli ping
+./mvnw test -Dtest=*ServiceTest
 ```
 
-### Port Conflicts
+Run controller tests only:
+
 ```bash
-# Change port in docker-compose.yml:
-ports:
-  - "8081:5000"  # Changed from 5000:5000
+./mvnw test -Dtest=*ControllerTest
 ```
 
-## 📖 Additional Documentation
+The repository currently contains tests for services, controllers, and security helpers, including authentication, events, posts, organizations, participation, QR, certificates, coins, chat, notifications, admin behavior, and utility classes.
 
-- [API Reference](docs/API.md)
-- [Database Schema](docs/DATABASE.md)
-- [Security Guide](docs/SECURITY.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
+## Database
 
-## 📄 License
+Flyway migrations are located in `src/main/resources/db.migration`.
 
-This project is proprietary software for the Ween platform.
+Important tables include:
 
-## 👥 Team
+- `users`
+- `organizations`
+- `events`
+- `event_registrations`
+- `participations`
+- `qr_tokens`
+- `certificates`
+- `coin_transactions`
+- `leaderboard_entries`
+- `notifications`
+- `referrals`
+- `chat_rooms`
+- `chat_messages`
 
-Developed by the Ween backend team. For support, contact: support@ween.az
+See [Entity Relationship Diagram](docs/erd.md) for the data model.
 
-## 🎯 Future Enhancements
+## OpenAPI
 
-- [ ] Mobile app integration
-- [ ] Advanced analytics dashboard
-- [ ] Machine learning recommendations
-- [ ] Video call integration for online events
-- [ ] Gamification badges and achievements
-- [ ] Social media integration
-- [ ] Multi-language support
-- [ ] Micro-service architecture migration
+When the application is running, API documentation is available at:
 
-## ✅ Project Delivery Checklist
+```text
+http://localhost:5050/swagger-ui.html
+http://localhost:5050/v3/api-docs
+```
 
-- ✅ 50+ production-ready classes
-- ✅ 14 service classes with full business logic
-- ✅ 9 REST controllers with 60+ endpoints
-- ✅ 10 repositories with custom queries
-- ✅ JWT-based security with role authorization
-- ✅ Redis token blacklist and caching
-- ✅ S3/MinIO file storage integration
-- ✅ Firebase push notifications
-- ✅ iText PDF certificate generation
-- ✅ QR code generation and encryption
-- ✅ Complete coin/gamification system
-- ✅ Leaderboard with multiple periods and scopes
-- ✅ Event filtering, search, and pagination
-- ✅ Referral program implementation
-- ✅ Email notifications
-- ✅ Background job schedulers
-- ✅ Flyway database migrations
-- ✅ 5 unit test classes (~70 tests)
-- ✅ 3 integration test classes (~40 tests)
-- ✅ Docker & Docker Compose setup
-- ✅ Comprehensive YAML configurations
-- ✅ Swagger/OpenAPI documentation
-- ✅ Global exception handling
-- ✅ Request/response DTOs with validation
-- ✅ MapStruct entity mapping
+## Team
 
----
+Team Name: Enthuzone
 
-**Status:** ✅ **COMPLETE** - Production-ready Spring Boot backend ready for deployment!
+Team Members:
+
+- Kenan Gafarov
+- Mansura Badalova
+- Umut Alizade
+- Lala Aliyeva
+
+## License
+
+This project is prepared for the Ween final project submission. Usage and distribution should follow the team and course rules.
