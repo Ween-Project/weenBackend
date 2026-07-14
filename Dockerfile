@@ -17,6 +17,6 @@ USER springboot:spring
 COPY --from=build --chown=springboot:spring /app/target/ween-backend-*.jar app.jar
 
 ENV PORT=5050
-EXPOSE 5050
+EXPOSE ${PORT}
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar app.jar"]

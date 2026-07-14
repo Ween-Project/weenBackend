@@ -38,4 +38,3 @@ build/
 .env.properties
 
 # Local env secrets
-src/main/resources/application.yml
