@@ -49,12 +49,6 @@ public class JwtUtil {
     public String generateQrToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "qr");
-        claims.put("email", user.getEmail());
-        claims.put("fullName", user.getFullName());
-        claims.put("username", user.getUsername());
-        claims.put("role", user.getRole());
-        if (user.getUniversity() != null) claims.put("university", user.getUniversity());
-        if (user.getMajor() != null) claims.put("major", user.getMajor());
 
         // 30 seconds expiry for QR code
         return createToken(claims, user.getId(), 30);
