@@ -79,7 +79,7 @@ ween:
     environment: ${SPRING_PROFILES_ACTIVE:dev}
   api-key: ${ORGANIZER_API_KEY}
   cors:
-    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:5000,http://localhost:5001,http://localhost:5173,https://ween.az,https://api.ween.az}
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:5000,http://localhost:5001,http://localhost:5173,https://ween.az,https://api.ween.az,https://weenapp.vercel.app}
   app:
     name: Ween
 

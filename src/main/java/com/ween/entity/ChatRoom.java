@@ -8,7 +8,7 @@ import lombok.*;
 @Entity
 @Table(name = "chat_rooms", indexes = {
         @Index(name = "idx_room_type", columnList = "type"),
-        @Index(name = "idx_event_id", columnList = "event_id"),
+        @Index(name = "idx_chatroom_event_id", columnList = "event_id"),
         @Index(name = "idx_participants", columnList = "participant_one_id, participant_two_id")
 })
 @Data
