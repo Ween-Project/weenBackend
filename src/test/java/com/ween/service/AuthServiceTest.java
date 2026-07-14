@@ -213,7 +213,7 @@ class AuthServiceTest {
 
         verify(passwordResetTokenRepository).deleteByUserId("user-1");
         verify(passwordResetTokenRepository).save(any());
-        verify(emailService).sendPasswordResetEmail(eq(email), eq("Ali Valiyev"), anyString());
+        verify(emailService, org.mockito.Mockito.timeout(1000)).sendPasswordResetEmail(eq(email), eq("Ali Valiyev"), anyString());
     }
 
     @Test

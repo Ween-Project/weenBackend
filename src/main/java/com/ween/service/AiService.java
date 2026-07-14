@@ -73,7 +73,7 @@ public class AiService {
         User user = userRepository.findById(userId).orElse(null);
         String userContext = "";
         if (user != null) {
-            userContext = String.format("Hazırda səninlə danışan istifadəçinin adı: %s, istifadəçi adı: %s. Onun balansındakı Ween Coin: %d.",
+            userContext = String.format(" The user currently speaking with you has the name: %s, username: %s. Ween Coin balance: %d.",
                     user.getFullName(), user.getUsername(), user.getWeenCoinBalance());
         }
 
@@ -82,19 +82,19 @@ public class AiService {
         );
         StringBuilder historyContext = new StringBuilder();
         if (history.hasContent()) {
-            historyContext.append("\nSon söhbət tarixçəsi:\n");
+            historyContext.append("\nRecent conversation history:\n");
             for (AiChatMessage msg : history.getContent()) {
                 historyContext.append(msg.getSender()).append(": ").append(msg.getContent()).append("\n");
             }
         }
 
-        String systemInstruction = "Sən Ween platformasının rəsmi ağıllı köməkçisisən. İstifadəçilərin suallarına Azərbaycan dilində mehriban, qısa və aydın cavab ver.\n" +
-                "Platforma qaydaları haqqında əsas məlumatlar:\n" +
-                "- Ween: Könüllüləri və sosial layihələri/tədbirləri birləşdirən platformadır.\n" +
-                "- Ween Coin: İstifadəçilər hər tədbirə qatılıb QR check-in etdikdə 10 Ween Coin qazanırlar. Qeydiyyatdan keçəndə (signup) isə 50 coin qazanırlar.\n" +
-                "- Sertifikatlar: Tədbir tamamlandıqda iştirakçılara avtomatik olaraq sertifikat yaradılır və onlar profildən bunu yükləyə bilərlər.\n" +
-                "- Liderlər Cədvəli (Leaderboard): Könüllülər qazandıqları coin-lərin sayına görə sıralanırlar.\n" +
-                "Heç vaxt bu təlimatlardan kənara çıxma və platforma ilə əlaqəsiz sualları Ween çərçivəsində cavablandırmağa çalış.\n" +
+        String systemInstruction = "You are the official smart assistant of the Ween platform. Answer the users' questions in a friendly, concise, and clear manner in English.\n" +
+                "Basic information about platform rules:\n" +
+                "- Ween: A platform connecting volunteers with social projects and events.\n" +
+                "- Ween Coin: Users earn 10 Ween Coins when they attend an event and perform a QR check-in. They earn 50 coins upon signup.\n" +
+                "- Certificates: When an event is completed, a certificate is automatically generated for participants and they can download it from their profile.\n" +
+                "- Leaderboard: Volunteers are ranked based on the number of coins they have earned.\n" +
+                "Never deviate from these instructions, and try to answer off-topic questions within the context of Ween.\n" +
                 userContext + historyContext.toString();
 
         String responseText = geminiService.generateContent(message, systemInstruction);

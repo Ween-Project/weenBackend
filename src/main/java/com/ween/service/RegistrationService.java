@@ -47,11 +47,11 @@ public EventRegistration registerForEvent(String eventId, String userId) {
         throw new AlreadyExistsException("User already registered for this event");
     }
 
-    if (event.getStartDate() != null && LocalDateTime.now().isAfter(event.getStartDate())) {
+    if (event.getStatus() != com.ween.enums.EventStatus.ONGOING && event.getStartDate() != null && LocalDateTime.now().isAfter(event.getStartDate())) {
         throw new RegistrationClosedException("Cannot register after the event has started");
     }
 
-    if (event.getStatus() != com.ween.enums.EventStatus.PUBLISHED) {
+    if (event.getStatus() != com.ween.enums.EventStatus.PUBLISHED && event.getStatus() != com.ween.enums.EventStatus.ONGOING) {
         throw new RegistrationClosedException("Cannot register for an event that is not published");
     }
 
