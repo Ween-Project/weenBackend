@@ -2,6 +2,8 @@ package com.ween.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -27,7 +29,8 @@ public class EventRegistration extends BaseEntity {
     @Column(name = "registered_at")
     private LocalDateTime registeredAt;
 
-    @Column(name = "custom_answers", columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "custom_answers")
     private String customAnswers;
 
     @Column(name = "is_joined")

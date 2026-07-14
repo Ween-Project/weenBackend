@@ -5,6 +5,8 @@ import com.ween.enums.MessagePermission;
 import lombok.*;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -81,10 +83,12 @@ public class User extends BaseEntity {
     @Column(name = "github_url", length = 300)
     private String githubUrl;
 
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "interests")
     private String interests;
 
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "skills")
     private String skills;
 
     @Column(name = "referral_code", length = 20, unique = true)
