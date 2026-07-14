@@ -32,4 +32,5 @@ public class PublicProfileResponse {
     private Long followingCount;
     private Boolean following;
     private Boolean canMessage;
+    private Boolean isEmailVerified;
 }

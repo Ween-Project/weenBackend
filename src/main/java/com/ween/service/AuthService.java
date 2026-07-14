@@ -387,8 +387,14 @@ public class AuthService {
         passwordResetTokenRepository.save(token);
 
         String resetLink = resetPasswordBaseUrl + "?token=" + URLEncoder.encode(rawToken, StandardCharsets.UTF_8);
-        emailService.sendPasswordResetEmail(accountEmail, displayName, resetLink);
-        log.info("Password reset email sent to: {}", email);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendPasswordResetEmail(accountEmail, displayName, resetLink);
+                log.info("Password reset email sent to: {}", accountEmail);
+            } catch (Exception e) {
+                log.error("Failed to send password reset email to: {}", accountEmail, e);
+            }
+        });
     }
 
     @Transactional
