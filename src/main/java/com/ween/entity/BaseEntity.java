@@ -22,11 +22,11 @@ public abstract class BaseEntity {
     private String id;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, columnDefinition = "TIMESTAMP(6)")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at", columnDefinition = "TIMESTAMP(6)")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @PrePersist

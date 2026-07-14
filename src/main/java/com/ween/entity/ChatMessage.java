@@ -34,7 +34,7 @@ public class ChatMessage extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "read_at", columnDefinition = "TIMESTAMP(6)")
+    @Column(name = "read_at")
     private LocalDateTime readAt;
 
     @Column(name = "is_request", nullable = false)
