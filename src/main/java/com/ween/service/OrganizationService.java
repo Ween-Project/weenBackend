@@ -100,22 +100,24 @@ public class OrganizationService {
     }
 
     @Transactional(readOnly = true)
-    public PublicProfileResponse getOrganizationProfile(String username) {
+    public OrganizationResponse getOrganizationProfile(String username) {
         Organization org = organizationRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found with username: " + username));
         
-        return PublicProfileResponse.builder()
+        return OrganizationResponse.builder()
                 .id(org.getId())
                 .username(org.getUsername())
-                .fullName(org.getOrganizationName())
-                .bio(org.getDescription())
-                .profilePhotoUrl(org.getLogoUrl())
+                .organizationName(org.getOrganizationName())
+                .description(org.getDescription())
+                .logoUrl(org.getLogoUrl())
                 .bannerUrl(org.getBannerUrl())
-                .weenCoinBalance(0)
-                .followerCount(0L)
-                .followingCount(0L)
-                .following(false)
-                .canMessage(false)
+                .email(org.getEmail())
+                .website(org.getWebsite())
+                .role(org.getRole())
+                .isVerified(org.getIsVerified())
+                .verificationNote(org.getVerificationNote())
+                .createdAt(org.getCreatedAt())
+                .updatedAt(org.getUpdatedAt())
                 .build();
     }
 }

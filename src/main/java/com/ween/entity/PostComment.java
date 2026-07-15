@@ -27,4 +27,19 @@ public class PostComment extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private PostComment parentComment;
+
+    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<PostComment> replies = new java.util.ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "post_comment_likes",
+        joinColumns = @JoinColumn(name = "comment_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private java.util.Set<User> likedBy = new java.util.HashSet<>();
+
 }

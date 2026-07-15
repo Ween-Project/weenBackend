@@ -228,11 +228,19 @@ public class PostService {
     public PostCommentResponse addComment(String postId, String currentUserId, AddPostCommentRequest request) {
         Post post = getInternalPost(postId);
         User author = getUser(currentUserId);
-        PostComment comment = PostComment.builder()
+        
+        PostComment.PostCommentBuilder commentBuilder = PostComment.builder()
                 .post(post)
                 .author(author)
-                .content(request.getContent())
-                .build();
+                .content(request.getContent());
+
+        if (request.getParentCommentId() != null && !request.getParentCommentId().trim().isEmpty()) {
+            PostComment parent = postCommentRepository.findById(request.getParentCommentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found"));
+            commentBuilder.parentComment(parent);
+        }
+
+        PostComment comment = commentBuilder.build();
 
         PostComment saved = postCommentRepository.save(comment);
         notifyPostOwnerWithComment(post, author, request.getContent());
@@ -241,10 +249,26 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public Page<PostCommentResponse> listComments(String postId, Pageable pageable) {
+    public Page<PostCommentResponse> listComments(String postId, String currentUserId, Pageable pageable) {
         Post post = getInternalPost(postId);
+        User user = getUser(currentUserId);
         return postCommentRepository.findByPostOrderByCreatedAtAsc(post, pageable)
-                .map(postMapper::toCommentResponse);
+                .map(comment -> {
+                    PostCommentResponse response = postMapper.toCommentResponse(comment);
+                    response.setLikedByMe(comment.getLikedBy() != null && comment.getLikedBy().contains(user));
+                    if (response.getReplies() != null) {
+                        for (PostCommentResponse reply : response.getReplies()) {
+                            // Find the actual reply comment to check if liked by me
+                            PostComment actualReply = comment.getReplies().stream()
+                                    .filter(r -> r.getId().equals(reply.getId()))
+                                    .findFirst().orElse(null);
+                            if (actualReply != null) {
+                                reply.setLikedByMe(actualReply.getLikedBy() != null && actualReply.getLikedBy().contains(user));
+                            }
+                        }
+                    }
+                    return response;
+                });
     }
 
     @Transactional
@@ -265,6 +289,36 @@ public class PostService {
 
         postCommentRepository.delete(comment);
         log.info("User {} deleted comment {} on post {}", currentUserId, commentId, postId);
+    }
+
+    @Transactional
+    public PostCommentResponse likeComment(String postId, String commentId, String currentUserId) {
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+        User user = getUser(currentUserId);
+        
+        if (!comment.getLikedBy().contains(user)) {
+            comment.getLikedBy().add(user);
+            postCommentRepository.save(comment);
+            
+            if (!comment.getAuthor().getId().equals(user.getId())) {
+                notificationService.createPostCommentNotification(comment.getAuthor().getId(), user.getUsername(), "liked your comment");
+            }
+        }
+        return postMapper.toCommentResponse(comment);
+    }
+
+    @Transactional
+    public PostCommentResponse unlikeComment(String postId, String commentId, String currentUserId) {
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+        User user = getUser(currentUserId);
+        
+        if (comment.getLikedBy().contains(user)) {
+            comment.getLikedBy().remove(user);
+            postCommentRepository.save(comment);
+        }
+        return postMapper.toCommentResponse(comment);
     }
 
     private User getUser(String userId) {

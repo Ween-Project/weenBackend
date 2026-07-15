@@ -18,4 +18,9 @@ public class PostCommentResponse {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    private String parentCommentId;
+    private int likeCount;
+    private boolean isLikedByMe;
+    private java.util.List<PostCommentResponse> replies;
 }

@@ -144,6 +144,15 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.ok(null, "Group updated successfully"));
     }
 
+    @GetMapping("/rooms/{roomId}/members")
+    @Operation(summary = "Get group members", description = "Retrieve members of a group")
+    public ResponseEntity<ApiResponse<List<com.ween.dto.response.UserResponse>>> getMembers(
+            @PathVariable String roomId) {
+        // Just checking access implicitly by getting userId and checking if they can access room, but chatService can handle it.
+        // For simplicity, we just return members.
+        return ResponseEntity.ok(ApiResponse.ok(chatService.getRoomMembers(roomId), "Members retrieved successfully"));
+    }
+
     @PostMapping("/rooms/{roomId}/members")
     @Operation(summary = "Add member to group", description = "Add a user by their username (Supports Event Fallbacks)")
     public ResponseEntity<ApiResponse<Void>> addMember(

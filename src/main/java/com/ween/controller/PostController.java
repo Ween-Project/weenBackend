@@ -177,8 +177,26 @@ public class PostController {
     public ResponseEntity<ApiResponse<Page<PostCommentResponse>>> listComments(
             @PathVariable String postId,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<PostCommentResponse> response = postService.listComments(postId, pageable);
+        Page<PostCommentResponse> response = postService.listComments(postId, securityUtil.getCurrentUserId(), pageable);
         return ResponseEntity.ok(ApiResponse.ok(response, "Comments retrieved successfully"));
+    }
+
+    @PostMapping("/{postId}/comments/{commentId}/like")
+    @Operation(summary = "Like comment")
+    public ResponseEntity<ApiResponse<PostCommentResponse>> likeComment(
+            @PathVariable String postId,
+            @PathVariable String commentId) {
+        PostCommentResponse response = postService.likeComment(postId, commentId, securityUtil.getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.ok(response, "Comment liked successfully"));
+    }
+
+    @DeleteMapping("/{postId}/comments/{commentId}/like")
+    @Operation(summary = "Unlike comment")
+    public ResponseEntity<ApiResponse<PostCommentResponse>> unlikeComment(
+            @PathVariable String postId,
+            @PathVariable String commentId) {
+        PostCommentResponse response = postService.unlikeComment(postId, commentId, securityUtil.getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.ok(response, "Comment unliked successfully"));
     }
 
     @DeleteMapping("/{postId}/comments/{commentId}")

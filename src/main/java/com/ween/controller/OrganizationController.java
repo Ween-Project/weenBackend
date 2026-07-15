@@ -10,6 +10,9 @@ import com.ween.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -82,17 +85,13 @@ public class OrganizationController {
     @GetMapping("/@{username}")
     @Operation(summary = "Get organization public profile", description = "Retrieve public profile information about an organization")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization profile retrieved successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Organization not found")
+            @ApiResponse(responseCode = "200", description = "Profile retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrganizationResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Organization not found")
     })
-    public ResponseEntity<ApiResponse<PublicProfileResponse>> getOrganizationProfile(@PathVariable String username) {
-        try {
-            PublicProfileResponse response = organizationService.getOrganizationProfile(username);
-            return ResponseEntity.ok(ApiResponse.ok(response, "Organization profile retrieved successfully"));
-        } catch (Exception e) {
-            log.error("Failed to retrieve organization profile for username: {}", username, e);
-            throw e;
-        }
+    public ResponseEntity<ApiResponse<OrganizationResponse>> getOrganizationProfile(@PathVariable String username) {
+        OrganizationResponse response = organizationService.getOrganizationProfile(username);
+        return ResponseEntity.ok(ApiResponse.ok(response, "Organization profile retrieved successfully"));
     }
 
     @GetMapping("/current-organization-events")

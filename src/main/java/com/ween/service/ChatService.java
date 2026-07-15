@@ -430,6 +430,19 @@ public class ChatService {
                 .toList();
     }
 
+    public List<com.ween.dto.response.UserResponse> getRoomMembers(String roomId) {
+        return chatRoomMemberRepository.findByChatRoomId(roomId).stream()
+                .map(member -> userRepository.findById(member.getUserId()).orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .map(user -> com.ween.dto.response.UserResponse.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .fullName(user.getFullName())
+                        .profilePhotoUrl(user.getProfilePhotoUrl())
+                        .build())
+                .toList();
+    }
+
     private String uploadGroupPhoto(MultipartFile photo) {
         try {
             return cloudinaryService.uploadFile(photo, "chat/groups");

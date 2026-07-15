@@ -49,6 +49,10 @@ public interface PostMapper {
     @Mapping(target = "content", source = "comment.content")
     @Mapping(target = "createdAt", source = "comment.createdAt")
     @Mapping(target = "updatedAt", source = "comment.updatedAt")
+    @Mapping(target = "parentCommentId", source = "comment.parentComment.id")
+    @Mapping(target = "likeCount", expression = "java(comment.getLikedBy() != null ? comment.getLikedBy().size() : 0)")
+    @Mapping(target = "isLikedByMe", ignore = true) // Will set this in service if needed
+    @Mapping(target = "replies", source = "comment.replies")
     PostCommentResponse toCommentResponse(PostComment comment);
 
     @Mapping(target = "id", source = "user.id")
