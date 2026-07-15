@@ -31,4 +31,7 @@ public class GroupChatMessage extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "reply_to_message_id", length = 36)
+    private String replyToMessageId;
+
 }

@@ -132,6 +132,7 @@ public class ChatService {
                 .chatRoomId(roomId)
                 .senderId(senderId)
                 .content(content)
+                .replyToMessageId(request.getReplyToMessageId())
                 .build();
 
         GroupChatMessage saved = groupChatMessageRepository.save(message);
@@ -488,12 +489,25 @@ public class ChatService {
     }
 
     private GroupMessageResponse toGroupResponse(GroupChatMessage message) {
+        User sender = userRepository.findById(message.getSenderId()).orElse(null);
+        String replyContent = null;
+        if (message.getReplyToMessageId() != null) {
+            replyContent = groupChatMessageRepository.findById(message.getReplyToMessageId())
+                    .map(GroupChatMessage::getContent)
+                    .orElse("Deleted message");
+        }
+
         return GroupMessageResponse.builder()
                 .id(message.getId())
                 .senderId(message.getSenderId())
                 .chatRoomId(message.getChatRoomId())
                 .content(message.getContent())
                 .createdAt(message.getCreatedAt())
+                .senderUsername(sender != null ? sender.getUsername() : null)
+                .senderFullName(sender != null ? sender.getFullName() : null)
+                .senderPhotoUrl(sender != null ? sender.getProfilePhotoUrl() : null)
+                .replyToMessageId(message.getReplyToMessageId())
+                .replyToMessageContent(replyContent)
                 .build();
     }
 }

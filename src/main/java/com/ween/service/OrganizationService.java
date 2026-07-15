@@ -1,6 +1,7 @@
 package com.ween.service;
 
 import com.ween.dto.response.PublicProfileResponse;
+import com.ween.dto.response.OrganizationResponse;
 
 import com.ween.dto.request.UpdateOrganizationRequest;
 import com.ween.entity.Event;

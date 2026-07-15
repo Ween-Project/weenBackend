@@ -11,4 +11,6 @@ public class GroupMessageRequest {
     @Size(max = 2000, message = "Message content cannot exceed 2000 characters")
     private String content;
 
+    private String replyToMessageId;
+
 }

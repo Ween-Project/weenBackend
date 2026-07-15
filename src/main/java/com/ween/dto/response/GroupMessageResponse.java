@@ -13,4 +13,13 @@ public class GroupMessageResponse {
     private String chatRoomId;
     private String content;
     private LocalDateTime createdAt;
+    
+    // Sender details for UI
+    private String senderUsername;
+    private String senderFullName;
+    private String senderPhotoUrl;
+
+    // Reply functionality
+    private String replyToMessageId;
+    private String replyToMessageContent;
 }

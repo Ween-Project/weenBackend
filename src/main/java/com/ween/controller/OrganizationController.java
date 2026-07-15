@@ -10,7 +10,6 @@ import com.ween.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -85,9 +84,9 @@ public class OrganizationController {
     @GetMapping("/@{username}")
     @Operation(summary = "Get organization public profile", description = "Retrieve public profile information about an organization")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Profile retrieved successfully",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Profile retrieved successfully",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrganizationResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Organization not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Organization not found")
     })
     public ResponseEntity<ApiResponse<OrganizationResponse>> getOrganizationProfile(@PathVariable String username) {
         OrganizationResponse response = organizationService.getOrganizationProfile(username);
