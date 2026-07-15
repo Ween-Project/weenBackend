@@ -32,7 +32,7 @@ class LeaderboardServiceTest {
     void mapsUsersToLeaderboardEntries() {
         User user = User.builder().username("ali").weenCoinBalance(100).build();
         user.setId("user-1");
-        when(userRepository.findAllByOrderByWeenCoinBalanceDesc(PageRequest.of(0, 10)))
+        when(userRepository.findByRoleNotOrderByWeenCoinBalanceDesc(com.ween.enums.UserRole.ADMIN, PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(List.of(user), PageRequest.of(0, 10), 1));
 
         assertThat(leaderboardService.getLeaderboardMapped(PageRequest.of(0, 10)).getContent())

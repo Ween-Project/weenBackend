@@ -100,7 +100,7 @@ public class LeaderboardService {
      * ===================================================================================== */
 
     public Page<User> getAllTimeLeaderboard(Pageable pageable) {
-        return userRepository.findAllByOrderByWeenCoinBalanceDesc(pageable);
+        return userRepository.findByRoleNotOrderByWeenCoinBalanceDesc(com.ween.enums.UserRole.ADMIN, pageable);
     }
 
     public Top10LeaderboardDto getTop10AllTimeLeaderboard() {
