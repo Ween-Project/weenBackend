@@ -79,9 +79,21 @@ public class OrganizationController {
         }
     }
 
-
-
-
+    @GetMapping("/@{username}")
+    @Operation(summary = "Get organization public profile", description = "Retrieve public profile information about an organization")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization profile retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Organization not found")
+    })
+    public ResponseEntity<ApiResponse<PublicProfileResponse>> getOrganizationProfile(@PathVariable String username) {
+        try {
+            PublicProfileResponse response = organizationService.getOrganizationProfile(username);
+            return ResponseEntity.ok(ApiResponse.ok(response, "Organization profile retrieved successfully"));
+        } catch (Exception e) {
+            log.error("Failed to retrieve organization profile for username: {}", username, e);
+            throw e;
+        }
+    }
 
     @GetMapping("/current-organization-events")
     @Operation(

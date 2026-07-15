@@ -31,6 +31,13 @@ public class OrganizationInvitationController {
         return ResponseEntity.ok(ApiResponse.ok(null, "Invitation sent successfully"));
     }
 
+    @GetMapping("/organizations/{orgId}/organizers")
+    @PreAuthorize("hasAnyRole('ORGANIZATION_ADMIN', 'ORGANIZER')")
+    @Operation(summary = "Get organizers", description = "Get list of organizers for this organization")
+    public ResponseEntity<ApiResponse<java.util.List<com.ween.dto.response.OrganizerResponse>>> getOrganizers(@PathVariable String orgId) {
+        return ResponseEntity.ok(ApiResponse.ok(invitationService.getOrganizers(orgId), "Organizers retrieved successfully"));
+    }
+
     @GetMapping("/invitations/approve")
     @Operation(summary = "Approve an invitation", description = "Approve an organization invitation using the provided token")
     public ResponseEntity<ApiResponse<Void>> approveInvitation(@RequestParam String token) {

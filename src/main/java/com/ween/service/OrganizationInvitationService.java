@@ -60,8 +60,8 @@ public class OrganizationInvitationService {
         
         invitationRepository.save(invitation);
 
-        String approveLink = frontendUrl + "/api/v1/invitations/approve?token=" + token;
-        String rejectLink = frontendUrl + "/api/v1/invitations/reject?token=" + token;
+        String approveLink = frontendUrl + "/invitations/approve?token=" + token;
+        String rejectLink = frontendUrl + "/invitations/reject?token=" + token;
 
         emailService.sendOrganizerInvitationEmail(user.getEmail(), org.getOrganizationName(), approveLink, rejectLink);
         log.info("Invitation sent to user {} for organization {}", user.getId(), org.getId());
@@ -121,5 +121,19 @@ public class OrganizationInvitationService {
         user.setRole(UserRole.VOLUNTEER);
         userRepository.save(user);
         log.info("Organizer {} removed from organization {}", organizerId, organizationId);
+    }
+    
+    @Transactional(readOnly = true)
+    public java.util.List<com.ween.dto.response.OrganizerResponse> getOrganizers(String organizationId) {
+        return organizerRepository.findByOrganizationId(organizationId).stream().map(org -> 
+            com.ween.dto.response.OrganizerResponse.builder()
+                .organizerId(org.getId())
+                .userId(org.getUser().getId())
+                .fullName(org.getUser().getFullName())
+                .email(org.getUser().getEmail())
+                .username(org.getUser().getUsername())
+                .profilePhotoUrl(org.getUser().getProfilePhotoUrl())
+                .build()
+        ).collect(java.util.stream.Collectors.toList());
     }
 }

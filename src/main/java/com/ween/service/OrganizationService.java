@@ -1,5 +1,7 @@
 package com.ween.service;
 
+import com.ween.dto.response.PublicProfileResponse;
+
 import com.ween.dto.request.UpdateOrganizationRequest;
 import com.ween.entity.Event;
 import com.ween.entity.Organization;
@@ -97,4 +99,23 @@ public class OrganizationService {
         log.info("Organization deleted: {}", organizationId);
     }
 
+    @Transactional(readOnly = true)
+    public PublicProfileResponse getOrganizationProfile(String username) {
+        Organization org = organizationRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found with username: " + username));
+        
+        return PublicProfileResponse.builder()
+                .id(org.getId())
+                .username(org.getUsername())
+                .fullName(org.getOrganizationName())
+                .bio(org.getDescription())
+                .profilePhotoUrl(org.getLogoUrl())
+                .bannerUrl(org.getBannerUrl())
+                .weenCoinBalance(0)
+                .followerCount(0L)
+                .followingCount(0L)
+                .following(false)
+                .canMessage(false)
+                .build();
+    }
 }
