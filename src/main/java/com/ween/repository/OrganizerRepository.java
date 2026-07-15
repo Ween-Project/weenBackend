@@ -12,5 +12,7 @@ public interface OrganizerRepository extends JpaRepository<Organizer, String> {
     Optional<Organizer> findByUserId(String userId);
     
     Optional<Organizer> findByIdAndOrganizationId(String id, String organizationId);
+    
+    java.util.List<Organizer> findByOrganizationId(String organizationId);
 
 }
