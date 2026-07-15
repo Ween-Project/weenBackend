@@ -22,15 +22,16 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     @Query("""
             SELECT u FROM User u
-            WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%'))
+            WHERE u.role != 'ADMIN'
+               AND (LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%'))
                OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%'))
                OR LOWER(COALESCE(u.university, '')) LIKE LOWER(CONCAT('%', :query, '%'))
                OR LOWER(COALESCE(u.major, '')) LIKE LOWER(CONCAT('%', :query, '%'))
-               OR LOWER(COALESCE(CAST(u.skills AS string), '')) LIKE LOWER(CONCAT('%', :query, '%'))
-               OR LOWER(COALESCE(CAST(u.interests AS string), '')) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(COALESCE(u.skills, '')) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(COALESCE(u.interests, '')) LIKE LOWER(CONCAT('%', :query, '%')))
             """)
     Page<User> searchPublicProfiles(@Param("query") String query, Pageable pageable);
 
     // For ALL_TIME leaderboard
-    Page<User> findAllByOrderByWeenCoinBalanceDesc(Pageable pageable);
+    Page<User> findByRoleNotOrderByWeenCoinBalanceDesc(com.ween.enums.UserRole role, Pageable pageable);
 }
